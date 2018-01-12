@@ -18,8 +18,8 @@ public class ScheduledScanner
 {
     private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    @Scheduled(fixedRate = 2000)
+    
+    @Scheduled(cron = "${scan.cron}")
     public void scanS3() {
         logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
     }
