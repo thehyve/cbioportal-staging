@@ -45,7 +45,7 @@ public class ScheduledScanner
         Resource mostRecentFile = allFilesInFolder[0];
         for (Resource resource : allFilesInFolder) {
 
-            if (resource.getFile().lastModified() > mostRecentFile.getFile().lastModified()) {
+            if (resource.lastModified() > mostRecentFile.lastModified()) {
                 mostRecentFile = resource;
             }
         }
