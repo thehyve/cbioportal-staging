@@ -11,9 +11,20 @@
 # Cron 0 0 * * * = once every hour
 # Cron 0 0 0 * * = once every day
 scan.cron=0 0 0 * * *
-# location to scan (local file or S3 location)
-scan.location=file:///dir/staging_dir/
+# location to scan (local file system or S3 location):
+# Local file system example:
+#scan.location=file:///dir/staging_dir/
+# S3 example:
+# scan.location=s3://bucket/staging_dir
+scan.location=s3://bucket/staging_dir
 
 # working directory
 etl.working.dir=file:///tmp
+
+# environment settings needed by S3 library. Set these when
+# running the tool outside EC2 environment:
+cloud.aws.region.static=eu-central-1
+cloud.aws.credentials.accessKey=<aws-key>
+cloud.aws.credentials.secretKey=<aws-secret-key>
+
 
