@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.concurrent.TimeUnit;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.slf4j.Logger;
@@ -38,11 +37,20 @@ public class ETLProcessRunner {
 
         try  {
             startProcess();
+            //E (Extract) step:
             extractor.run(indexFile);
-            TimeUnit.SECONDS.sleep(10);
+            //T (Transform) step:
+            //TODO transformer
+            //L (Load) step
+            //TODO loader
+            
         }
         finally
         {
+            //restart cBioPortal:
+            //TODO
+            
+            //end process / release lock:
             endProcess();
         }
     }
@@ -78,7 +86,7 @@ public class ETLProcessRunner {
 
     private void endProcess() {
         try {
-            logger.info("Closing socket" );
+            logger.info("Closing socket / releasing lock" );
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
