@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.concurrent.TimeUnit;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ public class ETLProcessRunner {
      * 
      * @throws InterruptedException
      */
-    public void run(Resource indexFile) throws InterruptedException {
+    public void run(Resource indexFile) {
 
         try  {
             startProcess();
@@ -44,6 +45,14 @@ public class ETLProcessRunner {
             //L (Load) step
             //TODO loader
             
+            //dummy code just to let it take some time...untill we have real steps above:
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
         }
         finally
         {
@@ -74,13 +83,13 @@ public class ETLProcessRunner {
             socket = new ServerSocket(PORT,0,InetAddress.getByAddress(new byte[] {127,0,0,1}));
         }
         catch (BindException e) {
-            logger.error("ETL process already running.", e);
-            System.exit(1);
+            logger.error("Another ETL process is already running.", e);
+            throw new RuntimeException("Another ETL process is already running", e);
         }
         catch (IOException e) {
             logger.error("Unexpected error.", e);
             e.printStackTrace();
-            System.exit(2);
+            throw new RuntimeException("Unexpected error.", e);
         }
     }
 

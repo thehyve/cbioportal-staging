@@ -40,7 +40,7 @@ public class ScheduledScanner
     
 
     @Scheduled(cron = "${scan.cron}")
-    public boolean scan() throws IOException, InterruptedException {
+    public boolean scan() throws IOException {
         logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
         nrIterations++;
         logger.info("Scanning location for new staging files: " + scanLocation);
