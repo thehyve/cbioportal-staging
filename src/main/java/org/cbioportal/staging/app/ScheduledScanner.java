@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +35,12 @@ public class ScheduledScanner
 
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
+    @Autowired
+    private ETLProcessRunner etlProcessRunner;
+    
 
     @Scheduled(cron = "${scan.cron}")
-    public boolean scan() throws IOException {
+    public boolean scan() throws IOException, InterruptedException {
         logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
         nrIterations++;
         logger.info("Scanning location for new staging files: " + scanLocation);
@@ -56,7 +60,7 @@ public class ScheduledScanner
         logger.info("Selected most recent one: "+ mostRecentFile.getFilename());
 
         // trigger ETL process:
-        //TODO
+        etlProcessRunner.run(mostRecentFile);
 
         
         //check if nrRepeats reached the configured max: 

@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *
  */
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages={"org.cbioportal.staging"})
 @EnableScheduling
 public class App 
 {
@@ -19,8 +19,6 @@ public class App
 
     public static void main( String[] args )
     {
-        //TODO - read given .properties file and: 
-        //        - start the BatchScanner process that repeatedly (based on given interval) scans a remote location. 
         logger.info("Starting cBioPortal staging app..." );
         SpringApplication.run(App.class, args);
     }
