@@ -21,10 +21,15 @@ scan.location=s3://bucket/staging_dir
 # working directory
 etl.working.dir=file:///tmp
 
-# environment settings needed by S3 library. Set these when
-# running the tool outside EC2 environment:
+# environment settings needed by S3 library. This is needed when
+# scan.location points to S3 and running the tool outside EC2 environment:
 cloud.aws.region.static=eu-central-1
-cloud.aws.credentials.accessKey=<aws-key>
-cloud.aws.credentials.secretKey=<aws-secret-key>
+# (optional) aws credentials for access to S3 bucket. Set these when
+# aws credentials have not been configured on machine or if default 
+# aws credentials are different. Setting it here also improves performance
+# of the S3 operations (probably because if these are not set, a slower 
+# trial and error route is chosen):
+#cloud.aws.credentials.accessKey=<aws-key>
+#cloud.aws.credentials.secretKey=<aws-secret-key>
 
 
