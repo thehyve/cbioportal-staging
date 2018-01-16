@@ -27,6 +27,10 @@ public class ScheduledScanner
 
     @Value("${scan.location}")
     private String scanLocation;
+    
+    @Value("${scan.cron.iterations:-1}")
+    private Integer scanIterations;
+    private int nrIterations = 0;
 
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
@@ -34,7 +38,7 @@ public class ScheduledScanner
     @Scheduled(cron = "${scan.cron}")
     public boolean scan() throws IOException {
         logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
-
+        nrIterations++;
         logger.info("Scanning location for new staging files: " + scanLocation);
         Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
         logger.info("Found "+ allFilesInFolder.length + " index files");
@@ -53,6 +57,13 @@ public class ScheduledScanner
 
         // trigger ETL process:
         //TODO
+
+        
+        //check if nrRepeats reached the configured max: 
+        if (scanIterations != -1 && nrIterations >= scanIterations) {
+            logger.info("==>>>>> Reached configured number of iterations (" + scanIterations + "). Exiting... <<<<<==");
+            System.exit(0);
+        }
 
         //return true if a process was triggered
         return true;
