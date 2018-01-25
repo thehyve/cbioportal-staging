@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.cbioportal.staging.app.ScheduledScanner;
@@ -27,6 +29,9 @@ public class ETLProcessRunner {
     @Autowired
     Extractor extractor;
     
+    @Autowired
+    Transformer transformer;
+    
     /**
      * Runs all the steps of the ETL process.
      * 
@@ -39,9 +44,10 @@ public class ETLProcessRunner {
         try  {
             startProcess();
             //E (Extract) step:
-            extractor.run(indexFile);
+            Map<Integer, List<String>> studiesLoaded = extractor.run(indexFile);
+            logger.info("Studies loaded :"+studiesLoaded);
             //T (Transform) step:
-            //TODO transformer
+            transformer.transform(studiesLoaded, "command");
             //L (Load) step
             //TODO loader
             
