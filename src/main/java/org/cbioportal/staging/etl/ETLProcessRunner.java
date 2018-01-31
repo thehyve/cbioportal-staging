@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,9 @@ public class ETLProcessRunner {
     @Autowired
     Transformer transformer;
     
+    @Autowired
+    Validator validator;
+    
     /**
      * Runs all the steps of the ETL process.
      * 
@@ -44,14 +48,15 @@ public class ETLProcessRunner {
         try  {
             startProcess();
             //E (Extract) step:
-            Map<Integer, List<String>> studiesLoaded = extractor.run(indexFile);
-            logger.info("Studies loaded :"+studiesLoaded);
+            Pair<Integer, List<String>> idAndStudies = extractor.run(indexFile);
             //T (Transform) step:
-            transformer.transform(studiesLoaded, "command");
-            //L (Load) step
+            transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
+            //V (Validate) step:
+            ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+            //L (Load) step:
             //TODO loader
             
-            //dummy code just to let it take some time...untill we have real steps above:
+            //dummy code just to let it take some time...until we have real steps above:
             try {
                 TimeUnit.SECONDS.sleep(10);
             } catch (InterruptedException e) {
