@@ -36,6 +36,12 @@ public class ETLProcessRunner {
     @Autowired
     Validator validator;
     
+    @Autowired
+    Loader loader;
+    
+    @Autowired
+    Restarter restarter;
+    
     /**
      * Runs all the steps of the ETL process.
      * 
@@ -54,21 +60,21 @@ public class ETLProcessRunner {
             //V (Validate) step:
             ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
             //L (Load) step:
-            //TODO loader
+            loader.load(idAndStudies.getKey(), validatedStudies);
             
             //dummy code just to let it take some time...until we have real steps above:
-            try {
-                TimeUnit.SECONDS.sleep(10);
-            } catch (InterruptedException e) {
+            //try {
+            //    TimeUnit.SECONDS.sleep(10);
+            //} catch (InterruptedException e) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            //    e.printStackTrace();
+            //}
 
         }
         finally
         {
             //restart cBioPortal:
-            //TODO
+            restarter.restart();
             
             //end process / release lock:
             endProcess();
