@@ -1,21 +1,29 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.cbioportal.staging.app.EmailService;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Loader {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	
+	@Autowired
+	EmailService emailService;
 	
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;
@@ -38,10 +46,11 @@ public class Loader {
 				throw new Exception("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
 						". Stopping process...");
 			} else {
-				try {
-					//Get studies from appropriate staging folder
-					File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-					for (String study : studies) {
+				Map<String, String> statusStudies = new HashMap<String, String>();
+				//Get studies from appropriate staging folder
+				File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+				for (String study : studies) {
+					try {
 						logger.info("Starting loading of study "+study);
 						File studyPath = new File(originPath+"/"+study);
 						String portalHome = System.getenv("PORTAL_HOME");
@@ -60,7 +69,7 @@ public class Loader {
 							throw new Exception("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
 									". Please change the mode in the application.properties.");
 						}
-						
+
 						//Apply loader command
 						loaderCmd.directory(new File(portalHome+"/core/src/main/scripts/importer"));
 						String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
@@ -70,21 +79,24 @@ public class Loader {
 						Process loadProcess = loaderCmd.start();
 						loadProcess.waitFor(); //Wait until loading is finished
 						logger.info("Loading of study "+study+" finished.");
-						
-						//TODO: Create email with the links to log files, including which studies were loaded and which failed
+						statusStudies.put(logFile.getAbsolutePath(), "<b><font style=\"color: #04B404\">SUCCESSFULLY LOADED</font></b>");
+					} catch (LoaderException e) {
+						//tell about error, continue with next study
+						logger.error(e.getMessage()+". The app will continue with the next study.");
+						statusStudies.put(study, "<b><font style=\"color: #FF0000\">ERRORS</font></b>");
+						e.printStackTrace();
 					}
-				} catch (LoaderException e) {
-					//tell about error, continue with next study
-					logger.error(e.getMessage()+". The app will continue with the next study.");
-					e.printStackTrace();
-				} catch (Exception e) {
-					logger.error("An error not expected occurred. Stopping process...");
-					e.printStackTrace();
-					System.exit(-1); //Stop app
 				}
+				emailService.emailStudiesLoaded(statusStudies);
 			}
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process...");
+			try {
+				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 			System.exit(-1); //Stop app
 		}
