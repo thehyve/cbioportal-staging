@@ -3,6 +3,7 @@ package org.cbioportal.staging.etl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,8 +15,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.app.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -24,6 +27,9 @@ import org.yaml.snakeyaml.Yaml;
 @Component
 class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	
+	@Autowired
+	EmailService emailService;
 
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;
@@ -36,6 +42,8 @@ class Extractor {
 		//Parse the indexFile and download all referred files to the working directory.
 		Pair<Integer, List<String>> data;
 		List<String> studiesLoaded = new ArrayList<String>();
+		List<String> studiesWithErrors = new ArrayList<String>();
+		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
 		Yaml yaml = new Yaml();
 		Map<String, Integer> errors = new HashMap<String, Integer>();
 		Integer id = 0;
@@ -82,13 +90,18 @@ class Extractor {
 								attempt ++;
 								if (attempt == 5) {
 									errors.put(entry.getKey(), errors.get(entry.getKey())+1);
-									//TODO: SEND EMAIL
+									if (filesNotFound.get(entry.getKey()) == null) {
+										ArrayList<String> newList = new ArrayList<String>();
+										newList.add(file);
+										filesNotFound.put(entry.getKey(), newList);
+									} else {
+										filesNotFound.get(entry.getKey()).add(file);
+									}
 								}
 							} catch (InterruptedException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 								errors.put(entry.getKey(), errors.get(entry.getKey())+1);
-								//TODO: SEND EMAIL
 							}
 						}
 					}
@@ -97,15 +110,32 @@ class Extractor {
 			for (String study : errors.keySet()) {
 				if (errors.get(study) == 0) {
 					studiesLoaded.add(study);
+				} else {
+					studiesWithErrors.add(study);
 				}
+			}
+			if (!studiesWithErrors.isEmpty()) {
+				emailService.emailStudyFileNotFound(filesNotFound);
 			}
 		}
 		catch (ClassCastException e) {
 			logger.error("The yaml file given has an incorrect format.", e);
+			try {
+				emailService.emailGenericError("The yaml file given has an incorrect format.", e);
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 		}
 		catch (IOException e) {
 			// TODO Auto-generated catch block
+			try {
+				emailService.emailGenericError("", e);
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 		}
 		data = Pair.of(id, studiesLoaded);

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,16 +13,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.app.EmailService;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Validator {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	
+	@Autowired
+	EmailService emailService;
 	
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;
@@ -38,6 +45,9 @@ public class Validator {
 	@Value("${central.share.location}")
 	private File centralShareLocation;
 	
+	@Value("${validation.level:Errors}")
+	private String validationLevel;
+	
 	ArrayList<String> validate(Integer id, List<String> studies) {
 		try {
 			ArrayList<String> studiesPassed = new ArrayList<String>();
@@ -48,6 +58,7 @@ public class Validator {
 				try {
 					//Get studies from appropriate staging folder
 					File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+					Map<Pair<String,String>,List<Integer>> validatedStudies = new HashMap<Pair<String,String>,List<Integer>>();
 					for (String study : studies) {
 						logger.info("Starting validation of study "+study);
 						File studyPath = new File(originPath+"/"+study);
@@ -115,26 +126,39 @@ public class Validator {
 								}
 						}
 						validationReader.close();
-						if (studyCounter.get("Errors") == 0) {
+						if (studyCounter.get(validationLevel) == 0) {
 							studiesPassed.add(study);
 						}
+						List<Integer> errorsAndWarnings = new ArrayList<Integer>();
+						errorsAndWarnings.add(studyCounter.get("Warnings"));
+						errorsAndWarnings.add(studyCounter.get("Errors"));
+						Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
+						validatedStudies.put(studyData, errorsAndWarnings);
 						logger.info("Validation of study "+study+" finished. Errors: "+studyCounter.get("Errors")+", Warnings: "+studyCounter.get("Warnings"));
-						return studiesPassed;
-						
-						//TODO: Create email with the links to the validation reports and log files, including whether the validation passed or not
 					}
+					emailService.emailValidationReport(validatedStudies, validationLevel);
+					return studiesPassed;
+					
 				} catch (ValidatorException e) {
 					//tell about error, continue with next study
 					logger.error(e.getMessage()+". The app will continue with the next study.");
+					emailService.emailGenericError(e.getMessage()+". The app will continue with the next study.", e);
 					e.printStackTrace();
 				} catch (Exception e) {
 					logger.error("An error not expected occurred. Stopping process...");
+					emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
 					e.printStackTrace();
 					System.exit(-1); //Stop app
 				}
 			}
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process...");
+			try {
+				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 			System.exit(-1); //Stop app
 		}
