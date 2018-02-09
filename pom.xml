@@ -85,17 +85,14 @@
 			<version>1.0.2</version>
 			<scope>provided</scope>
 		</dependency>
-		
-		<!-- velocity -->
+	
+		<!-- Attention: Be sure nothing pulls in an old dependency with groupId 
+			"freemarker" (without the "org."), because then you will end up with two 
+			freemarker.jar-s and unpredictable behavior! -->
 		<dependency>
-			<groupId>org.apache.velocity</groupId>
-			<artifactId>velocity</artifactId>
-			<version>1.7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.velocity</groupId>
-			<artifactId>velocity-tools</artifactId>
-			<version>2.0</version>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>2.3.27-incubating</version>
 		</dependency>
 		
 		<!-- https://mvnrepository.com/artifact/org.springframework/spring-context-support -->

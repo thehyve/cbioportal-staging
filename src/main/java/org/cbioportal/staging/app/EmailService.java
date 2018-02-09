@@ -1,11 +1,13 @@
 package org.cbioportal.staging.app;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -25,14 +27,20 @@ import org.cbioportal.staging.exceptions.TransformerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+
+import freemarker.core.ParseException;
+import freemarker.template.Configuration;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class EmailService {
 	
 	@Autowired
-	//private ConfigService configService;
-    //private JavaMailSender mailSender;
-    //private VelocityEngine velocityEngine;
+    private Configuration freemarkerConfig;
 	
 	@Value("${mail.admin.user}")
 	private String mailAdminUser;
@@ -91,7 +99,7 @@ public class EmailService {
 				  });
 	}
 	
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies) throws UnsupportedEncodingException {
+	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
 		for (String failedStudy : failedStudies.keySet()) {
 			allFailedStudies.append("STUDY: "+failedStudy+"<br>");
@@ -99,7 +107,7 @@ public class EmailService {
 				allFailedStudies.append("- "+failedFile+"<br>");
 			}
 		}
-		String finalFailedStudies = allFailedStudies.toString();
+		final String finalFailedStudies = allFailedStudies.toString();
 
 		Properties properties = getProperties();
 		Session session = getSession(properties);
@@ -108,16 +116,11 @@ public class EmailService {
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
+		    Template t = freemarkerConfig.getTemplate("studyFileNotFound.ftl");
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, new HashMap<String, String>() {{
+		        put("finalFailedStudies",finalFailedStudies);
+		    }});
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
-		    String message = "<div>Dear cBioPortal Administrator,<br><br>"+
-		    "While checking the S3 location for the study files, "+
-		    "the following files were found to be missing (after "+
-		    "trying 5 times over a period of 25 minutes):<br>" + 
-		    finalFailedStudies +
-		    "<br>Please add these files or update the "+
-		    "\"list_of_studies.yaml\" configuration file on S3.<br><br>" +
-		    "Regards,<br>" + 
-		    "cBioPortal staging app. </div>";
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -134,7 +137,7 @@ public class EmailService {
 		return stackTrace.replace(System.getProperty("line.separator"), "<br/>\n");
 	}
 	
-	public void emailStudyError(String studyId, Exception e) throws UnsupportedEncodingException {
+	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -143,14 +146,11 @@ public class EmailService {
 		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId);
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
-		    String message = "<div>Dear cBioPortal Administrator,<br><br>"+
-		    "The study files for study "+studyId+" could not be transformed by the given "+
-		    "transformation script. Error details:<br>"+
-		    displayError(e) +
-		    "<br>Please check the data files and/or the transformation script and "+
-		    "fix them accordingly.<br><br>" +
-		    "Regards,<br>" + 
-		    "cBioPortal staging app. </div>";
+		    Template t = freemarkerConfig.getTemplate("studyError.ftl");
+		    Map<String, String> messageParams = new HashMap<String, String>();
+		    messageParams.put("studyId", studyId);
+		    messageParams.put("displayError", displayError(e));
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -159,7 +159,7 @@ public class EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,List<Integer>> validatedStudies, String level) throws UnsupportedEncodingException {
+	public void emailValidationReport(Map<Pair<String,String>,List<Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -191,15 +191,11 @@ public class EmailService {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
-		    String message = "<div>Dear cBioPortal Administrator,<br><br>"+
-		    "New studies were found on S3. They were transformed to cBioPortal staging files and " +
-		    	"the staging files have been validated. These are the validation reports:" +
-		    studies +
-		    "<br><br>The system will proceed and attempt loading the " +
-		    studiesToLoad + " studies. " + 
-		    "Please update the other studies accordingly.<br><br>"+
-		    "Regards,<br>" + 
-		    "cBioPortal staging app. </div>";
+		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
+		    Map<String, String> messageParams = new HashMap<String, String>();
+		    messageParams.put("studies", studies);
+		    messageParams.put("studiesToLoad", studiesToLoad);
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -208,7 +204,7 @@ public class EmailService {
 		}
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded) throws UnsupportedEncodingException {
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -222,14 +218,10 @@ public class EmailService {
 		    msg.setSubject("INFO - cBioPortal staging app: data loading results for new studies");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
-		    String message = "<div>Dear cBioPortal Administrator,<br><br>"+
-		    "The system tried loading the studies below. These are the data loading " + 
-		    "log files for each of the attempted studies:"+
-		    studies +
-		    "<br><br>The <b><font style=\"color: #04B404\">SUCCESSFULLY LOADED</font></b> studies are " + 
-		    "available for querying in the portal.<br><br>" +
-		    "Regards,<br>" + 
-		    "cBioPortal staging app. </div>";
+		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
+		    Map<String, String> messageParams = new HashMap<String, String>();
+		    messageParams.put("studies", studies);
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -238,7 +230,7 @@ public class EmailService {
 		}
 	}
 	
-	public void emailGenericError(String errorMessage, Exception e) throws UnsupportedEncodingException {
+	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -247,14 +239,11 @@ public class EmailService {
 		    msg.setSubject("ERROR - cBioPortal staging app: unexpected error");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
-		    String message = "<div>Dear cBioPortal Administrator,<br><br>"+
-		    "An unexpected error occurred while running one of the steps. Error details:<br> "+
-		    errorMessage + "<br><br>" +
-		    displayError(e) +
-		    "<br>Please check if the necessary dependencies are up and running and " +
-		    "if current configuration is still correct.<br><br>" +
-		    "Regards,<br>" + 
-		    "cBioPortal staging app. </div>";
+		    Template t = freemarkerConfig.getTemplate("genericError.ftl");
+		    Map<String, String> messageParams = new HashMap<String, String>();
+		    messageParams.put("errorMessage", errorMessage);
+		    messageParams.put("displayError", displayError(e));
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);

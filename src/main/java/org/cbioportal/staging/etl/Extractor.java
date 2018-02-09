@@ -24,6 +24,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
+
 @Component
 class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
@@ -115,14 +120,31 @@ class Extractor {
 				}
 			}
 			if (!studiesWithErrors.isEmpty()) {
-				emailService.emailStudyFileNotFound(filesNotFound);
+				try {
+					emailService.emailStudyFileNotFound(filesNotFound);
+				} catch (TemplateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		catch (ClassCastException e) {
 			logger.error("The yaml file given has an incorrect format.", e);
 			try {
-				emailService.emailGenericError("The yaml file given has an incorrect format.", e);
-			} catch (UnsupportedEncodingException e1) {
+				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
+			} catch (TemplateNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (MalformedTemplateNameException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (TemplateException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
@@ -131,8 +153,20 @@ class Extractor {
 		catch (IOException e) {
 			// TODO Auto-generated catch block
 			try {
-				emailService.emailGenericError("", e);
-			} catch (UnsupportedEncodingException e1) {
+				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
+			} catch (TemplateNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (MalformedTemplateNameException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (TemplateException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
