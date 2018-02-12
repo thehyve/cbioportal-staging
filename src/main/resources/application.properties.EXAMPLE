@@ -34,4 +34,36 @@ cloud.aws.region.static=eu-central-1
 #cloud.aws.credentials.accessKey=<aws-key>
 #cloud.aws.credentials.secretKey=<aws-secret-key>
 
+# cbioportal mode, either "local" or "docker". If the "docker" mode is specified,
+# the cBioPortal Docker image name must be specified.
+cbioportal.mode=local
+cbioportal.docker.image=<image-name>
+cbioportal.docker.network=<network-name>
+
+# Central share location (for validation reports and log files).
+central.share.location=file:///Users/oleguer/Desktop/test_out/share/
+
+#Tomcat command (for local cBioPortal mode)
+tomcat.command=catalina
+
+#cBioPortal container name (for Docker cBioPortal mode)
+cbioportal.container.name=<container-name>
+
+#Validation level: two options:
+# "Warnings": to load studies with no warnings or errors.
+# "Errors": to load studies with no errors (but that can contain warnings).
+validation.level = Errors
+
+#Mail properties
+mail.admin.user=<email>
+mail.app.user=noreply@thehyve.nl
+mail.app.password=thehyvetest
+mail.smtp.host=<smtp-host>
+mail.debug=<boolean>
+mail.transport.protocol=<transport-protocol>
+mail.smtp.port=<smtp-port>
+mail.smtp.auth=<boolean>
+mail.smtp.ssl.enable=<boolean>
+mail.smtp.starttls.enable=<boolean>
+
 
