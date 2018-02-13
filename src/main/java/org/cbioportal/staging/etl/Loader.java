@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cbioportal.staging.app.EmailService;
+import org.cbioportal.staging.app.EmailServiceImpl;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class Loader {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 	
 	@Autowired
-	EmailService emailService;
+	EmailServiceImpl emailService;
 	
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;

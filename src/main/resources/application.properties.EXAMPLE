@@ -66,4 +66,3 @@ mail.smtp.auth=<boolean>
 mail.smtp.ssl.enable=<boolean>
 mail.smtp.starttls.enable=<boolean>
 
-

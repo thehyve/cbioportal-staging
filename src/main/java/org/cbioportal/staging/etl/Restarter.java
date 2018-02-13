@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
-import org.cbioportal.staging.app.EmailService;
+import org.cbioportal.staging.app.EmailServiceImpl;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class Restarter {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
 	@Autowired
-	EmailService emailService;
+	EmailServiceImpl emailService;
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;
