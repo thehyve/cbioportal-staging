@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.app.EmailService;
+import org.cbioportal.staging.app.EmailServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ class Transformer {
 	private File etlWorkingDir;
 	
 	@Autowired
-	EmailService emailService;
+	EmailServiceImpl emailService;
 
 	void transform(Integer id, List<String> studies, String transformationCommand) {
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id);
