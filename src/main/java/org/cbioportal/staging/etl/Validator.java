@@ -1,11 +1,14 @@
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
 package org.cbioportal.staging.etl;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,19 +17,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.cbioportal.staging.app.EmailService;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Validator {
@@ -35,115 +34,104 @@ public class Validator {
 	@Autowired
 	EmailService emailService;
 	
+	@Autowired
+	ValidationService validationService;
+	
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;
-	
-	@Value("${cbioportal.mode}")
-	private String cbioportalMode;
-	
-	@Value("${cbioportal.docker.image}")
-	private String cbioportalDockerImage;
-	
-	@Value("${cbioportal.docker.network}")
-	private String cbioportalDockerNetwork;
 	
 	@Value("${central.share.location}")
 	private File centralShareLocation;
 	
-	@Value("${validation.level:Errors}")
+	@Value("${validation.level:ERROR}")
 	private String validationLevel;
 	
-	ArrayList<String> validate(Integer id, List<String> studies) {
+	@Value("${portal.home}")
+	private String portalHome;
+	
+	Map<String, Integer> getMessageCounter(File logFile) {
+		
 		try {
-			ArrayList<String> studiesPassed = new ArrayList<String>();
+			Map<String, Integer> messageCounter = new HashMap<String, Integer>();
+			messageCounter.put("ERROR", 0);
+			messageCounter.put("WARNING", 0);
+			BufferedReader validationReader;
+			validationReader = new BufferedReader(new FileReader(logFile));
+			String valReadLine = null;
+			while ((valReadLine = validationReader.readLine()) != null) {
+				if (valReadLine.indexOf("WARNING") != -1) {
+					messageCounter.put("WARNING", messageCounter.get("WARNING")+1);
+				}
+				if (valReadLine.indexOf("ERROR") != -1) {
+					messageCounter.put("ERROR", messageCounter.get("ERROR")+1);
+				}
+			}
+			validationReader.close();
+			return messageCounter;
+			
+		} catch (IOException e) {
+			logger.error("The log file provided has not been found.");
+			try {
+				emailService.emailGenericError("The log file provided has not been found.", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
+	boolean hasStudyPassed(String study, String validationLevel, Map<String, Integer> messageCounter) {
+		if (validationLevel.equals("WARNING")) { //Load studies with no warnings or errors
+			if (messageCounter.get("WARNING").equals(0) && messageCounter.get("ERROR").equals(0)) {
+				return true;
+			}
+			return false;
+		} else if (validationLevel.equals("ERROR")) { //Load studies with only no errors
+			if (messageCounter.get("ERROR").equals(0)) {
+				return true;
+			}
+			return false;
+		} else {
+			throw new IllegalArgumentException("Validation level should be WARNING or ERROR. Please check the application.properties.");
+		}
+	}
+	
+	ArrayList<String> validate(Integer id, List<String> studies) {
+		ArrayList<String> studiesPassed = new ArrayList<String>();
+		try {
 			if (!centralShareLocation.exists()) {
-				throw new Exception("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
+				throw new IOException("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
 						". Stopping process...");
 			} else {
 				try {
 					//Get studies from appropriate staging folder
 					File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-					Map<Pair<String,String>,List<Integer>> validatedStudies = new HashMap<Pair<String,String>,List<Integer>>();
+					Map<Pair<String,String>,Map<String, Integer>> validatedStudies = new HashMap<Pair<String,String>,Map<String, Integer>>();
 					for (String study : studies) {
 						logger.info("Starting validation of study "+study);
+						//Get the paths for the study and validate it
 						File studyPath = new File(originPath+"/"+study);
-						String portalHome = System.getenv("PORTAL_HOME");
 						String reportTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-						String reportName = study+"_validation_report_"+reportTimeStamp+".html";
-						String reportPath = centralShareLocation.toString()+"/"+reportName;
-						File portalInfoPath = new File(etlWorkingDir.toPath()+"/portalInfo/");
-						ProcessBuilder validationCmd;
-						ProcessBuilder portalInfoCmd;
-						if (cbioportalMode.equals("local")) {
-							validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.toString(), "-p", portalInfoPath.toString(), "-html", reportPath, "-v");
-							portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoPath.toString());
-						} else if (cbioportalMode.equals("docker")) {
-							if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-								validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-										"-v", studyPath.toString()+":/study:ro", "-v", centralShareLocation.toString()+"/:/outdir",
-										"-v", etlWorkingDir.toPath()+"/portalinfo:/portalinfo:ro", cbioportalDockerImage,
-										"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outdir/"+reportName);
-								portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork,
-										"-v", portalInfoPath.toString()+":/portalinfo", "-w", "/cbioportal/core/src/main/scripts",
-										cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
-							} else {
-								throw new Exception("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
-							}
-						} else {
-							throw new Exception("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-									". Please change the mode in the application.properties.");
-						}
+						String reportPath = centralShareLocation.toString()+"/"+study+"_validation_report_"+reportTimeStamp+".html";
+						File logFile = validationService.validate(study, studyPath.getAbsolutePath(), reportPath);
 						
-						//Check if portalInfo exists, otherwise create it
-						if (!portalInfoPath.exists()) {
-							logger.info("portalInfo does not exist. Creating it...");
-							portalInfoCmd.directory(new File(portalHome+"/core/src/main/scripts"));
-							Process pInfo = portalInfoCmd.start();
-							BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
-							String line = null;
-							while ((line = reader.readLine()) != null)
-							{
-								logger.info(line);
-							}
-							pInfo.waitFor();
-							logger.info("Dump portalInfo finished. Continuing validation...");
-						}
+						//Process validation output
+						Map<String, Integer> messageCounter = getMessageCounter(logFile);
 						
-						//Apply validation command
-						validationCmd.directory(new File(portalHome+"/core/src/main/scripts/importer"));
-						String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-						File logFile = new File(centralShareLocation.toString()+"/"+study+"_validation_log_"+logTimeStamp+".log");
-						validationCmd.redirectErrorStream(true);
-						validationCmd.redirectOutput(Redirect.appendTo(logFile));
-						Process validateProcess = validationCmd.start();
-						validateProcess.waitFor(); //Wait until validation is finished
-						BufferedReader validationReader = new BufferedReader(new FileReader(logFile));
-						String valReadLine = null;
-						Map<String, Integer> studyCounter = new HashMap<String, Integer>();
-						studyCounter.put("Errors", 0);
-						studyCounter.put("Warnings", 0);
-						while ((valReadLine = validationReader.readLine()) != null) {
-							if (valReadLine.indexOf("WARNING") != -1) {
-								studyCounter.put("Warnings", studyCounter.get("Warnings")+1);
-								}
-							if (valReadLine.indexOf("ERROR") != -1) {
-								studyCounter.put("Errors", studyCounter.get("Errors")+1);
-								}
-						}
-						validationReader.close();
-						if (studyCounter.get(validationLevel) == 0) {
+						//Check if study has passed the validation threshold
+						if (hasStudyPassed(study, validationLevel, messageCounter)) {
 							studiesPassed.add(study);
 						}
-						List<Integer> errorsAndWarnings = new ArrayList<Integer>();
-						errorsAndWarnings.add(studyCounter.get("Warnings"));
-						errorsAndWarnings.add(studyCounter.get("Errors"));
+						
+						//Add validation result for the email validation report
 						Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
-						validatedStudies.put(studyData, errorsAndWarnings);
-						logger.info("Validation of study "+study+" finished. Errors: "+studyCounter.get("Errors")+", Warnings: "+studyCounter.get("Warnings"));
+						validatedStudies.put(studyData, messageCounter);
+						
+						logger.info("Validation of study "+study+" finished. Errors: "+messageCounter.get("ERROR")+
+								", Warnings: "+messageCounter.get("WARNING"));
 					}
-					emailService.emailValidationReport(validatedStudies, validationLevel);
-					return studiesPassed;
-					
+					emailService.emailValidationReport(validatedStudies, validationLevel);					
 				} catch (ValidatorException e) {
 					//tell about error, continue with next study
 					logger.error(e.getMessage()+". The app will continue with the next study.");
@@ -153,32 +141,18 @@ public class Validator {
 					logger.error("An error not expected occurred. Stopping process...");
 					emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
 					e.printStackTrace();
-					System.exit(-1); //Stop app
 				}
 			}
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process...");
 			try {
 				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-			} catch (TemplateNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (MalformedTemplateNameException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (ParseException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (TemplateException e1) {
-				// TODO Auto-generated catch block
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
 			}
 			e.printStackTrace();
-			System.exit(-1); //Stop app
 		}
-		return null;
+		return studiesPassed;
 	}
 }
