@@ -21,11 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
-
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 
@@ -76,11 +71,8 @@ class Transformer {
 				e.printStackTrace();
 				try {
 					emailService.emailStudyError(study, e);
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (TemplateException e1) {
-					// TODO Auto-generated catch block
+				} catch (Exception e1) {
+					logger.error("The email could not be sent due to the error specified below.");
 					e1.printStackTrace();
 				}
 			}
@@ -88,24 +80,11 @@ class Transformer {
 				logger.error("An error not expected occurred. Stopping process...");
 				try {
 					emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-				} catch (TemplateNotFoundException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (MalformedTemplateNameException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (ParseException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (TemplateException e1) {
-					// TODO Auto-generated catch block
+				} catch (Exception e1) {
+					logger.error("The email could not be sent due to the error specified below.");
 					e1.printStackTrace();
 				}
 				e.printStackTrace();
-				System.exit(-1); //Stop app
 			}
 		}
 		logger.info("Transformation step finished.");
