@@ -1,0 +1,115 @@
+Data loading step using: /Users/oleguer/cbioportal/scripts/target/scripts-1.11.3-SNAPSHOT.jar
+
+Checked DB schema version: (expected: 2.4.0) (found: 2.4.0)
+Checking if Cancer study with identifier lgg_ucsf_2014 already exists before removing...
+Recaching...
+Finished recaching...
+Cancer study with identifier lgg_ucsf_2014 found in database, removing...
+Recaching...
+Finished recaching...
+deleted study:
+ID: 39
+Done.
+Total time:  136929 ms
+
+Recaching...
+Finished recaching...
+Recaching...
+Finished recaching...
+Loaded the following cancer study:
+--> Study ID:  40
+--> Name:  Low-Grade Gliomas (UCSF, Science 2014).
+--> Description:  Mutation data from whole exome sequencing of 23 grade II glioma patients.
+Done.
+Total time:  7097 ms
+
+Recaching...
+Finished recaching...
+Reading data from:  /Users/oleguer/Desktop/test_out/20/staging/lgg_ucsf_2014/data_clinical_sample.txt
+--> total number of lines:  62
+--> records inserted into `clinical_sample` table: 427
+Total number of sample specific clinical attributes added:  427
+Total number of samples processed:  61
+Total number of attribute values skipped because of empty value:  61
+Done.
+Total time:  6000 ms
+
+Reading data from:  /Users/oleguer/Desktop/test_out/20/staging/lgg_ucsf_2014/data_mutations_extended.txt
+Recaching...
+Finished recaching...
+--> profile id:  175
+--> profile name:  Mutations
+--> genetic alteration type:  MUTATION_EXTENDED
+--> records inserted into `sample_profile` table: 61
+--> records inserted into `mutation_event` table: 9464
+--> records inserted into `mutation` table: 10185
+--> total number of data entries skipped (see table below):  4970
+--> total number of samples: 61
+--> total number of genes for which one or more mutation events were stored:  6416
+Filtering table:
+-----------------
+Mutation filter decisions: 15060
+Rejects: 4875
+Mutation Status 'None' Rejects:  0
+LOH or Wild Type Rejects:  0
+Empty Annotation Rejects:  0
+Missense Germline Rejects:  0
+5'Flank Rejects: 12
+3'Flank Rejects: 22
+Intron Rejects: 110
+Silent Rejects: 4701
+5'UTR Rejects: 9
+3'UTR Rejects: 21
+
+Warnings / Errors:
+-------------------
+0.  Ambiguous alias C11orf2: corresponding entrez ids of 738,56912; 1x
+1.  Ambiguous alias CCBP2: corresponding entrez ids of 1238,51554; 2x
+2.  Ambiguous alias CCRL1: corresponding entrez ids of 1524,51554; 1x
+3.  Ambiguous or missing gene: 1-Dec [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+4.  Ambiguous or missing gene: 1-Sep [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+5.  Ambiguous or missing gene: 3-Mar [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+6.  Ambiguous or missing gene: 3-Sep [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 2x
+7.  Ambiguous or missing gene: 6-Mar [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+8.  Ambiguous or missing gene: 7-Mar [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+9.  Ambiguous or missing gene: 9-Sep [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+10.  Ambiguous or missing gene: C11orf2 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+11.  Ambiguous or missing gene: C20orf96(NM_080571:exon2:c.17+2->TA) [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 2x
+12.  Ambiguous or missing gene: CCBP2 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 2x
+13.  Ambiguous or missing gene: CCRL1 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+14.  Ambiguous or missing gene: FLJ22184 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+15.  Ambiguous or missing gene: FLJ43860 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+16.  Ambiguous or missing gene: LOC100653515 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+17.  Ambiguous or missing gene: LOC388946 [] or ambiguous alias. Ignoring it and all mutation data associated with it!; 1x
+18.  CDKN2AP14ARF in the cbio cancer gene list config file [resources/cbio_cancer_genes.txt] is not a HUGO gene symbol. You should either update this file or update the `gene` and `gene_alias` tables to fix this.; 1x
+19.  CDKN2AP16INK4A in the cbio cancer gene list config file [resources/cbio_cancer_genes.txt] is not a HUGO gene symbol. You should either update this file or update the `gene` and `gene_alias` tables to fix this.; 1x
+20.  EGFRVIII in the cbio cancer gene list config file [resources/cbio_cancer_genes.txt] is not a HUGO gene symbol. You should either update this file or update the `gene` and `gene_alias` tables to fix this.; 1x
+21.  Skipping entry with mutation type: RNA; 77x
+Done.
+Total time:  52657 ms
+
+Recaching...
+Finished recaching...
+Reading data from:  /Users/oleguer/Desktop/test_out/20/staging/lgg_ucsf_2014/data_clinical_patient.txt
+--> total number of lines:  24
+--> records inserted into `clinical_patient` table: 91
+Total number of patient specific clinical attributes added:  91
+Total number of attribute values skipped because of empty value:  1
+Done.
+Total time:  7497 ms
+
+Recaching...
+Finished recaching...
+Adding case list:  lgg_ucsf_2014_all...
+--> stable ID:  lgg_ucsf_2014_all
+--> case list name:  All cases in study
+--> number of cases:  61
+Done.
+Total time:  6144 ms
+
+Recaching...
+Finished recaching...
+Updating study status to :  'AVAILABLE' for study: lgg_ucsf_2014
+Done.
+Total time:  5287 ms
+
