@@ -1,12 +1,16 @@
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
 package org.cbioportal.staging.etl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.cbioportal.staging.app.EmailService;
+import org.cbioportal.staging.services.EmailService;
 import org.springframework.stereotype.Component;
 
 import freemarker.core.ParseException;
@@ -31,7 +35,7 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailStudyErrorSent  = true;
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,List<Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<Pair<String,String>,Map<String, Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
 	}
 	

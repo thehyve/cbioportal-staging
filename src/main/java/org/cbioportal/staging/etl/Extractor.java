@@ -1,3 +1,8 @@
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
 package org.cbioportal.staging.etl;
 
 import java.io.File;
@@ -13,8 +18,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.cbioportal.staging.app.EmailService;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.services.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,7 +171,6 @@ class Extractor {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
 			}
-			System.exit(-1); //Stop app
 		}
 		data = Pair.of(id, studiesLoaded);
 		logger.info("Extractor step finished");

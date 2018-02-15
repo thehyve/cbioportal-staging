@@ -1,4 +1,9 @@
-package org.cbioportal.staging.app;
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
+package org.cbioportal.staging.services;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -6,7 +11,6 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,6 +25,7 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang3.tuple.Pair;
+import org.cbioportal.staging.app.ScheduledScanner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -157,7 +162,7 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,List<Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<Pair<String,String>,Map<String, Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -172,8 +177,8 @@ public class EmailServiceImpl implements EmailService {
 		
 		String studies = new String();
 		for (Pair<String, String> study : validatedStudies.keySet()) {
-			if (validatedStudies.get(study).get(1).equals(0)) {
-				if (validatedStudies.get(study).get(0).equals(0)) { //Study with no warnings and no errors
+			if (validatedStudies.get(study).get("ERROR").equals(0)) {
+				if (validatedStudies.get(study).get("WARNING").equals(0)) { //Study with no warnings and no errors
 					studies = studies + "<br>- "+study.getLeft()+", "+study.getRight()+", status: "+"<b><font style=\"color: #04B404\">VALID</font></b>";
 				}
 				else { //Study with warnings and no errors

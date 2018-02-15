@@ -1,8 +1,12 @@
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
 package org.cbioportal.staging.etl;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -10,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cbioportal.staging.app.EmailServiceImpl;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.services.EmailServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,3 +1,8 @@
+/*
+* Copyright (c) 2018 The Hyve B.V.
+* This code is licensed under the GNU Affero General Public License,
+* version 3, or (at your option) any later version.
+*/
 package org.cbioportal.staging.etl;
 
 import java.io.File;
@@ -5,13 +10,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.app.EmailServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,7 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.EmailServiceImpl;
 
 @Component
 class Transformer {
