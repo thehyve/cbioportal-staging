@@ -15,12 +15,13 @@ import java.util.Date;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ValidationServiceImpl implements ValidationService {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
@@ -43,7 +44,7 @@ public class ValidationServiceImpl implements ValidationService {
 	public File validate(String study, String studyPath, String reportPath) throws ValidatorException, ConfigurationException {
 		try {
 			
-			TemporaryFolder portalInfoFolder = new TemporaryFolder();
+			File portalInfoFolder = new File(centralShareLocation.toString()+"/portalInfo");
 			String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
 			File logFile = new File(centralShareLocation.toString()+"/"+study+"_validation_log_"+logTimeStamp+".log");
 			
@@ -71,7 +72,15 @@ public class ValidationServiceImpl implements ValidationService {
 						". Please change the mode in the application.properties.");
 			}
 			
-			//dump portal data
+			//dump portal data (first delete previous portalInfo folder if exists)
+			if (portalInfoFolder.exists()) {
+				String[]entries = portalInfoFolder.list();
+				for(String s: entries){
+				    File currentFile = new File(portalInfoFolder.getPath(),s);
+				    currentFile.delete();
+				}
+				portalInfoFolder.delete();
+			}
 			logger.info("Dumping portalInfo...");
 			Process pInfo = portalInfoCmd.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
@@ -86,6 +95,8 @@ public class ValidationServiceImpl implements ValidationService {
 			//Apply validation command
 			validationCmd.redirectErrorStream(true);
 			validationCmd.redirectOutput(Redirect.appendTo(logFile));
+			Process validateProcess = validationCmd.start();
+			validateProcess.waitFor(); //Wait until validation is finished
 			return logFile;
 		}
 		catch (InvalidPropertyException e) {

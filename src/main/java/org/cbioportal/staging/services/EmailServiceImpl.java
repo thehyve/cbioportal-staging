@@ -167,12 +167,12 @@ public class EmailServiceImpl implements EmailService {
 		Session session = getSession(properties);
 		
 		String studiesToLoad = new String();
-		if (level.equals("Errors")) {
+		if (level.equals("ERROR")) {
 			studiesToLoad = "<b><font style=\"color: #04B404\">VALID</font></b> and <b><font style=\"color: #FFBF00\">VALID with WARNINGS</font></b>";
-		} else if (level.equals("Warnings")) {
+		} else if (level.equals("WARNING")) {
 			studiesToLoad = "<b><font style=\"color: #04B404\">VALID</font></b>";
 		} else {
-			logger.error("The level should be 'Errors' or 'Warnings'");
+			logger.error("The level should be 'ERROR' or 'WARNING'");
 		}
 		
 		String studies = new String();
