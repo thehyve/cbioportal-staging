@@ -52,7 +52,7 @@ public class ExtractorTest {
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
 	@Test
-	public void filesFoundAndNotFoundInYaml() throws IOException {
+	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
@@ -76,7 +76,7 @@ public class ExtractorTest {
 	}
 
 	@Test
-	public void allFilesFoundInYaml() throws IOException {
+	public void allFilesFoundInYaml() throws IOException, InterruptedException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
@@ -99,7 +99,7 @@ public class ExtractorTest {
 	}
 	
 	@Test
-	public void incorrectYaml() {
+	public void incorrectYaml() throws InterruptedException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
@@ -116,7 +116,7 @@ public class ExtractorTest {
 	}
 	
 	@Test
-	public void notFoundYaml() {
+	public void notFoundYaml() throws InterruptedException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());

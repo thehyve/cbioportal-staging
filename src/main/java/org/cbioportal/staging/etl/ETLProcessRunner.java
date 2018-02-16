@@ -15,12 +15,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 
 /**
  * Main ETL process.
@@ -53,8 +59,14 @@ public class ETLProcessRunner {
      * @param indexFile: index YAML file containing the names of the files to be "ETLed".
      * 
      * @throws InterruptedException
+     * @throws TemplateException 
+     * @throws IOException 
+     * @throws ConfigurationException 
+     * @throws ParseException 
+     * @throws MalformedTemplateNameException 
+     * @throws TemplateNotFoundException 
      */
-    public void run(Resource indexFile) {
+    public void run(Resource indexFile) throws InterruptedException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
 
         try  {
             startProcess();

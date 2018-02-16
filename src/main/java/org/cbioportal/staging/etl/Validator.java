@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.ValidationService;
@@ -26,6 +27,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Validator {
@@ -97,61 +103,46 @@ public class Validator {
 		}
 	}
 	
-	ArrayList<String> validate(Integer id, List<String> studies) {
+	ArrayList<String> validate(Integer id, List<String> studies) throws ConfigurationException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
-		try {
-			if (!centralShareLocation.exists()) {
-				throw new IOException("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
-						". Stopping process...");
-			} else {
-				try {
-					//Get studies from appropriate staging folder
-					File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-					Map<Pair<String,String>,Map<String, Integer>> validatedStudies = new HashMap<Pair<String,String>,Map<String, Integer>>();
-					for (String study : studies) {
-						logger.info("Starting validation of study "+study);
-						//Get the paths for the study and validate it
-						File studyPath = new File(originPath+"/"+study);
-						String reportTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-						String reportPath = centralShareLocation.toString()+"/"+study+"_validation_report_"+reportTimeStamp+".html";
-						File logFile = validationService.validate(study, studyPath.getAbsolutePath(), reportPath);
-						
-						//Process validation output
-						Map<String, Integer> messageCounter = getMessageCounter(logFile);
-						
-						//Check if study has passed the validation threshold
-						if (hasStudyPassed(study, validationLevel, messageCounter)) {
-							studiesPassed.add(study);
-						}
-						
-						//Add validation result for the email validation report
-						Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
-						validatedStudies.put(studyData, messageCounter);
-						
-						logger.info("Validation of study "+study+" finished. Errors: "+messageCounter.get("ERROR")+
-								", Warnings: "+messageCounter.get("WARNING"));
-					}
-					emailService.emailValidationReport(validatedStudies, validationLevel);					
-				} catch (ValidatorException e) {
-					//tell about error, continue with next study
-					logger.error(e.getMessage()+". The app will continue with the next study.");
-					emailService.emailGenericError(e.getMessage()+". The app will continue with the next study.", e);
-					e.printStackTrace();
-				} catch (Exception e) {
-					logger.error("An error not expected occurred. Stopping process...");
-					emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-					e.printStackTrace();
-				}
-			}
-		} catch (Exception e) {
-			logger.error("An error not expected occurred. Stopping process...");
+		if (!centralShareLocation.exists()) {
+			throw new IOException("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
+					". Stopping process...");
+		} else {
 			try {
-				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
+				//Get studies from appropriate staging folder
+				File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+				Map<Pair<String,String>,Map<String, Integer>> validatedStudies = new HashMap<Pair<String,String>,Map<String, Integer>>();
+				for (String study : studies) {
+					logger.info("Starting validation of study "+study);
+					//Get the paths for the study and validate it
+					File studyPath = new File(originPath+"/"+study);
+					String reportTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
+					String reportPath = centralShareLocation.toString()+"/"+study+"_validation_report_"+reportTimeStamp+".html";
+					File logFile = validationService.validate(study, studyPath.getAbsolutePath(), reportPath);
+
+					//Process validation output
+					Map<String, Integer> messageCounter = getMessageCounter(logFile);
+
+					//Check if study has passed the validation threshold
+					if (hasStudyPassed(study, validationLevel, messageCounter)) {
+						studiesPassed.add(study);
+					}
+
+					//Add validation result for the email validation report
+					Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
+					validatedStudies.put(studyData, messageCounter);
+
+					logger.info("Validation of study "+study+" finished. Errors: "+messageCounter.get("ERROR")+
+							", Warnings: "+messageCounter.get("WARNING"));
+				}
+				emailService.emailValidationReport(validatedStudies, validationLevel);
+			} catch (ValidatorException e) {
+				//tell about error, continue with next study
+				logger.error(e.getMessage()+". The app will continue with the next study.");
+				emailService.emailGenericError(e.getMessage()+". The app will continue with the next study.", e);
+				e.printStackTrace();
 			}
-			e.printStackTrace();
 		}
 		return studiesPassed;
 	}

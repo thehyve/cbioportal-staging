@@ -8,11 +8,13 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +24,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Validator.class, 
@@ -145,8 +152,8 @@ public class ValidatorTest {
 		assertEquals(null, result);
 	}
 	
-	@Test
-	public void noCentralShareLocation() {
+	@Test(expected=IOException.class)
+	public void noCentralShareLocation() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		File notfound = new File("notfound");
 		File etlWorkingDir = new File("src/test/resources/validator_tests");
@@ -167,7 +174,7 @@ public class ValidatorTest {
 	}
 	
 	@Test
-	public void studyPassedValidation() {
+	public void studyPassedValidation() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validationService, "throwError", false);
@@ -192,7 +199,7 @@ public class ValidatorTest {
 	}
 	
 	@Test
-	public void studyFailedValidation() {
+	public void studyFailedValidation() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validationService, "throwError", false);
@@ -217,7 +224,7 @@ public class ValidatorTest {
 	}
 	
 	@Test
-	public void validationErrorEmailSent() {
+	public void validationErrorEmailSent() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validationService, "throwError", true);

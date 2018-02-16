@@ -60,7 +60,7 @@ class Extractor {
 		return result;
 	}
 
-	Pair<Integer, List<String>> run(Resource indexFile) {
+	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException {
 		logger.info("Extract step: downloading files to " + etlWorkingDir.getAbsolutePath());
 		//Parse the indexFile and download all referred files to the working directory.
 		Pair<Integer, List<String>> data;
@@ -96,34 +96,23 @@ class Extractor {
 						logger.error("The file "+file+" from the study "+entry.getKey()+" does not exist in "+originPath+"/"+file+". Tried "+attempt+" times.");
 						attempt ++;
 						while (attempt <= 5) {
+							TimeUnit.SECONDS.sleep(1); //TODO: Change to: TimeUnit.MINUTES.sleep(5); //Wait 5 minutes
 							try {
-								TimeUnit.SECONDS.sleep(1); //TODO: Change to: TimeUnit.MINUTES.sleep(5); //Wait 5 minutes
-								try {
-									copyResource(file, originPath, destinationPath);
-								}
-								catch (IOException f) {
-									logger.error("The file "+file+" from the study "+entry.getKey()+" does not exist in "+originPath+"/"+file+". Tried "+attempt+" times.");
-								}
-								attempt ++;
-								if (attempt == 5) {
-									errors.put(entry.getKey(), errors.get(entry.getKey())+1);
-									if (filesNotFound.get(entry.getKey()) == null) {
-										ArrayList<String> newList = new ArrayList<String>();
-										newList.add(file);
-										filesNotFound.put(entry.getKey(), newList);
-									} else {
-										filesNotFound.get(entry.getKey()).add(file);
-									}
-								}
-							} catch (InterruptedException e1) {
-								logger.error("The process has been stopped.");
-								try {
-									emailService.emailGenericError("An error not expected occurred. Stopping process...", e1);
-								} catch (Exception e2) {
-									logger.error("The email could not be sent due to the error specified below.");
-									e2.printStackTrace();
-								}
+								copyResource(file, originPath, destinationPath);
+							}
+							catch (IOException f) {
+								logger.error("The file "+file+" from the study "+entry.getKey()+" does not exist in "+originPath+"/"+file+". Tried "+attempt+" times.");
+							}
+							attempt ++;
+							if (attempt == 5) {
 								errors.put(entry.getKey(), errors.get(entry.getKey())+1);
+								if (filesNotFound.get(entry.getKey()) == null) {
+									ArrayList<String> newList = new ArrayList<String>();
+									newList.add(file);
+									filesNotFound.put(entry.getKey(), newList);
+								} else {
+									filesNotFound.get(entry.getKey()).add(file);
+								}
 							}
 						}
 					}
@@ -158,15 +147,6 @@ class Extractor {
 			logger.error("The yaml file was not found.");
 			try {
 				emailService.emailGenericError("The yaml file was not found.", e);
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
-			}
-		}
-		catch (Exception e) {
-			logger.error("An error not expected occurred. Stopping process...");
-			try {
-				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();

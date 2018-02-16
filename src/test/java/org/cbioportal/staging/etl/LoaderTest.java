@@ -8,6 +8,7 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
@@ -44,8 +50,8 @@ public class LoaderTest {
 		emailService.reset();
 	}
 	
-	@Test
-	public void noCentralShareLocation() {
+	@Test(expected=IOException.class)
+	public void noCentralShareLocation() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		File notfound = new File("notfound");
 		File etlWorkingDir = new File("src/test/resources/loader_tests");
@@ -65,7 +71,7 @@ public class LoaderTest {
 	}
 	
 	@Test
-	public void studyLoaded() {
+	public void studyLoaded() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
 		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");

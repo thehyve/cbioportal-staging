@@ -76,16 +76,6 @@ class Transformer {
 					e1.printStackTrace();
 				}
 			}
-			catch (Exception e) {
-				logger.error("An error not expected occurred. Stopping process...");
-				try {
-					emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-				} catch (Exception e1) {
-					logger.error("The email could not be sent due to the error specified below.");
-					e1.printStackTrace();
-				}
-				e.printStackTrace();
-			}
 		}
 		logger.info("Transformation step finished.");
 	}
