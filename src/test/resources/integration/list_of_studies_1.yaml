@@ -1,0 +1,9 @@
+study1:
+    - fileA.txt
+
+study2:
+    - file1.txt
+
+study3:
+    - fileX.txt
+    - fileZ.txt

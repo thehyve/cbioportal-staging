@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.ScheduledScannerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,10 @@ public class ScheduledScanner
 	private ETLProcessRunner etlProcessRunner;
 	@Autowired
 	EmailService emailService;
-
+	
+	@Autowired
+	ScheduledScannerService scheduledScannerService;
+	
 	@Scheduled(cron = "${scan.cron}")
 	public boolean scan() {
 		try {
@@ -81,14 +85,14 @@ public class ScheduledScanner
 			
 		} catch (AmazonS3Exception e) {
 			logger.error("The bucket cannot be reached. Please check the scan.location provided in the application.properties.");
-			System.exit(1);
+			scheduledScannerService.stopApp();
 		} catch (IOException e) {
-			System.exit(1);
+			scheduledScannerService.stopApp();
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process...");
 			try {
 				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-				System.exit(1);
+				scheduledScannerService.stopApp();
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();

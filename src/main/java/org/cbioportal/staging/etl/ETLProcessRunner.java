@@ -39,19 +39,19 @@ public class ETLProcessRunner {
     private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
     @Autowired
-    Extractor extractor;
+    private Extractor extractor;
     
     @Autowired
-    Transformer transformer;
+    private Transformer transformer;
     
     @Autowired
-    Validator validator;
+    private Validator validator;
     
     @Autowired
-    Loader loader;
+    private Loader loader;
     
     @Autowired
-    Restarter restarter;
+    private Restarter restarter;
     
     /**
      * Runs all the steps of the ETL process.

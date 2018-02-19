@@ -8,16 +8,15 @@ package org.cbioportal.staging.etl;
 import java.io.IOException;
 
 import org.cbioportal.staging.services.RestarterService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Restarter {
-
-	@Autowired
-	RestarterService restarterService;
+public class RestarterServiceMockupImpl implements RestarterService {
 	
-	void restart() throws InterruptedException, IOException {
-		restarterService.restart();
+	
+	@Override
+	public void restart() throws InterruptedException, IOException {
+		
 	}
+	
 }
