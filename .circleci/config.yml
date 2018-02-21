@@ -49,7 +49,9 @@ jobs:
       - run: 
           name: Test docker
           command: |
-             docker run hello-world
+             docker run -it --rm \
+               thehyve/cbioportal \
+               metaImport.py 
     
       - run:
           name: Install maven 
