@@ -1,0 +1,71 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      # image with docker pre-installed so we can easily run the validation and importer steps via docker:
+      - image: circleci/openjdk:8-jdk
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/ , e.g.:
+      # - image: circleci/postgres:9.4
+
+    working_directory: ~/repo
+    
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      MAVEN_VERSION: 3.3.9    
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      #- restore_cache:
+      #    keys:
+      #    - v1-dependencies-{{ checksum "requirements_py" }}
+          # fallback to using the latest cache if no exact match is found
+      #    - v1-dependencies-
+
+      - run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            sudo mv /tmp/docker/* /usr/bin
+            sudo groupadd docker
+            sudo usermod -aG docker $USER
+            
+      - run:
+          name: Install maven 
+          command: |
+            export 
+            mkdir -p ~/maven
+            test -d ~/maven/$MAVEN_VERSION/bin || { \
+                find ~/maven -mindepth 1 -delete && \
+                mkdir -p ~/maven/$MAVEN_VERSION && \
+                wget -O - http://www-us.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | \
+                    tar -C ~/maven/$MAVEN_VERSION --strip-components=1 -xzf -; }
+
+      #- save_cache:
+      #    paths:		
+      #    - ./venv
+      #    key: v1-dependencies-{{ checksum "requirements_py" }}
+        
+      # run tests!
+      - run:
+          name: Run build and tests
+          command: |
+            mvn clean install
+
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
+          
