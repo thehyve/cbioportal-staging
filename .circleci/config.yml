@@ -28,30 +28,6 @@ jobs:
       - setup_remote_docker:   # (2)
           docker_layer_caching: true # (3)
 
-      # Download and cache dependencies
-      #- restore_cache:
-      #    keys:
-      #    - v1-dependencies-{{ checksum "requirements_py" }}
-          # fallback to using the latest cache if no exact match is found
-      #    - v1-dependencies-
-
-      #- run:
-      #    name: Install Docker client
-      #    command: |
-      #      set -x
-      #      VER="17.03.0-ce"
-      #      curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-      #      tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-      #      sudo mv /tmp/docker/* /usr/bin
-      #      sudo groupadd docker
-      #      sudo usermod -aG docker $USER
-            
-      - run: 
-          name: Test docker
-          command: |
-             docker run -it --rm \
-               thehyve/cbioportal \
-               metaImport.py 
     
       - run:
           name: Install maven 
@@ -64,11 +40,6 @@ jobs:
                 wget -O - http://www-us.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | \
                     tar -C ~/maven/$MAVEN_VERSION --strip-components=1 -xzf -; }
 
-      #- save_cache:
-      #    paths:		
-      #    - ./venv
-      #    key: v1-dependencies-{{ checksum "requirements_py" }}
-        
       # run tests!
       - run:
           name: Run build and tests
