@@ -7,9 +7,7 @@ import java.util.List;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,9 +26,10 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.services.ValidationServiceImpl.class,
         org.cbioportal.staging.services.LoaderServiceImpl.class,
-        org.cbioportal.staging.services.TransformerServiceImpl.class,
-        org.cbioportal.staging.services.RestarterServiceImpl.class,
+        //org.cbioportal.staging.services.TransformerServiceImpl.class,
+        org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
 		org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
+		org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
         org.cbioportal.staging.app.ScheduledScanner.class})
 @SpringBootTest
@@ -45,6 +44,8 @@ public class FullIntegrationTest {
 
     @Autowired
     private Transformer transformer;
+	@Autowired
+	private TransformerServiceMockupImpl transformerService;
 
     @Autowired
     private Validator validator;
@@ -56,6 +57,12 @@ public class FullIntegrationTest {
     private EmailServiceMockupImpl emailService;
 
     @Autowired
+    private Restarter restarter;
+	@Autowired
+	private RestarterServiceMockupImpl restarterService;
+
+    
+    @Autowired
     private ETLProcessRunner etlProcessRunner;
 
     @Autowired
@@ -66,30 +73,29 @@ public class FullIntegrationTest {
         emailService.reset();
     }
 
-    @Rule
-    public TemporaryFolder etlWorkingDir = new TemporaryFolder();
-
     @Test
     /**
      * This test assumes local cBioPortal + mySql containers are running.
      * 
      */
     public void allStudiesLoaded() {
-        //set mockups and input parameters for all services
-        ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-        ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 
+        //mock transformation (for now... TODO - later replace by real one):
+		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
+		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
+        
+        //mock email service:
+        ReflectionTestUtils.setField(extractor, "emailService", emailService);
         ReflectionTestUtils.setField(transformer, "emailService", emailService);
-
         ReflectionTestUtils.setField(validator, "emailService", emailService);
-
         ReflectionTestUtils.setField(loader, "emailService", emailService);
 
+        ReflectionTestUtils.setField(etlProcessRunner, "extractor", extractor);
         ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
         ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
         ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
+        ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 
-        ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
         ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 
         scheduledScanner.scan();
