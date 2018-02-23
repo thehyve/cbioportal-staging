@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -73,10 +74,14 @@ public class IntegrationTest {
 	@Autowired
 	private ScheduledScanner scheduledScanner;
 	
+	@Autowired
+	private ResourcePatternResolver resourcePatternResolver;
+	
 	@Before
     public void setUp() throws Exception {
         emailService.reset();
         loaderService.reset();
+        validationService.reset();
     }
 	
 	@Rule
@@ -85,15 +90,15 @@ public class IntegrationTest {
 	@Test
 	public void allStudiesLoaded() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validationService, "testFile", "src/test/resources/validator_tests/test.log");
+		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
@@ -130,15 +135,15 @@ public class IntegrationTest {
 	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validationService, "testFile", "src/test/resources/validator_tests/test2.log");
+		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
@@ -171,15 +176,16 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validationService, "testFile", "src/test/resources/validator_tests/none.log");
+		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
+		ReflectionTestUtils.setField(validationService, "throwError", true);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
@@ -201,7 +207,7 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
 		assertEquals(false, emailService.isEmailValidationReportSent()); 
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
+		assertEquals(true, emailService.isEmailStudiesLoadedSent());
 		assertEquals(true, emailService.isEmailGenericErrorSent());
 		
 		//no studies are loaded due to the error
@@ -212,15 +218,15 @@ public class IntegrationTest {
 	@Test
 	public void noScanLocation() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/notfound");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/notfound"));
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validationService, "testFile", "src/test/resources/validator_tests/test.log");
+		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
