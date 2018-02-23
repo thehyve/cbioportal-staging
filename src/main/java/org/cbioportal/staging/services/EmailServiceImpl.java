@@ -1,7 +1,17 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.services;
 
@@ -101,7 +111,7 @@ public class EmailServiceImpl implements EmailService {
 				  });
 	}
 	
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeAttempt) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
 		for (String failedStudy : failedStudies.keySet()) {
 			allFailedStudies.append("STUDY: "+failedStudy+"<br>");
@@ -110,6 +120,7 @@ public class EmailServiceImpl implements EmailService {
 			}
 		}
 		final String finalFailedStudies = allFailedStudies.toString();
+		final Integer totalTime = timeAttempt*5;
 
 		Properties properties = getProperties();
 		Session session = getSession(properties);
@@ -121,6 +132,7 @@ public class EmailServiceImpl implements EmailService {
 		    Template t = freemarkerConfig.getTemplate("studyFileNotFound.ftl");
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, new HashMap<String, String>() {{
 		        put("finalFailedStudies",finalFailedStudies);
+		        put("totalTime", totalTime.toString());
 		    }});
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
 		    msg.setContent(message, "text/html; charset=utf-8");
@@ -162,32 +174,22 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,Map<String, Integer>> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<Pair<String,String>,Integer> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
-		String studiesToLoad = new String();
-		if (level.equals("ERROR")) {
-			studiesToLoad = "<b><font style=\"color: #04B404\">VALID</font></b> and <b><font style=\"color: #FFBF00\">VALID with WARNINGS</font></b>";
-		} else if (level.equals("WARNING")) {
-			studiesToLoad = "<b><font style=\"color: #04B404\">VALID</font></b>";
-		} else {
-			logger.error("The level should be 'ERROR' or 'WARNING'");
-		}
-		
-		String studies = new String();
+		Map<String, String> studies = new HashMap<String, String>();
 		for (Pair<String, String> study : validatedStudies.keySet()) {
-			if (validatedStudies.get(study).get("ERROR").equals(0)) {
-				if (validatedStudies.get(study).get("WARNING").equals(0)) { //Study with no warnings and no errors
-					studies = studies + "<br>- "+study.getLeft()+", "+study.getRight()+", status: "+"<b><font style=\"color: #04B404\">VALID</font></b>";
-				}
-				else { //Study with warnings and no errors
-					studies = studies + "<br>- "+study.getLeft()+", "+study.getRight()+", status: "+"<b><font style=\"color: #FFBF00\">VALID with WARNINGS</font></b>";
-				}
+			if (validatedStudies.get(study) == 0) {
+				studies.put(study.getLeft()+", "+study.getRight(), "VALID"); 
+			}
+			else if (validatedStudies.get(study) == 3) { //Study with warnings and no errors
+				studies.put(study.getLeft()+", "+study.getRight(), "VALID with WARNINGS");
 			} else { //Study with errors
-				studies = studies + "<br>- "+study.getLeft()+", "+study.getRight()+", status: "+"<b><font style=\"color: #FF0000\">ERRORS</font></b>";
+				studies.put(study.getLeft()+", "+study.getRight(), "ERRORS");
 			}
 		}
+		logger.info("STUDIES EMAIL: "+studies);
 		
 		Message msg = new MimeMessage(session);
 		try {
@@ -195,9 +197,9 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
-		    Map<String, String> messageParams = new HashMap<String, String>();
+		    Map messageParams = new HashMap();
 		    messageParams.put("studies", studies);
-		    messageParams.put("studiesToLoad", studiesToLoad);
+		    messageParams.put("level", level);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
@@ -211,19 +213,14 @@ public class EmailServiceImpl implements EmailService {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
-		String studies = new String();
-		for (String study : studiesLoaded.keySet()) {
-			studies = studies + "<br> - " + study + ", status: " + studiesLoaded.get(study);
-		}
-		
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: data loading results for new studies");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
-		    Map<String, String> messageParams = new HashMap<String, String>();
-		    messageParams.put("studies", studies);
+		    Map<String, Map<String, String>> messageParams = new HashMap<String, Map<String, String>>();
+		    messageParams.put("studies", studiesLoaded);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());

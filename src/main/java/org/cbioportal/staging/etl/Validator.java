@@ -1,13 +1,21 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.etl;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import freemarker.core.ParseException;
@@ -43,11 +52,11 @@ public class Validator {
 	@Autowired
 	ValidationService validationService;
 	
-	@Value("${etl.working.dir:file:///tmp}")
-	private File etlWorkingDir;
+	@Value("${etl.working.dir:java.io.tmpdir}")
+	private String etlWorkingDir;
 	
 	@Value("${central.share.location}")
-	private File centralShareLocation;
+	private Resource centralShareLocation;
 	
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -55,46 +64,14 @@ public class Validator {
 	@Value("${portal.home}")
 	private String portalHome;
 	
-	Map<String, Integer> getMessageCounter(File logFile) {
-		
-		try {
-			Map<String, Integer> messageCounter = new HashMap<String, Integer>();
-			messageCounter.put("ERROR", 0);
-			messageCounter.put("WARNING", 0);
-			BufferedReader validationReader;
-			validationReader = new BufferedReader(new FileReader(logFile));
-			String valReadLine = null;
-			while ((valReadLine = validationReader.readLine()) != null) {
-				if (valReadLine.indexOf("WARNING") != -1) {
-					messageCounter.put("WARNING", messageCounter.get("WARNING")+1);
-				}
-				if (valReadLine.indexOf("ERROR") != -1) {
-					messageCounter.put("ERROR", messageCounter.get("ERROR")+1);
-				}
-			}
-			validationReader.close();
-			return messageCounter;
-			
-		} catch (IOException e) {
-			logger.error("The log file provided has not been found.");
-			try {
-				emailService.emailGenericError("The log file provided has not been found.", e);
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
-			}
-		}
-		return null;
-	}
-	
-	boolean hasStudyPassed(String study, String validationLevel, Map<String, Integer> messageCounter) {
-		if (validationLevel.equals("WARNING")) { //Load studies with no warnings or errors
-			if (messageCounter.get("WARNING").equals(0) && messageCounter.get("ERROR").equals(0)) {
+	boolean hasStudyPassed(String study, String validationLevel, int exitStatus) {
+		if (validationLevel.equals("WARNING")) { //Load studies with no warnings and no errors
+			if (exitStatus == 0) {
 				return true;
 			}
 			return false;
 		} else if (validationLevel.equals("ERROR")) { //Load studies with only no errors
-			if (messageCounter.get("ERROR").equals(0)) {
+			if (exitStatus == 0 || exitStatus == 3) {
 				return true;
 			}
 			return false;
@@ -105,44 +82,42 @@ public class Validator {
 	
 	ArrayList<String> validate(Integer id, List<String> studies) throws ConfigurationException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
-		if (!centralShareLocation.exists()) {
-			throw new IOException("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
-					". Stopping process...");
-		} else {
-			try {
-				//Get studies from appropriate staging folder
-				File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-				Map<Pair<String,String>,Map<String, Integer>> validatedStudies = new HashMap<Pair<String,String>,Map<String, Integer>>();
-				for (String study : studies) {
-					logger.info("Starting validation of study "+study);
-					//Get the paths for the study and validate it
-					File studyPath = new File(originPath+"/"+study);
-					String reportTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-					String reportPath = centralShareLocation.toString()+"/"+study+"_validation_report_"+reportTimeStamp+".html";
-					File logFile = validationService.validate(study, studyPath.getAbsolutePath(), reportPath);
-
-					//Process validation output
-					Map<String, Integer> messageCounter = getMessageCounter(logFile);
-
-					//Check if study has passed the validation threshold
-					if (hasStudyPassed(study, validationLevel, messageCounter)) {
-						studiesPassed.add(study);
-					}
-
-					//Add validation result for the email validation report
-					Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
-					validatedStudies.put(studyData, messageCounter);
-
-					logger.info("Validation of study "+study+" finished. Errors: "+messageCounter.get("ERROR")+
-							", Warnings: "+messageCounter.get("WARNING"));
+		try {
+			//Get studies from appropriate staging folder
+			File originPath = new File(etlWorkingDir+"/"+id+"/staging");
+			Map<Pair<String,String>,Integer> validatedStudies = new HashMap<Pair<String,String>,Integer>();
+			for (String study : studies) {
+				logger.info("Starting validation of study "+study);
+				//Get the paths for the study and validate it
+				File studyPath = new File(originPath+"/"+study);
+				String timeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
+				String reportName = study+"_validation_report_"+timeStamp+".html";
+				String reportPath = etlWorkingDir+"/"+id+"/"+reportName;
+				String logFileName = study+"_validation_log_"+timeStamp+".log";
+				File logFile = new File(etlWorkingDir+"/"+id+"/"+logFileName);
+				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile);
+				
+				//Put report and log file in the share location
+				validationService.copyToResource(reportName, reportPath, centralShareLocation);
+				validationService.copyToResource(logFileName, logFile.getAbsolutePath(), centralShareLocation);
+				
+				//Check if study has passed the validation threshold
+				if (hasStudyPassed(study, validationLevel, exitStatus)) {
+					studiesPassed.add(study);
 				}
-				emailService.emailValidationReport(validatedStudies, validationLevel);
-			} catch (ValidatorException e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will continue with the next study.");
-				emailService.emailGenericError(e.getMessage()+". The app will continue with the next study.", e);
-				e.printStackTrace();
+
+				//Add validation result for the email validation report
+				Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
+				validatedStudies.put(studyData, exitStatus);
+
+				logger.info("Validation of study "+study+" finished.");
 			}
+			emailService.emailValidationReport(validatedStudies, validationLevel);
+		} catch (ValidatorException e) {
+			//tell about error, continue with next study
+			logger.error(e.getMessage()+". The app will skip this study.");
+			emailService.emailGenericError(e.getMessage()+". The app will skip this study.", e);
+			e.printStackTrace();
 		}
 		return studiesPassed;
 	}
