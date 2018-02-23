@@ -13,15 +13,28 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.exceptions;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
-
-public interface LoaderService {
+public class LoaderException extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5072243529310767969L;
 	
-	public File load(String study, File studyPath) throws IOException, InterruptedException, ConfigurationException, Exception;
+	public LoaderException()
+	{
+	}
+	public LoaderException(String message, Exception e)
+	{
+		super(message);
+	}
+	public LoaderException(String message)
+	{
+		super(message);
+	}
 
 }

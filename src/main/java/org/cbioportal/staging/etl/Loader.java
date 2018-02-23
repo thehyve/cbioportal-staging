@@ -1,7 +1,17 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.etl;
 
@@ -38,44 +48,27 @@ public class Loader {
 	@Value("${etl.working.dir:file:///tmp}")
 	private File etlWorkingDir;
 	
-	@Value("${cbioportal.mode}")
-	private String cbioportalMode;
-	
-	@Value("${cbioportal.docker.image}")
-	private String cbioportalDockerImage;
-	
-	@Value("${cbioportal.docker.network}")
-	private String cbioportalDockerNetwork;
-	
-	@Value("${central.share.location}")
-	private File centralShareLocation;
-
-	@Value("${portal.home}")
-	private String portalHome;
-	
-	void load(Integer id, List<String> studies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		if (!centralShareLocation.exists()) {
-			throw new IOException("The central share location directory specified in application.properties do not exist: "+centralShareLocation.toString()+
-					". Stopping process...");
-		} else {
-			Map<String, String> statusStudies = new HashMap<String, String>();
-			//Get studies from appropriate staging folder
-			File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-			for (String study : studies) {
-				try {
-					logger.info("Starting loading of study "+study);
-					File studyPath = new File(originPath+"/"+study);
-					File logFile = loaderService.load(study, studyPath);
-					logger.info("Loading of study "+study+" finished.");
-					statusStudies.put(logFile.getAbsolutePath(), "<b><font style=\"color: #04B404\">SUCCESSFULLY LOADED</font></b>");
-				} catch (Exception e) {
-					//tell about error, continue with next study
-					logger.error(e.getMessage()+". The app will continue with the next study.");
-					statusStudies.put(study, "<b><font style=\"color: #FF0000\">ERRORS</font></b>");
-					e.printStackTrace();
-				}
+	boolean load(Integer id, List<String> studies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException {
+		Map<String, String> statusStudies = new HashMap<String, String>();
+		//Get studies from appropriate staging folder
+		File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+		for (String study : studies) {
+			try {
+				logger.info("Starting loading of study "+study+". This can take some minutes.");
+				File studyPath = new File(originPath+"/"+study);
+				File logFile = loaderService.load(study, studyPath);
+				logger.info("Loading of study "+study+" finished.");
+				statusStudies.put(logFile.getAbsolutePath(), "SUCCESSFULLY LOADED");
+			} catch (RuntimeException e) {
+				throw new RuntimeException(e);
+			} catch (Exception e) {
+				//tell about error, continue with next study
+				logger.error(e.getMessage()+". The app will skip this study.");
+				statusStudies.put(study, "ERRORS");
+				e.printStackTrace();
 			}
-			emailService.emailStudiesLoaded(statusStudies);
 		}
+		emailService.emailStudiesLoaded(statusStudies);
+		return true;
 	}
 }

@@ -1,7 +1,17 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.etl;
 
@@ -18,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -45,29 +56,12 @@ public class LoaderTest {
 	@Autowired
 	private LoaderServiceMockupImpl loaderService;
 	
+	@Autowired
+	private ResourcePatternResolver resourcePatternResolver;
+	
 	@Before
 	public void setUp() throws Exception {
 		emailService.reset();
-	}
-	
-	@Test(expected=IOException.class)
-	public void noCentralShareLocation() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		File notfound = new File("notfound");
-		File etlWorkingDir = new File("src/test/resources/loader_tests");
-		ReflectionTestUtils.setField(loader, "centralShareLocation", notfound);
-		ReflectionTestUtils.setField(loader, "etlWorkingDir", etlWorkingDir);
-
-		List<String> studies = new ArrayList<String>();
-		studies.add("lgg_ucsf_2014");
-		loader.load(0, studies);
-		
-		//Check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
 	}
 	
 	@Test
@@ -75,9 +69,7 @@ public class LoaderTest {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
 		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
-
 		File etlWorkingDir = new File("src/test/resources/loader_tests");
-		ReflectionTestUtils.setField(loader, "centralShareLocation", etlWorkingDir);
 		ReflectionTestUtils.setField(loader, "etlWorkingDir", etlWorkingDir);
 
 		List<String> studies = new ArrayList<String>();
