@@ -1,7 +1,17 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.services;
 
@@ -23,33 +33,30 @@ public class RestarterServiceImpl implements RestarterService {
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;
 	
-	@Value("${cbioportal.container.name}")
-	private String cbioportalContainerName;
-	
-	@Value("${tomcat.command}")
-	private String tomcatCommand;
+	@Value("${refresh.command}")
+	private String refreshCommand;
 
 	@Value("${portal.home}")
 	private String portalHome;
 	
 	@Override
 	public void restart() throws InterruptedException, IOException {
-		if (cbioportalMode.equals("local")) {
-			logger.info("Stopping Tomcat...");
-			ProcessBuilder stopCmd = new ProcessBuilder(tomcatCommand, "stop", "-force");
-			stopCmd.directory(new File(portalHome));
-			Process stopProcess = stopCmd.start();
-			stopProcess.waitFor();
-			logger.info("Tomcat successfully stopped. Restarting Tomcat...");
-			ProcessBuilder startCmd = new ProcessBuilder(tomcatCommand, "start");
-			startCmd.directory(new File(portalHome));
-			Process startProcess = startCmd.start();
-			startProcess.waitFor();
-			logger.info("Tomcat successfully restarted.");
-		} else if (cbioportalMode.equals("docker")) {
-			if (!cbioportalContainerName.equals("")) {
+		if (!refreshCommand.equals("")) {
+			if (cbioportalMode.equals("local")) {
+				logger.info("Stopping Tomcat...");
+				ProcessBuilder stopCmd = new ProcessBuilder(refreshCommand, "stop", "-force");
+				stopCmd.directory(new File(portalHome));
+				Process stopProcess = stopCmd.start();
+				stopProcess.waitFor();
+				logger.info("Tomcat successfully stopped. Restarting Tomcat...");
+				ProcessBuilder startCmd = new ProcessBuilder(refreshCommand, "start");
+				startCmd.directory(new File(portalHome));
+				Process startProcess = startCmd.start();
+				startProcess.waitFor();
+				logger.info("Tomcat successfully restarted.");
+			} else if (cbioportalMode.equals("docker")) {
 				logger.info("Restarting Tomcat...");
-				ProcessBuilder restarterCmd = new ProcessBuilder ("docker", "restart", cbioportalContainerName);
+				ProcessBuilder restarterCmd = new ProcessBuilder ("docker", "restart", refreshCommand);
 				Process restartProcess = restarterCmd.start();
 				BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
 				String line = null;
@@ -60,11 +67,11 @@ public class RestarterServiceImpl implements RestarterService {
 				restartProcess.waitFor();
 				logger.info("Tomcat successfully restarted.");
 			} else {
-				throw new IOException("cbioportal.mode is 'docker', but no container name has been specified in the application.properties.");
+				throw new IOException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
+						". Please change the mode in the application.properties.");
 			}
 		} else {
-			throw new IOException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-					". Please change the mode in the application.properties.");
+			throw new IOException("The refresh.command is empty. Please check your application.properties.");
 		}
 	}
 
