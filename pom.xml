@@ -22,13 +22,6 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>1.5.9.RELEASE</version>
 	</parent>
-	
-	<repositories>
-		<repository>
-			<id>adobe-public</id>
-			<url>https://repo.adobe.com/nexus/content/repositories/public/</url>
-		</repository>
-	</repositories>
 
 	<dependencyManagement>
 		<dependencies>
@@ -85,12 +78,6 @@
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
 			<version>1.4.7</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>jaf</groupId>
-			<artifactId>activation</artifactId>
-			<version>1.0.2</version>
 			<scope>provided</scope>
 		</dependency>
 	
