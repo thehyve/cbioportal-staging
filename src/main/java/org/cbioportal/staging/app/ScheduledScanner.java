@@ -1,8 +1,18 @@
 /*
- * Copyright (c) 2018 The Hyve B.V.
- * This code is licensed under the GNU Affero General Public License,
- * version 3, or (at your option) any later version.
- */
+* Copyright (c) 2018 The Hyve B.V.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 package org.cbioportal.staging.app;
 
 import java.io.IOException;
@@ -57,7 +67,7 @@ public class ScheduledScanner
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
 			nrIterations++;
-			logger.info("Scanning location for new staging files: " + scanLocation);
+			logger.info("Scanning location for the newest yaml file: " + scanLocation);
 			Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
 			logger.info("Found "+ allFilesInFolder.length + " index files");
 	
@@ -89,7 +99,7 @@ public class ScheduledScanner
 		} catch (IOException e) {
 			scheduledScannerService.stopApp();
 		} catch (Exception e) {
-			logger.error("An error not expected occurred. Stopping process...");
+			logger.error("An error not expected occurred. Stopping process..." + System.getProperty("line.separator") + e);
 			try {
 				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
 				scheduledScannerService.stopApp();
