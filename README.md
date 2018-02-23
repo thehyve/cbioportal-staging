@@ -35,37 +35,45 @@ You can overwrite application properties at runtime by adding them as parameters
 ```
 
 ## Yaml file format and location of study files
-The app expects a yaml file in the working directory (path specified in `etl.working.dir` of the `application.properties`) with the prefix `list_of_studies` in its name (for example, `list_of_studies_1.yaml`). This file contains all the file names, grouped by study, that will be required for the application to transform them into staging files suitable to be loaded into cBioPortal. The structure of the yaml file must be as follows:
+The app expects a yaml file in the working directory (path specified in `scan.location` of the `application.properties`) with the prefix `list_of_studies` in its name (for example, `list_of_studies_1.yaml`). This file contains all the file names, grouped by study, that will be required for the application to transform them into staging files suitable to be loaded into cBioPortal. The structure of the yaml file must be as follows:
 ```
 study1:
-    - file1.txt
-    - file2.txt
+    - /path/to/file1.txt
+    - /path/to/file2.txt
 study2:
-    - fileB.txt
-    - fileC.txt
+    - /path/to/fileB.txt
+    - /path/to/fileC.txt
 ```
-In the example above, `study1` and `study2` are the names of the studies, and `file1.txt`, `file2.txt`, `fileB.txt` and `fileC.txt` are the names of the study files. The app expects to find `file1.txt` and `file2.txt` inside a folder called `study1`, and `fileB.txt` and `fileC.txt` inside a folder called `study2`. Those study folders are expected to be found in the `scan.location` specified in `application.properties`.
+
+The path to files should be relative to the `scan.location`. For example, if `file1.txt` is located in folder `files` inside `scan.location`, the file path in the yaml should be: `files/file1.txt`.
 
 ## Application properties
 ### Cron settings
 We can configure the app to run as a cron job by using these parameters:
 * `scan.cron`: expects a cron-like expression, extending the usual UN\*X definition to include triggers on the second as well as minute, hour, day of month, month and day of week.  e.g. `0 * * * * MON-FRI` means once per minute on weekdays (at the top of the minute - the 0th second). Other examples: `0 * * * *` (once every minute), `0 0 * * *` (once every hour), `0 0 0 * *` (once every day).
-* `scan.cron.iterations`: number of times to repeat the cron (se to -1 to repeat indefinitely).
+* `scan.cron.iterations`: number of times to repeat the cron (set to -1 to repeat indefinitely).
 
 ### Location settings
-* `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that will transform.
+* `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that it will download and pass on to the transformation step. Local file system example: `scan.location=file:///dir/staging_dir/`; S3 example: `scan.location=s3://bucket/staging_dir`.
 * `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
 * `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
-* `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location`.
+* `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
 * `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs.
 
 ### cBioPortal settings
 * `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
-* `cbioportal.docker.image`, `cbioportal.docker.network` and `cbioportal.container.name`: Docker image, network and container names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
-* `tomcat.command`: the command-line name for Tomcat (for example, `catalina`). This is only required if the `cbioportal.mode` is `local`.
+* `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
+* `refresh.command`: if the `cbioportal.mode` is `local`, this is the command-line name for Tomcat (for example, `catalina`). If the `cbioportal.mode` is `docker`, this is the name of the cbioportal container.
+
+### Extractor settings
+* `time.attempt`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
+
+### Transformer settings
+* `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+* `transformation.command.location`: local path where the transformation command will be executed.
 
 ### Validation settings
-* `validation.level`: sets the threshold for loading studies after validation. It has two options: `Warnings` (to load studies with no warnings or errors), and `Errors` (to load studies with no errors, but that can contain warnings).
+* `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
 
 ### Mail properties
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
