@@ -1,7 +1,17 @@
 /*
 * Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as
+* published by the Free Software Foundation, either version 3 of the
+* License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.etl;
 
@@ -11,7 +21,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
@@ -67,7 +76,7 @@ public class ETLProcessRunner {
      * @throws TemplateNotFoundException 
      */
     public void run(Resource indexFile) throws InterruptedException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, ConfigurationException, IOException, TemplateException {
-
+        boolean loadSuccessful = false;
         try  {
             startProcess();
             //E (Extract) step:
@@ -77,21 +86,14 @@ public class ETLProcessRunner {
             //V (Validate) step:
             ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
             //L (Load) step:
-            loader.load(idAndStudies.getKey(), validatedStudies);
-            
-            //dummy code just to let it take some time...until we have real steps above:
-            //try {
-            //    TimeUnit.SECONDS.sleep(10);
-            //} catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-            //    e.printStackTrace();
-            //}
-
+            loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
         }
         finally
         {
             //restart cBioPortal:
-            restarter.restart();
+            if (loadSuccessful) {
+                restarter.restart();
+            }
             
             //end process / release lock:
             endProcess();
