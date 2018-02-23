@@ -1,8 +1,18 @@
 /*
-* Copyright (c) 2018 The Hyve B.V.
-* This code is licensed under the GNU Affero General Public License,
-* version 3, or (at your option) any later version.
-*/
+ * Copyright (c) 2018 The Hyve B.V.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.cbioportal.staging.etl;
 
 import java.io.File;
@@ -32,26 +42,30 @@ import org.yaml.snakeyaml.Yaml;
 @Component
 class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
-	
+
 	@Autowired
 	EmailService emailService;
 
-	@Value("${etl.working.dir:file:///tmp}")
-	private File etlWorkingDir;
-	
+	@Value("${etl.working.dir:java.io.tmpdir}")
+	private String etlWorkingDir;
+
+	@Value("${time.attempt:5}")
+	private Integer timeAttempt;
+
 	@Autowired
-    private ResourcePatternResolver resourcePatternResolver;
+	private ResourcePatternResolver resourcePatternResolver;
 
 	@Value("${scan.location}")
-	private String scanLocation;
-	
+	private Resource scanLocation;
+
 	private void copyResource(String resourceName, String resourcePath, File destinationPath) throws IOException {
-		InputStream is = resourcePatternResolver.getResource(resourcePath+"/"+resourceName).getInputStream();
+		logger.info("Copying resource "+resourceName);
+		InputStream is = resourcePatternResolver.getResource(resourcePath).getInputStream();
 		Files.copy(is, Paths.get(destinationPath+"/"+resourceName));
 		logger.info("File "+resourceName+" has been copied successfully!");
 		is.close();
 	}
-	
+
 	private Map<String, List<String>> parseYaml(Resource resource) throws IOException {
 		InputStream is = resource.getInputStream();
 		Yaml yaml = new Yaml();
@@ -60,8 +74,20 @@ class Extractor {
 		return result;
 	}
 
-	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException {
-		logger.info("Extract step: downloading files to " + etlWorkingDir.getAbsolutePath());
+	/**
+	 * Function that parses the yaml file and copies the files specified in the yaml to a folder in the etlWorkingDir
+	 * with the job id. Inside this job id folder, files will be grouped in different folders by study, each of these
+	 * folders will be named by the study name. If a file specified in the yaml is not found, it will try it 5 times
+	 * (time between attempts is configurable). If after 5 times, the file is still not found, an email will be sent
+	 * to the administrator.
+	 * 
+	 * @param indexFile: yaml file
+	 * @return A pair with an integer (job id) and a list of strings (names of studies successfully copied)
+	 * @throws InterruptedException
+	 * @throws IOException 
+	 */
+	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException, IOException {
+		logger.info("Extract step: downloading files to " + etlWorkingDir);
 		//Parse the indexFile and download all referred files to the working directory.
 		Pair<Integer, List<String>> data;
 		List<String> studiesLoaded = new ArrayList<String>();
@@ -69,42 +95,37 @@ class Extractor {
 		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
 		Map<String, Integer> errors = new HashMap<String, Integer>();
 		Integer id = 0;
-		File idPath = new File(etlWorkingDir.toPath()+"/"+id);
+		File idPath = new File(etlWorkingDir+"/"+id);
 		while (idPath.exists()) {
 			id ++;
-			idPath = new File(etlWorkingDir.toPath()+"/"+id);
+			idPath = new File(etlWorkingDir+"/"+id);
 		}
 		if (!idPath.exists()) {
 			idPath.mkdirs();
 		}
 		try {
 			Map<String, List<String>> parsedYaml = parseYaml(indexFile);
-			for (Entry<String, List<String>>entry : parsedYaml.entrySet()) {
+			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
 				File destinationPath = new File(idPath+"/"+entry.getKey());
 				if (!destinationPath.exists()) {
 					destinationPath.mkdirs();
 				}
 				errors.put(entry.getKey(), 0); //Add error counter for the current study
-				for (String file : entry.getValue() ) {
-					logger.info("Copying file "+file+" from study "+entry.getKey());
-					String originPath = scanLocation+"/"+entry.getKey();
-					try {
-						copyResource(file, originPath, destinationPath);
-					}
-					catch (IOException e) {
-						Integer attempt = 1;
-						logger.error("The file "+file+" from the study "+entry.getKey()+" does not exist in "+originPath+"/"+file+". Tried "+attempt+" times.");
-						attempt ++;
-						while (attempt <= 5) {
-							TimeUnit.SECONDS.sleep(1); //TODO: Change to: TimeUnit.MINUTES.sleep(5); //Wait 5 minutes
-							try {
-								copyResource(file, originPath, destinationPath);
-							}
-							catch (IOException f) {
-								logger.error("The file "+file+" from the study "+entry.getKey()+" does not exist in "+originPath+"/"+file+". Tried "+attempt+" times.");
-							}
+				for (String filePath : entry.getValue() ) {
+					String[] fullFilePath = filePath.split("/");
+					String file = fullFilePath[fullFilePath.length-1];
+					filePath = scanLocation.getURI()+"/"+filePath;
+					int attempt = 1;
+					while (attempt <= 5) {
+						try {
+							copyResource(file, filePath, destinationPath);
+							break;
+						}
+						catch (IOException f) {
+							logger.error("File "+file+" of study "+entry.getKey()+" does not exist in path: "+filePath+". Tried "+attempt+" times.");
 							attempt ++;
 							if (attempt == 5) {
+								logger.error("Tried 5 times. File "+file+" not found, quitting...");
 								errors.put(entry.getKey(), errors.get(entry.getKey())+1);
 								if (filesNotFound.get(entry.getKey()) == null) {
 									ArrayList<String> newList = new ArrayList<String>();
@@ -113,6 +134,8 @@ class Extractor {
 								} else {
 									filesNotFound.get(entry.getKey()).add(file);
 								}
+							} else {
+								TimeUnit.MINUTES.sleep(timeAttempt);
 							}
 						}
 					}
@@ -127,7 +150,7 @@ class Extractor {
 			}
 			if (!studiesWithErrors.isEmpty()) {
 				try {
-					emailService.emailStudyFileNotFound(filesNotFound);
+					emailService.emailStudyFileNotFound(filesNotFound, timeAttempt);
 				} catch (Exception e) {
 					logger.error("The email could not be sent due to the error specified below.");
 					e.printStackTrace();
@@ -144,7 +167,7 @@ class Extractor {
 			}
 		}
 		catch (IOException e) {
-			logger.error("The yaml file was not found.");
+			logger.error("The yaml file was not found at "+indexFile);
 			try {
 				emailService.emailGenericError("The yaml file was not found.", e);
 			} catch (Exception e1) {

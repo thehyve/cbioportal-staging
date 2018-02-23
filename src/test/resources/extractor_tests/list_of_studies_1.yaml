@@ -1,5 +1,5 @@
 study1:
-    - fileA.txt
+    - study1/fileA.txt
 
 study2:
-    - fileB.txt
+    - study2/fileB.txt
