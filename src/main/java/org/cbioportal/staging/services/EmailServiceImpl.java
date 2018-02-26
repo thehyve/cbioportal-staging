@@ -189,7 +189,6 @@ public class EmailServiceImpl implements EmailService {
 				studies.put(study.getLeft()+", "+study.getRight(), "ERRORS");
 			}
 		}
-		logger.info("STUDIES EMAIL: "+studies);
 		
 		Message msg = new MimeMessage(session);
 		try {
