@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +41,7 @@ public class RestarterServiceImpl implements RestarterService {
 	private String portalHome;
 	
 	@Override
-	public void restart() throws InterruptedException, IOException {
+	public void restart() throws InterruptedException, IOException, ConfigurationException {
 		if (!refreshCommand.equals("")) {
 			if (cbioportalMode.equals("local")) {
 				logger.info("Stopping Tomcat...");
@@ -67,7 +68,7 @@ public class RestarterServiceImpl implements RestarterService {
 				restartProcess.waitFor();
 				logger.info("Tomcat successfully restarted.");
 			} else {
-				throw new IOException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
+				throw new ConfigurationException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
 						". Please change the mode in the application.properties.");
 			}
 		} else {

@@ -98,6 +98,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
+		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
@@ -143,6 +144,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
+		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
@@ -184,6 +186,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
+		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
 		ReflectionTestUtils.setField(validationService, "throwError", true);
 		
@@ -226,6 +229,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
+		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);

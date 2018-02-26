@@ -16,7 +16,6 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +25,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.ValidationService;
@@ -36,11 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Validator {
@@ -80,7 +73,7 @@ public class Validator {
 		}
 	}
 	
-	ArrayList<String> validate(Integer id, List<String> studies) throws ConfigurationException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	ArrayList<String> validate(Integer id, List<String> studies) throws Exception {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
 		try {
 			//Get studies from appropriate staging folder

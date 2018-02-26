@@ -17,8 +17,10 @@ package org.cbioportal.staging.services;
 
 import java.io.IOException;
 
+import org.cbioportal.staging.exceptions.ConfigurationException;
+
 public interface RestarterService {
 	
-	public void restart() throws InterruptedException, IOException;
+	public void restart() throws InterruptedException, IOException, ConfigurationException;
 
 }

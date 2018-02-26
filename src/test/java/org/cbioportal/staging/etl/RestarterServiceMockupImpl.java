@@ -17,6 +17,7 @@ package org.cbioportal.staging.etl;
 
 import java.io.IOException;
 
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.RestarterService;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class RestarterServiceMockupImpl implements RestarterService {
 	
 	
 	@Override
-	public void restart() throws InterruptedException, IOException {
+	public void restart() throws InterruptedException, IOException, ConfigurationException {
 		
 	}
 	

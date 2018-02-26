@@ -52,12 +52,14 @@ public class TransformerServiceImpl implements TransformerService {
 		try {
 			logger.info("Starting transformation for file: "+studyPath.getName());
 			ProcessBuilder transformationCmd;
-				if (transformationCommandLocation != "") {
-					transformationCmd = new ProcessBuilder(transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
-					transformationCmd.directory(new File(transformationCommandLocation));
-				} else {
-					throw new ConfigurationException("No command location has been specified in the application.properties.");
-				}
+			if (transformationCommandLocation.equals("")) {
+				throw new ConfigurationException("No transformation command location has been specified in the application.properties.");
+			} else if (transformationCommandLocation.equals("")) {
+				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
+			} else {
+				transformationCmd = new ProcessBuilder(transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
+				transformationCmd.directory(new File(transformationCommandLocation));
+			}
 			//Apply validation command
 			Process transformationProcess = transformationCmd.start();
 			InputStreamReader errorStream = new InputStreamReader(transformationProcess.getErrorStream());

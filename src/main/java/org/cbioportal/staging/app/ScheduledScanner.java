@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.app;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -102,16 +101,6 @@ public class ScheduledScanner
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
 			}
-		} catch (IOException e) {
-			logger.error("The yaml file has not been found.");
-			try {
-				emailService.emailGenericError("The yaml file has not been found.", e);
-				scheduledScannerService.stopApp();
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
-			}
-			e.printStackTrace();
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process..." + System.getProperty("line.separator") + e);
 			try {

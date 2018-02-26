@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;

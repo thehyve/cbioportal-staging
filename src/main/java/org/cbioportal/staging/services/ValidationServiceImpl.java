@@ -61,7 +61,7 @@ public class ValidationServiceImpl implements ValidationService {
 	private ResourcePatternResolver resourcePatternResolver;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile) throws ValidatorException, ConfigurationException {
+	public int validate(String study, String studyPath, String reportPath, File logFile) throws ValidatorException, ConfigurationException, Exception {
 		try {
 			File cslPath = Paths.get(centralShareLocation.getURI()).toFile();
 			File portalInfoFolder = new File(cslPath+"/portalInfo");
@@ -128,12 +128,14 @@ public class ValidationServiceImpl implements ValidationService {
 			return exitValue;
 		}
 		catch (InvalidPropertyException e) {
-			throw e;
+			throw new ValidatorException("Error during validation execution: property not valid, check the validation command. ", e);
+		}
+		catch (ConfigurationException e) {
+			throw new ConfigurationException(e.toString(), e);
 		}
 		catch (Exception e) {
-			throw new ValidatorException("Error during validation execution. ", e);
+			throw new Exception("Error during validation execution. ");
 		}
-		
 	}
 	
 	public void copyToResource(String fileName, String filePath, Resource resourceOut) throws IOException {
