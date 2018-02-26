@@ -75,8 +75,13 @@ public class ValidationServiceImpl implements ValidationService {
 				validationCmd.directory(new File(portalHome+"/core/src/main/scripts/importer"));
 			} else if (cbioportalMode.equals("docker")) {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
+					//make sure report file exists first, otherwise docker will map it as a folder:
+					File f = new File(reportPath);
+					f.getParentFile().mkdirs(); 
+					f.createNewFile();
+					//docker command:
 					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+"/:/outreport.html",
+							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+":/outreport.html",
 							"-v", portalInfoFolder.toString()+ ":/portalinfo:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
 					portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork,
@@ -111,6 +116,7 @@ public class ValidationServiceImpl implements ValidationService {
 			logger.info("Dump portalInfo finished. Continuing validation...");
 		
 			//Apply validation command
+			logger.info("Starting validation. Report will be stored in: " + reportPath);
 			validationCmd.redirectErrorStream(true);
 			validationCmd.redirectOutput(Redirect.appendTo(logFile));
 			Process validateProcess = validationCmd.start();
