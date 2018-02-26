@@ -76,7 +76,6 @@ public class ValidationServiceImpl implements ValidationService {
 			} else if (cbioportalMode.equals("docker")) {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
 					//make sure report file exists first, otherwise docker will map it as a folder:
-					//TODO - later this file needs to be moved to the resource location (could be S3)
 					File f = new File(reportPath);
 					f.getParentFile().mkdirs(); 
 					f.createNewFile();
