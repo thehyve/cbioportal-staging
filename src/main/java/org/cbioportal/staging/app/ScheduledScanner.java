@@ -95,9 +95,23 @@ public class ScheduledScanner
 			
 		} catch (AmazonS3Exception e) {
 			logger.error("The bucket cannot be reached. Please check the scan.location provided in the application.properties.");
-			scheduledScannerService.stopApp();
+			try {
+				emailService.emailGenericError("The bucket cannot be reached. Please check the scan.location provided in the application.properties.", e);
+				scheduledScannerService.stopApp();
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
 		} catch (IOException e) {
-			scheduledScannerService.stopApp();
+			logger.error("The yaml file has not been found.");
+			try {
+				emailService.emailGenericError("The yaml file has not been found.", e);
+				scheduledScannerService.stopApp();
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
 		} catch (Exception e) {
 			logger.error("An error not expected occurred. Stopping process..." + System.getProperty("line.separator") + e);
 			try {
