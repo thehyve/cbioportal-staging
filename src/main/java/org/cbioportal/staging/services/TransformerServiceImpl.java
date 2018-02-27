@@ -60,7 +60,8 @@ public class TransformerServiceImpl implements TransformerService {
 				transformationCmd = new ProcessBuilder(transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
 				transformationCmd.directory(new File(transformationCommandLocation));
 			}
-			//Apply validation command
+			//Apply transformation command
+			logger.info("Executing command: "+String.join(" ", transformationCmd.command()));
 			Process transformationProcess = transformationCmd.start();
 			InputStreamReader errorStream = new InputStreamReader(transformationProcess.getErrorStream());
 			//Create error stack for exception

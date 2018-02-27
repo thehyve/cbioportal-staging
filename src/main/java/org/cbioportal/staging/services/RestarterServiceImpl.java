@@ -47,6 +47,7 @@ public class RestarterServiceImpl implements RestarterService {
 				logger.info("Stopping Tomcat...");
 				ProcessBuilder stopCmd = new ProcessBuilder(refreshCommand, "stop", "-force");
 				stopCmd.directory(new File(portalHome));
+				logger.info("Executing command: "+String.join(" ", stopCmd.command()));
 				Process stopProcess = stopCmd.start();
 				stopProcess.waitFor();
 				logger.info("Tomcat successfully stopped. Restarting Tomcat...");
@@ -58,6 +59,7 @@ public class RestarterServiceImpl implements RestarterService {
 			} else if (cbioportalMode.equals("docker")) {
 				logger.info("Restarting Tomcat...");
 				ProcessBuilder restarterCmd = new ProcessBuilder ("docker", "restart", refreshCommand);
+				logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
 				Process restartProcess = restarterCmd.start();
 				BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
 				String line = null;
