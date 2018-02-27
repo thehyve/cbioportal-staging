@@ -90,8 +90,8 @@ public class Validator {
 				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
 				
 				//Put report and log file in the share location
-				validationService.copyToResource(new File(reportPath), centralShareLocation);
-				validationService.copyToResource(logFile, centralShareLocation);
+				String finalReport = validationService.copyToResource(new File(reportPath), centralShareLocation);
+				String finalLogFile = validationService.copyToResource(logFile, centralShareLocation);
 				
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {
@@ -99,7 +99,7 @@ public class Validator {
 				}
 
 				//Add validation result for the email validation report
-				Pair<String, String> studyData = Pair.of(reportPath, logFile.getAbsolutePath());
+				Pair<String, String> studyData = Pair.of(finalReport, finalLogFile);
 				validatedStudies.put(studyData, exitStatus);
 
 				logger.info("Validation of study "+study+" finished.");

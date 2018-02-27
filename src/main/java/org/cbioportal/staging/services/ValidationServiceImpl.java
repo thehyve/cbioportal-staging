@@ -135,7 +135,7 @@ public class ValidationServiceImpl implements ValidationService {
 		}
 	}
 	
-	public void copyToResource(File filePath, String resourceOut) throws IOException {
+	public String copyToResource(File filePath, String resourceOut) throws IOException {
 		String resourcePath = resourceOut+"/"+filePath.getName();
 		Resource resource;
 		if (resourcePath.startsWith("file:")) {
@@ -154,6 +154,7 @@ public class ValidationServiceImpl implements ValidationService {
 		}
 		outputStream.close();
 		br.close();
+		return resource.getURL().toString();
 	}
 
 }

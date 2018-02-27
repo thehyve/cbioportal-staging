@@ -58,7 +58,7 @@ public class LoaderServiceImpl implements LoaderService {
 	private String centralShareLocation;
 	
 	@Override
-	public File load(String study, File studyPath, int id) throws ConfigurationException, IOException, Exception {
+	public String load(String study, File studyPath, int id) throws ConfigurationException, IOException, Exception {
 		ProcessBuilder loaderCmd;
 		if (cbioportalMode.equals("local")) {
 			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
@@ -80,14 +80,14 @@ public class LoaderServiceImpl implements LoaderService {
 		logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
 		String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
 		String logName = study+"_loading_log_"+logTimeStamp+".log";
-		File logFile = new File(etlWorkingDir+"/"+id+"/staging"+logName);
+		File logFile = new File(etlWorkingDir+"/"+id+"/staging/"+logName);
 		loaderCmd.redirectErrorStream(true);
 		loaderCmd.redirectOutput(Redirect.appendTo(logFile));
 		try {
 			Process loadProcess = loaderCmd.start();
 			loadProcess.waitFor(); //Wait until loading is finished
-			validationService.copyToResource(logFile, centralShareLocation);
-			return logFile;
+			String finalLogFile = validationService.copyToResource(logFile, centralShareLocation);
+			return finalLogFile;
 		} catch (IOException e) {
 			throw new IOException(e);
 		} catch (Exception e) {

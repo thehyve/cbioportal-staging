@@ -42,7 +42,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 		this.exitStatus = 0;
 	}
 	
-	public void copyToResource(File reportFile, String centralShareLocation) throws IOException {
-		
+	public String copyToResource(File reportFile, String centralShareLocation) throws IOException {
+		return "";
 	}
 }
