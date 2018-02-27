@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Paths;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -54,17 +53,16 @@ public class ValidationServiceImpl implements ValidationService {
 	@Value("${portal.home}")
 	private String portalHome;
 	
-	@Value("${central.share.location}")
-	private Resource centralShareLocation;
+	@Value("${etl.working.dir:java.io.tmpdir}")
+	private String etlWorkingDir;
 	
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile) throws ValidatorException, ConfigurationException, Exception {
+	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception {
 		try {
-			File cslPath = Paths.get(centralShareLocation.getURI()).toFile();
-			File portalInfoFolder = new File(cslPath+"/portalInfo");
+			File portalInfoFolder = new File(etlWorkingDir+"/"+id+"/portalInfo");
 			
 			ProcessBuilder validationCmd;
 			ProcessBuilder portalInfoCmd;
@@ -80,7 +78,7 @@ public class ValidationServiceImpl implements ValidationService {
 					f.getParentFile().mkdirs(); 
 					f.createNewFile();
 					//docker command:
-					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
+					validationCmd = new ProcessBuilder ("sudo", "docker", "run", "-i", "--rm",
 							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+":/outreport.html",
 							"-v", portalInfoFolder.toString()+ ":/portalinfo:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
@@ -95,16 +93,8 @@ public class ValidationServiceImpl implements ValidationService {
 						". Please change the mode in the application.properties.");
 			}
 			
-			//dump portal data (first delete previous portalInfo folder if exists)
-			if (portalInfoFolder.exists()) {
-				String[]entries = portalInfoFolder.list();
-				for(String s: entries){
-				    File currentFile = new File(portalInfoFolder.getPath(),s);
-				    currentFile.delete();
-				}
-				portalInfoFolder.delete();
-			}
 			logger.info("Dumping portalInfo...");
+			logger.info("Executing command: "+String.join(" ", portalInfoCmd.command()));
 			Process pInfo = portalInfoCmd.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
 			String line = null;
@@ -117,19 +107,12 @@ public class ValidationServiceImpl implements ValidationService {
 		
 			//Apply validation command
 			logger.info("Starting validation. Report will be stored in: " + reportPath);
+			logger.info("Executing command: "+String.join(" ", validationCmd.command()));
 			validationCmd.redirectErrorStream(true);
 			validationCmd.redirectOutput(Redirect.appendTo(logFile));
 			Process validateProcess = validationCmd.start();
 			validateProcess.waitFor(); //Wait until validation is finished
 			int exitValue = validateProcess.exitValue();
-			
-			//Delete portalInfo
-			String[]entries = portalInfoFolder.list();
-			for(String s: entries){
-			    File currentFile = new File(portalInfoFolder.getPath(),s);
-			    currentFile.delete();
-			}
-			portalInfoFolder.delete();
 			
 			return exitValue;
 		}
@@ -139,14 +122,21 @@ public class ValidationServiceImpl implements ValidationService {
 		catch (ConfigurationException e) {
 			throw new ConfigurationException(e.toString(), e);
 		}
+		catch (IOException e) {
+			if (cbioportalMode.equals("docker")) {
+				throw new ConfigurationException("Error during validation execution: check if Docker is installed, check whether the current"
+						+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.", e);
+			} else {
+				throw new ConfigurationException("Check if portal home is correctly set in application.properties. Configured portal home is: "+portalHome, e);
+			}
+		}
 		catch (Exception e) {
-			throw new Exception("Error during validation execution. ");
+			throw new Exception("Error during validation execution. ", e);
 		}
 	}
 	
-	public void copyToResource(String fileName, String filePath, Resource resourceOut) throws IOException {
-		String resourcePath = resourceOut.getURI()+fileName;
-		//logger.info("COMMAND PATH: "+resourcePath);
+	public void copyToResource(String fileName, String filePath, String resourceOut) throws IOException {
+		String resourcePath = resourceOut+"/"+fileName;
 		Resource resource;
 		if (resourcePath.startsWith("file:")) {
 			resource = new FileSystemResource(resourcePath.replace("file:", ""));
@@ -154,13 +144,14 @@ public class ValidationServiceImpl implements ValidationService {
 		else {
 			resource = this.resourcePatternResolver.getResource(resourcePath);
 		}
+		logger.info("COMMAND PATH: "+resource.getURI());
 		WritableResource writableResource = (WritableResource) resource;
 		OutputStream outputStream = writableResource.getOutputStream();
 		BufferedReader br = new BufferedReader(new FileReader(filePath));
 		String line = null;
 		while ((line = br.readLine()) != null)  
 		{
-			outputStream.write(line.getBytes());
+				outputStream.write(line.getBytes());
 		}
 		br.close();
 	}

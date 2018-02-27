@@ -20,12 +20,11 @@ import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.springframework.core.io.Resource;
 
 public interface ValidationService {
 	
-	public int validate(String study, String studyPath, String reportPath, File logFile) throws ValidatorException, ConfigurationException, Exception;
+	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception;
 
-	public void copyToResource(String reportName, String reportPath, Resource centralShareLocation) throws IOException;
+	public void copyToResource(String reportName, String reportPath, String centralShareLocation) throws IOException;
 
 }

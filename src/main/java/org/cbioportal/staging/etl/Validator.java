@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -49,7 +48,7 @@ public class Validator {
 	private String etlWorkingDir;
 	
 	@Value("${central.share.location}")
-	private Resource centralShareLocation;
+	private String centralShareLocation;
 	
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -73,7 +72,7 @@ public class Validator {
 		}
 	}
 	
-	ArrayList<String> validate(Integer id, List<String> studies) throws Exception {
+	ArrayList<String> validate(Integer id, List<String> studies) throws IllegalArgumentException, Exception {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
 		try {
 			//Get studies from appropriate staging folder
@@ -88,7 +87,7 @@ public class Validator {
 				String reportPath = etlWorkingDir+"/"+id+"/"+reportName;
 				String logFileName = study+"_validation_log_"+timeStamp+".log";
 				File logFile = new File(etlWorkingDir+"/"+id+"/"+logFileName);
-				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile);
+				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
 				
 				//Put report and log file in the share location
 				validationService.copyToResource(reportName, reportPath, centralShareLocation);

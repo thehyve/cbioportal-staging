@@ -56,7 +56,7 @@ class Extractor {
 	private ResourcePatternResolver resourcePatternResolver;
 
 	@Value("${scan.location}")
-	private Resource scanLocation;
+	private String scanLocation;
 
 	private void copyResource(String resourceName, String resourcePath, File destinationPath) throws IOException {
 		logger.info("Copying resource "+resourceName);
@@ -113,8 +113,9 @@ class Extractor {
 				errors.put(entry.getKey(), 0); //Add error counter for the current study
 				for (String filePath : entry.getValue() ) {
 					String[] fullFilePath = filePath.split("/");
+					//logger.info("FULL FILE PATH: "+scanLocation);
 					String file = fullFilePath[fullFilePath.length-1];
-					filePath = scanLocation.getURI()+"/"+filePath;
+					filePath = scanLocation+"/"+filePath;
 					int attempt = 1;
 					while (attempt <= 5) {
 						try {

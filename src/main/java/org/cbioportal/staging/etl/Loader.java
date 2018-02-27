@@ -56,7 +56,7 @@ public class Loader {
 			try {
 				logger.info("Starting loading of study "+study+". This can take some minutes.");
 				File studyPath = new File(originPath+"/"+study);
-				File logFile = loaderService.load(study, studyPath);
+				File logFile = loaderService.load(study, studyPath, id);
 				logger.info("Loading of study "+study+" finished.");
 				statusStudies.put(logFile.getAbsolutePath(), "SUCCESSFULLY LOADED");
 			} catch (RuntimeException e) {

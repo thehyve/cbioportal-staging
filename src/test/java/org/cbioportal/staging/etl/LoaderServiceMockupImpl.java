@@ -31,7 +31,7 @@ public class LoaderServiceMockupImpl implements LoaderService {
 	private List<String> loadedStudies = new ArrayList<String>();
 	
 	@Override
-	public File load(String study, File studyPath) throws IOException, InterruptedException, ConfigurationException {
+	public File load(String study, File studyPath, int id) throws IOException, InterruptedException, ConfigurationException {
 		File logFile = new File(testFile);
 		loadedStudies.add(study);
 		return logFile; 

@@ -21,7 +21,6 @@ import java.io.IOException;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidationService;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,7 +30,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 	private boolean throwError = false;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile) throws ValidatorException, ConfigurationException {
+	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException {
 		if (throwError) {
 			throw new ValidatorException("dummy test error");
 		}
@@ -43,7 +42,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 		this.exitStatus = 0;
 	}
 	
-	public void copyToResource(String reportName, String reportPath, Resource centralShareLocation) throws IOException {
+	public void copyToResource(String reportName, String reportPath, String centralShareLocation) throws IOException {
 		
 	}
 }

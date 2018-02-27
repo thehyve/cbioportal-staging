@@ -28,12 +28,13 @@ import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
+	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;
@@ -47,11 +48,17 @@ public class LoaderServiceImpl implements LoaderService {
 	@Value("${portal.home}")
 	private String portalHome;
 	
+	@Value("${etl.working.dir}")
+	private String etlWorkingDir;
+	
+	@Autowired
+	ValidationService validationService;
+	
 	@Value("${central.share.location}")
-	private Resource centralShareLocation;
+	private String centralShareLocation;
 	
 	@Override
-	public File load(String study, File studyPath) throws ConfigurationException, IOException, Exception {
+	public File load(String study, File studyPath, int id) throws ConfigurationException, IOException, Exception {
 		ProcessBuilder loaderCmd;
 		if (cbioportalMode.equals("local")) {
 			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
@@ -70,15 +77,16 @@ public class LoaderServiceImpl implements LoaderService {
 		}
 
 		//Apply loader command
+		logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
 		String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-		String cslPath = centralShareLocation.getURL().toString();
-		String[] centralShareLocationPath = cslPath.split(":");
-		File logFile = new File(centralShareLocationPath[1]+"/"+study+"_loading_log_"+logTimeStamp+".log");
+		String logName = study+"_loading_log_"+logTimeStamp+".log";
+		File logFile = new File(etlWorkingDir+"/"+id+"/staging"+logName);
 		loaderCmd.redirectErrorStream(true);
 		loaderCmd.redirectOutput(Redirect.appendTo(logFile));
 		try {
 			Process loadProcess = loaderCmd.start();
 			loadProcess.waitFor(); //Wait until loading is finished
+			validationService.copyToResource(logName, logFile.getAbsolutePath(), centralShareLocation);
 			return logFile;
 		} catch (IOException e) {
 			throw new IOException(e);

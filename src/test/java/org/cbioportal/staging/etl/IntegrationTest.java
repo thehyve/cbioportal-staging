@@ -14,7 +14,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -74,9 +73,6 @@ public class IntegrationTest {
 	@Autowired
 	private ScheduledScanner scheduledScanner;
 	
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
-	
 	@Before
     public void setUp() throws Exception {
         emailService.reset();
@@ -90,7 +86,7 @@ public class IntegrationTest {
 	@Test
 	public void allStudiesLoaded() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
@@ -136,7 +132,7 @@ public class IntegrationTest {
 	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
@@ -178,7 +174,7 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/test/resources/integration"));
+		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
@@ -221,7 +217,7 @@ public class IntegrationTest {
 	@Test
 	public void noScanLocation() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", this.resourcePatternResolver.getResource("file:src/notfound"));
+		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/notfound");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
