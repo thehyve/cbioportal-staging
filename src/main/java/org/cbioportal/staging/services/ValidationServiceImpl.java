@@ -78,7 +78,7 @@ public class ValidationServiceImpl implements ValidationService {
 					f.getParentFile().mkdirs(); 
 					f.createNewFile();
 					//docker command:
-					validationCmd = new ProcessBuilder ("sudo", "docker", "run", "-i", "--rm",
+					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
 							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+":/outreport.html",
 							"-v", portalInfoFolder.toString()+ ":/portalinfo:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
@@ -135,8 +135,8 @@ public class ValidationServiceImpl implements ValidationService {
 		}
 	}
 	
-	public void copyToResource(String fileName, String filePath, String resourceOut) throws IOException {
-		String resourcePath = resourceOut+"/"+fileName;
+	public void copyToResource(File filePath, String resourceOut) throws IOException {
+		String resourcePath = resourceOut+"/"+filePath.getName();
 		Resource resource;
 		if (resourcePath.startsWith("file:")) {
 			resource = new FileSystemResource(resourcePath.replace("file:", ""));
@@ -144,15 +144,15 @@ public class ValidationServiceImpl implements ValidationService {
 		else {
 			resource = this.resourcePatternResolver.getResource(resourcePath);
 		}
-		logger.info("COMMAND PATH: "+resource.getURI());
 		WritableResource writableResource = (WritableResource) resource;
 		OutputStream outputStream = writableResource.getOutputStream();
 		BufferedReader br = new BufferedReader(new FileReader(filePath));
 		String line = null;
-		while ((line = br.readLine()) != null)  
+		while ((line = br.readLine()) != null)
 		{
 				outputStream.write(line.getBytes());
 		}
+		outputStream.close();
 		br.close();
 	}
 

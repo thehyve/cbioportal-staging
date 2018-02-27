@@ -86,7 +86,7 @@ public class LoaderServiceImpl implements LoaderService {
 		try {
 			Process loadProcess = loaderCmd.start();
 			loadProcess.waitFor(); //Wait until loading is finished
-			validationService.copyToResource(logName, logFile.getAbsolutePath(), centralShareLocation);
+			validationService.copyToResource(logFile, centralShareLocation);
 			return logFile;
 		} catch (IOException e) {
 			throw new IOException(e);

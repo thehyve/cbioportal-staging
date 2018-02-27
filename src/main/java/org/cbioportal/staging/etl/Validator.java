@@ -90,8 +90,8 @@ public class Validator {
 				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
 				
 				//Put report and log file in the share location
-				validationService.copyToResource(reportName, reportPath, centralShareLocation);
-				validationService.copyToResource(logFileName, logFile.getAbsolutePath(), centralShareLocation);
+				validationService.copyToResource(new File(reportPath), centralShareLocation);
+				validationService.copyToResource(logFile, centralShareLocation);
 				
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {

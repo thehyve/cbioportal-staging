@@ -163,7 +163,7 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
 		assertEquals(true, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
+		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
 		
 		//assert that the loader reports the studies that are passed by the validation (changes to mockup)
@@ -206,7 +206,7 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
 		assertEquals(false, emailService.isEmailValidationReportSent()); 
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
+		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(true, emailService.isEmailGenericErrorSent());
 		
 		//no studies are loaded due to the error

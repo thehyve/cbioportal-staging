@@ -106,7 +106,7 @@ public class FullIntegrationTest {
         assertEquals(false, emailService.isEmailStudyErrorSent());
         assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
         assertEquals(true, emailService.isEmailValidationReportSent());
-        assertEquals(true, emailService.isEmailStudiesLoadedSent());
+        assertEquals(false, emailService.isEmailStudiesLoadedSent());
 
         //assert that the loader reports the studies that are passed by the validation (changes to mockup)
         List<String> expected = new ArrayList<String>();
