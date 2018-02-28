@@ -145,15 +145,14 @@ public class ValidationServiceImpl implements ValidationService {
 			resource = this.resourcePatternResolver.getResource(resourcePath);
 		}
 		WritableResource writableResource = (WritableResource) resource;
-		OutputStream outputStream = writableResource.getOutputStream();
-		BufferedReader br = new BufferedReader(new FileReader(filePath));
-		String line = null;
-		while ((line = br.readLine()) != null)
-		{
+		try (OutputStream outputStream = writableResource.getOutputStream(); 
+				BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+			String line = null;
+			while ((line = br.readLine()) != null)
+			{
 				outputStream.write(line.getBytes());
+			}
 		}
-		outputStream.close();
-		br.close();
 		return resource.getURL().toString();
 	}
 
