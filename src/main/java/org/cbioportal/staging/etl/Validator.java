@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -49,6 +49,9 @@ public class Validator {
 	
 	@Value("${central.share.location}")
 	private String centralShareLocation;
+	
+	@Value("${central.share.location.portal:null}")
+	private String centralShareLocationPortal;
 	
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -77,7 +80,7 @@ public class Validator {
 		try {
 			//Get studies from appropriate staging folder
 			File originPath = new File(etlWorkingDir+"/"+id+"/staging");
-			Map<Pair<String,String>,Integer> validatedStudies = new HashMap<Pair<String,String>,Integer>();
+			Map<String,Integer> validatedStudies = new HashMap<String,Integer>();
 			for (String study : studies) {
 				logger.info("Starting validation of study "+study);
 				//Get the paths for the study and validate it
@@ -90,8 +93,20 @@ public class Validator {
 				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
 				
 				//Put report and log file in the share location
-				String finalReport = validationService.copyToResource(new File(reportPath), centralShareLocation);
-				String finalLogFile = validationService.copyToResource(logFile, centralShareLocation);
+				//First, make the "id" dir in the share location if it is local
+				String centralShareLocationPath = centralShareLocation+"/"+id;
+				if (!centralShareLocationPath.startsWith("s3:")) {
+					File cslPath = new File(centralShareLocation+"/"+id);
+					if (centralShareLocationPath.startsWith("file:")) {
+						cslPath = new File(centralShareLocationPath.replace("file:", ""));
+					}
+					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
+					if (!cslPath.exists()) {
+						cslPath.mkdirs();
+					}
+				}
+				validationService.copyToResource(new File(reportPath), centralShareLocationPath);
+				validationService.copyToResource(logFile, centralShareLocationPath);
 				
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {
@@ -99,12 +114,14 @@ public class Validator {
 				}
 
 				//Add validation result for the email validation report
-				Pair<String, String> studyData = Pair.of(finalReport, finalLogFile);
-				validatedStudies.put(studyData, exitStatus);
+				validatedStudies.put(study, exitStatus);
 
 				logger.info("Validation of study "+study+" finished.");
 			}
-			emailService.emailValidationReport(validatedStudies, validationLevel);
+			if (centralShareLocationPortal.equals("null") || centralShareLocationPortal.equals("")) {
+				centralShareLocationPortal = centralShareLocation;
+			}
+			emailService.emailValidationReport(validatedStudies, validationLevel, centralShareLocationPortal+"/"+id+"/");
 		} catch (ValidatorException e) {
 			//tell about error, continue with next study
 			logger.error(e.getMessage()+". The app will skip this study.");

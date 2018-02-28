@@ -25,6 +25,6 @@ public interface ValidationService {
 	
 	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception;
 
-	public String copyToResource(File reportPath, String centralShareLocation) throws IOException;
+	public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
 
 }

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.services.EmailService;
 import org.springframework.stereotype.Component;
 
@@ -45,11 +44,11 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailStudyErrorSent  = true;
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,Integer> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudiesLoadedSent = true;
 	}
 	

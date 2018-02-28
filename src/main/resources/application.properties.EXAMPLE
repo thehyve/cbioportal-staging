@@ -27,7 +27,9 @@ cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
 
 # Central share location (for validation reports and log files).
-central.share.location=file:///Users/oleguer/Desktop/test_out/share/
+central.share.location=file:///Users/oleguer/Desktop/test_out/share
+# (optional) Central share location web-portal
+#central.share.location.portal=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
 
 # Minutes before trying to find a file specified by the yaml file that has not been found
 time.attempt=5

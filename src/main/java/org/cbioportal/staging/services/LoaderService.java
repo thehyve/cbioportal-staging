@@ -22,6 +22,6 @@ import org.cbioportal.staging.exceptions.ConfigurationException;
 
 public interface LoaderService {
 	
-	public String load(String study, File studyPath, int id) throws IOException, InterruptedException, ConfigurationException, Exception;
+	public String load(String study, File studyPath, int id, String centralShareLocation) throws IOException, InterruptedException, ConfigurationException, Exception;
 
 }

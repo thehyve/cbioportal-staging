@@ -174,19 +174,19 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<Pair<String,String>,Integer> validatedStudies, String level) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
 		Map<String, String> studies = new HashMap<String, String>();
-		for (Pair<String, String> study : validatedStudies.keySet()) {
+		for (String study : validatedStudies.keySet()) {
 			if (validatedStudies.get(study) == 0) {
-				studies.put(study.getLeft()+", "+study.getRight(), "VALID"); 
+				studies.put(study, "VALID"); 
 			}
 			else if (validatedStudies.get(study) == 3) { //Study with warnings and no errors
-				studies.put(study.getLeft()+", "+study.getRight(), "VALID with WARNINGS");
+				studies.put(study, "VALID with WARNINGS");
 			} else { //Study with errors
-				studies.put(study.getLeft()+", "+study.getRight(), "ERRORS");
+				studies.put(study, "ERRORS");
 			}
 		}
 		
@@ -198,6 +198,7 @@ public class EmailServiceImpl implements EmailService {
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
 		    Map messageParams = new HashMap();
 		    messageParams.put("studies", studies);
+		    messageParams.put("csl_path", csl_path);
 		    messageParams.put("level", level);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
@@ -208,7 +209,7 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -218,8 +219,9 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
 		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
-		    Map<String, Map<String, String>> messageParams = new HashMap<String, Map<String, String>>();
+		    Map messageParams = new HashMap();
 		    messageParams.put("studies", studiesLoaded);
+		    messageParams.put("csl_path", csl_path);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());

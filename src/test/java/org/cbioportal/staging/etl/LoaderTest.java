@@ -28,7 +28,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -55,9 +54,6 @@ public class LoaderTest {
 	
 	@Autowired
 	private LoaderServiceMockupImpl loaderService;
-	
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
 	
 	@Before
 	public void setUp() throws Exception {

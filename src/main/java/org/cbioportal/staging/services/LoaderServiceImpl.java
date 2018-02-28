@@ -54,11 +54,8 @@ public class LoaderServiceImpl implements LoaderService {
 	@Autowired
 	ValidationService validationService;
 	
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
 	@Override
-	public String load(String study, File studyPath, int id) throws ConfigurationException, IOException, Exception {
+	public String load(String study, File studyPath, int id, String centralShareLocation) throws ConfigurationException, IOException, Exception {
 		ProcessBuilder loaderCmd;
 		if (cbioportalMode.equals("local")) {
 			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
@@ -86,8 +83,8 @@ public class LoaderServiceImpl implements LoaderService {
 		try {
 			Process loadProcess = loaderCmd.start();
 			loadProcess.waitFor(); //Wait until loading is finished
-			String finalLogFile = validationService.copyToResource(logFile, centralShareLocation);
-			return finalLogFile;
+			validationService.copyToResource(logFile, centralShareLocation);
+			return logFile.getAbsolutePath();
 		} catch (IOException e) {
 			throw new IOException(e);
 		} catch (Exception e) {
