@@ -13,42 +13,31 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.app;
+package org.cbioportal.staging.exceptions;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
-/**
- * Unit test for simple App.
- */
-public class AppTest 
-    extends TestCase
+public class TransformerException extends Exception
 {
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
-    }
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8901822768870101717L;
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
-    }
-
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        System.out.println("tests");
-        assertTrue( true );
-    }
+	public TransformerException()
+	{
+	}
+	public TransformerException(String message, IOException e)
+	{
+		super(message);
+	}
+	
+	public TransformerException(String message, FileNotFoundException e)
+	{
+		super(message);
+	}
+	public TransformerException(String message) {
+		super (message);
+	}
 }

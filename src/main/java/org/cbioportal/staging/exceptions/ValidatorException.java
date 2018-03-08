@@ -13,42 +13,24 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.app;
+package org.cbioportal.staging.exceptions;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+public class ValidatorException extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5072243529310767969L;
+	
+	public ValidatorException()
+	{
+	}
+	public ValidatorException(String message, Exception e)
+	{
+		super(message);
+	}
+	public ValidatorException(String message)
+	{
+		super(message);
+	}
 
-/**
- * Unit test for simple App.
- */
-public class AppTest 
-    extends TestCase
-{
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
-    }
-
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
-    }
-
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        System.out.println("tests");
-        assertTrue( true );
-    }
 }

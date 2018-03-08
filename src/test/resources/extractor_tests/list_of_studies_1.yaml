@@ -1,0 +1,5 @@
+study1:
+    - study1/fileA.txt
+
+study2:
+    - study2/fileB.txt

@@ -15,26 +15,17 @@
 */
 package org.cbioportal.staging.app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.ui.freemarker.FreeMarkerConfigurationFactoryBean;
 
-/**
- * Main app class to run the staging and loading process as a background service
- *
- */
+@Configuration
+public class FreemarkerConfig {
 
-@SpringBootApplication(scanBasePackages={"org.cbioportal.staging"})
-@EnableScheduling
-public class App 
-{
-    private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
-
-    public static void main( String[] args )
-    {
-        logger.info("Starting cBioPortal staging app..." );
-        SpringApplication.run(App.class, args);
+    @Bean
+    public FreeMarkerConfigurationFactoryBean getFreeMarkerConfiguration() {
+        FreeMarkerConfigurationFactoryBean bean = new FreeMarkerConfigurationFactoryBean();
+        bean.setTemplateLoaderPath("/templates/");
+        return bean;
     }
 }
