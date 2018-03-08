@@ -42,13 +42,16 @@ You can override application properties at runtime by adding them as parameters,
 ```
 ./target/cbioportal-staging-*.jar --scan.cron="* * * * * *"
 ```
+or link your own custom properties file, for example:
+```
+./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
+```
 
 ### Run in docker
 
 To run in docker, use:
 
 ```
-docker stop cbio-staging-container; docker rm cbio-staging-container;
 docker run -d --restart=always \
     --name=cbio-staging-container \
     --net=<same docker net where cbioportal container is running> \
@@ -99,8 +102,9 @@ We can configure the app to run as a cron job by using these parameters:
 * `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
 * `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
 * `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
-* `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs.
-* `central.share.location.portal`: optional, for s3: path to `central.share.location` that is accessible by the browser. Usually, with this format: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
+* `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
+* `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
+email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
 
 ### cBioPortal settings
 * `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
