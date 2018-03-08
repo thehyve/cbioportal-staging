@@ -56,9 +56,6 @@ public class Validator {
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
 	
-	@Value("${portal.home}")
-	private String portalHome;
-	
 	boolean hasStudyPassed(String study, String validationLevel, int exitStatus) {
 		if (validationLevel.equals("WARNING")) { //Load studies with no warnings and no errors
 			if (exitStatus == 0) {
