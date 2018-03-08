@@ -35,9 +35,6 @@ import org.springframework.stereotype.Component;
 public class TransformerServiceImpl implements TransformerService {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
-	@Value("${portal.home}")
-	private String portalHome;
-	
 	@Value("${transformation.command.location}")
 	private String transformationCommandLocation;
 	

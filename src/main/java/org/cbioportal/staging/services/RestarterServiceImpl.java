@@ -37,7 +37,7 @@ public class RestarterServiceImpl implements RestarterService {
 	@Value("${refresh.command}")
 	private String refreshCommand;
 
-	@Value("${portal.home}")
+	@Value("${portal.home:.}")
 	private String portalHome;
 	
 	@Override

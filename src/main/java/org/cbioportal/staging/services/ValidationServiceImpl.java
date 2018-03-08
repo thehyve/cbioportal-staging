@@ -50,7 +50,7 @@ public class ValidationServiceImpl implements ValidationService {
 	@Value("${cbioportal.docker.network}")
 	private String cbioportalDockerNetwork;
 	
-	@Value("${portal.home}")
+	@Value("${portal.home:.}")
 	private String portalHome;
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")

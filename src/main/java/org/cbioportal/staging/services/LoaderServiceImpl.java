@@ -45,7 +45,7 @@ public class LoaderServiceImpl implements LoaderService {
 	@Value("${cbioportal.docker.network}")
 	private String cbioportalDockerNetwork;
 	
-	@Value("${portal.home}")
+	@Value("${portal.home:.}")
 	private String portalHome;
 	
 	@Value("${etl.working.dir}")
