@@ -8,13 +8,15 @@
 scan.cron=0 0 0 * * *
 # number of times to repeat the cron (set to -1 to repeat indefinitely):
 scan.cron.iterations=-1
-# location to scan (local file system or S3 location):
-scan.location=s3://bucket/staging_dir
+# location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
+scan.location=file:///tmp
 
 # working directory
 etl.working.dir=file:///tmp
 
-# environment settings needed by S3 library
+# (optional) environment settings needed by S3 library. Set this when 
+# running the tool outside EC2 environment (also when *not* using S3 in any 
+# of the location configurations):
 cloud.aws.region.static=eu-central-1
 # (optional) aws credentials for access to S3 bucket:
 #cloud.aws.credentials.accessKey=<aws-key>
@@ -27,7 +29,7 @@ cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
 
 # Central share location (for validation reports and log files).
-central.share.location=file:///Users/oleguer/Desktop/test_out/share
+central.share.location=file:///tmp
 # (optional) Central share location web-portal
 #central.share.location.portal=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
 
@@ -46,8 +48,8 @@ validation.level = ERROR
 
 #Mail properties
 mail.admin.user=<email>
-mail.app.user=noreply@thehyve.nl
-mail.app.password=thehyvetest
+mail.app.user=noreply@test.com
+mail.app.password=test
 mail.smtp.host=<smtp-host>
 mail.debug=<boolean>
 mail.transport.protocol=<transport-protocol>
