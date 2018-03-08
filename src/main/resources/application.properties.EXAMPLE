@@ -27,8 +27,9 @@ cbioportal.mode=local
 # properties for cbioportal.mode=docker:
 cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
+cbioportal.docker.cbio.container=<cbio-container>
 
-# Central share location (for validation reports and log files).
+# Central share location (for validation reports and log files, can also be a S3 location).
 central.share.location=file:///tmp
 # (optional) Central share location web-portal
 #central.share.location.portal=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
