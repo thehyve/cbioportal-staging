@@ -42,9 +42,6 @@ time.attempt=5
 transformation.command.script=./umccr_wrapper_parser.py
 transformation.command.location=<location-path>
 
-#Refresh command
-refresh.command=catalina
-
 #Validation level
 validation.level = ERROR
 
