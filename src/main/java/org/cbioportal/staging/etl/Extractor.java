@@ -105,6 +105,9 @@ class Extractor {
 		}
 		try {
 			Map<String, List<String>> parsedYaml = parseYaml(indexFile);
+			if (parsedYaml == null) {
+				throw new IOException("Yaml file found to be empty");
+			}
 			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
 				File destinationPath = new File(idPath+"/"+entry.getKey());
 				if (!destinationPath.exists()) {
@@ -168,7 +171,7 @@ class Extractor {
 			}
 		}
 		catch (IOException e) {
-			logger.error("The yaml file was not found at "+indexFile);
+			logger.error("The yaml file was empty or not found at "+indexFile);
 			try {
 				emailService.emailGenericError("The yaml file was not found.", e);
 			} catch (Exception e1) {
