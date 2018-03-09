@@ -62,7 +62,7 @@ class Extractor {
 		logger.info("Copying resource "+resourceName);
 		InputStream is = resourcePatternResolver.getResource(resourcePath).getInputStream();
 		Files.copy(is, Paths.get(destinationPath+"/"+resourceName));
-		logger.info("File "+resourceName+" has been copied successfully!");
+		logger.info("File "+resourceName+" has been copied successfully to "+ destinationPath+"/"+resourceName);
 		is.close();
 	}
 
