@@ -54,7 +54,6 @@ To run in docker, use:
 ```
 docker run -d --restart=always \
     --name=cbio-staging-container \
-    --net=<same docker net where cbioportal container is running> \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
     -v $PWD/custom.properties:/custom/custom.properties \
@@ -71,7 +70,6 @@ adding them directly to the end of the docker command, e.g.:
 ```
 docker run -d --restart=always \
     --name=cbio-staging-container \
-    --net=<same docker net where cbioportal container is running> \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
     -v $PWD/custom.properties:/custom/custom.properties \
@@ -99,12 +97,20 @@ We can configure the app to run as a cron job by using these parameters:
 
 ### Location settings
 * `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that it will download and pass on to the transformation step. Local file system example: `scan.location=file:///dir/staging_dir/`; S3 example: `scan.location=s3://bucket/staging_dir`.
-* `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
-* `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
 * `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
 * `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
 * `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
+
+### S3 vs local file system settings:
+If any of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
+
+* `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
+* `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
+
+If **none** of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
+* `spring.autoconfigure.exclude`: set this to the list of AWS classes to skip in autoconfigure step when starting up the app. Set it to this: `spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration`
+
 
 ### cBioPortal settings
 * `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.

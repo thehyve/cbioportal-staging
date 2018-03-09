@@ -15,12 +15,13 @@ scan.location=file:///tmp
 etl.working.dir=file:///tmp
 
 # (optional) environment settings needed by S3 library. Set this when 
-# running the tool outside EC2 environment (also when *not* using S3 in any 
-# of the location configurations):
-cloud.aws.region.static=eu-central-1
+# running the tool outside EC2 environment:
+#cloud.aws.region.static=eu-central-1
 # (optional) aws credentials for access to S3 bucket:
 #cloud.aws.credentials.accessKey=<aws-key>
 #cloud.aws.credentials.secretKey=<aws-secret-key>
+# Turn OFF any S3: leave this property enabled if *NOT* using S3, but disable it (and enable the ones above) otherwise:
+spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
 
 # cbioportal mode, either "local" or "docker".
 cbioportal.mode=local
