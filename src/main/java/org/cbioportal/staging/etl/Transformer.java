@@ -34,7 +34,7 @@ import org.cbioportal.staging.services.TransformerService;
 class Transformer {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
-	@Value("${etl.working.dir:file:///tmp}")
+	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;
 	
 	@Autowired

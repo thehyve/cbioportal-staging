@@ -48,7 +48,7 @@ public class LoaderServiceImpl implements LoaderService {
 	@Value("${portal.home:.}")
 	private String portalHome;
 	
-	@Value("${etl.working.dir}")
+	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;
 	
 	@Autowired

@@ -45,7 +45,7 @@ public class Loader {
 	@Autowired
 	LoaderService loaderService;
 	
-	@Value("${etl.working.dir:file:///tmp}")
+	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;
 
 	@Value("${central.share.location}")

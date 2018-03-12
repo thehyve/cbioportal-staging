@@ -11,8 +11,8 @@ scan.cron.iterations=-1
 # location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
 scan.location=file:///tmp
 
-# working directory
-etl.working.dir=file:///tmp
+# (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
+#etl.working.dir=/custom/working/dir
 
 # (optional) environment settings needed by S3 library. Set this when 
 # running the tool outside EC2 environment:
