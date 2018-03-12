@@ -129,7 +129,7 @@ If **none** of the `*.location` attributes points to an S3 bucket, you will have
 
 ### Mail properties
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
-* `mail.admin.user`: address where the app will send the emails.
+* `mail.admin.user`: address where the app will send the emails to.
 * `mail.app.user` and `mail.app.password`: credentials of the app email. Those parameters should not be changed.
 * `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
 * `mail.debug`: boolean, if set to `true` prints debugging logs in the screen. 
