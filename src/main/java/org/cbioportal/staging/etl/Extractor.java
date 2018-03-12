@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,8 +86,15 @@ class Extractor {
 	 * @return A pair with an integer (job id) and a list of strings (names of studies successfully copied)
 	 * @throws InterruptedException
 	 * @throws IOException 
+	 * @throws ConfigurationException 
 	 */
-	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException, IOException {
+	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException, IOException, ConfigurationException {
+		//validate:
+		if (etlWorkingDir.startsWith("file:/") || (etlWorkingDir.startsWith("s3:/"))) {
+			throw new ConfigurationException("Invalid configuration: configuration option `etl.working.dir` should point to "
+					+ "a local folder and not to a location (so *not* starting with file:/ or s3:/). "
+					+ "Configuration found: etl.working.dir=" + etlWorkingDir);
+		}
 		logger.info("Extract step: downloading files to " + etlWorkingDir);
 		//Parse the indexFile and download all referred files to the working directory.
 		Pair<Integer, List<String>> data;

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class ExtractorTest {
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
 	@Test
-	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException {
+	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
@@ -87,7 +88,7 @@ public class ExtractorTest {
 	}
 
 	@Test
-	public void allFilesFoundInYaml() throws IOException, InterruptedException {
+	public void allFilesFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
@@ -110,7 +111,7 @@ public class ExtractorTest {
 	}
 	
 	@Test
-	public void incorrectYaml() throws InterruptedException, IOException {
+	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
@@ -127,7 +128,7 @@ public class ExtractorTest {
 	}
 	
 	@Test
-	public void notFoundYaml() throws InterruptedException, IOException {
+	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
