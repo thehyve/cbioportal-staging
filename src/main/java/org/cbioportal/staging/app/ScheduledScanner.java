@@ -93,24 +93,27 @@ public class ScheduledScanner
 			}
 			
 		} catch (AmazonS3Exception e) {
-			logger.error("The bucket cannot be reached. Please check the scan.location provided in the application.properties.");
 			try {
+				logger.error("The bucket cannot be reached. Please check the scan.location provided in the application.properties.");
 				emailService.emailGenericError("The bucket cannot be reached. Please check the scan.location provided in the application.properties.", e);
-				scheduledScannerService.stopApp();
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
+			} finally {
+				e.printStackTrace();
+				scheduledScannerService.stopApp();
 			}
 		} catch (Exception e) {
-			logger.error("An error not expected occurred. Stopping process..." + System.getProperty("line.separator") + e);
 			try {
-				emailService.emailGenericError("An error not expected occurred. Stopping process...", e);
-				scheduledScannerService.stopApp();
+				logger.error("An error not expected occurred. Stopping process... Error found: " + e);
+				emailService.emailGenericError("An error not expected occurred. Stopping process... Error found: ", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
+			} finally {
+				e.printStackTrace();
+				scheduledScannerService.stopApp();
 			}
-			e.printStackTrace();
 		}
 		//return true if a process was triggered
 		return true;

@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -122,8 +121,12 @@ public class Validator {
 		} catch (ValidatorException e) {
 			//tell about error, continue with next study
 			logger.error(e.getMessage()+". The app will skip this study.");
-			emailService.emailGenericError(e.getMessage()+". The app will skip this study.", e);
-			e.printStackTrace();
+			try {
+				emailService.emailGenericError(e.getMessage()+". The app will skip this study.", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
 		}
 		return studiesPassed;
 	}
