@@ -138,7 +138,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-		    logger.info(me.getMessage());
+		    logger.error(me.getMessage(), me);
 		}
 	}
 	
@@ -169,7 +169,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-		    logger.error(me.getMessage());
+		    logger.error(me.getMessage(), me);
 		}
 	}
 	
@@ -204,7 +204,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-		    logger.info(me.getMessage());
+		    logger.error(me.getMessage(), me);
 		}
 	}
 	
@@ -226,7 +226,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-		    logger.info(me.getMessage());
+		    logger.error(me.getMessage(), me);
 		}
 	}
 	
@@ -248,7 +248,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
 		} catch(MessagingException me) {
-		    logger.info(me.getMessage());
+		    logger.error(me.getMessage(), me);
 		}
 	}
 
