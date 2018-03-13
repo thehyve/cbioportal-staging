@@ -11,13 +11,13 @@ the staging files have been validated. This is the validation status for each of
   </#if>
 </#list>
 <br><br>The validation reports and log files can be found here:
-<p>- ${csl_path}
+<p>- <a href="${csl_path}">${csl_path}</a>
 <br><br>The system will proceed and attempt loading the 
 <#if level == "ERROR">
 <b><font style="color: #04B404">VALID</font></b> and <b><font style="color: #FFBF00">VALID with WARNINGS</font></b>
 <#elseif level == "WARNING">
 <b><font style="color: #04B404">VALID</font></b>
 </#if> studies. 
-Please update the other studies accordingly.<br><br>
+Please update any other studies accordingly.<br><br>
 Regards,<br>
 cBioPortal staging app. </div>

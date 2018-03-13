@@ -74,7 +74,7 @@ public class Loader {
 				e.printStackTrace();
 			}
 		}
-		if (centralShareLocationPortal.equals("null") || centralShareLocationPortal.equals("")) {
+		if (centralShareLocationPortal == null || centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
 		}
 		emailService.emailStudiesLoaded(statusStudies, centralShareLocationPortal+"/"+id+"/");

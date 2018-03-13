@@ -114,7 +114,7 @@ public class Validator {
 
 				logger.info("Validation of study "+study+" finished.");
 			}
-			if (centralShareLocationPortal.equals("null") || centralShareLocationPortal.equals("")) {
+			if (centralShareLocationPortal == null || centralShareLocationPortal.equals("")) {
 				centralShareLocationPortal = centralShareLocation;
 			}
 			emailService.emailValidationReport(validatedStudies, validationLevel, centralShareLocationPortal+"/"+id+"/");
