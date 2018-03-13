@@ -45,7 +45,7 @@ transformation.command.script=./umccr_wrapper_parser.py
 validation.level = ERROR
 
 #Mail properties
-mail.admin.user=<email>
+mail.to=<email>
 mail.app.user=noreply@test.com
 mail.app.password=test
 mail.smtp.host=<smtp-host>

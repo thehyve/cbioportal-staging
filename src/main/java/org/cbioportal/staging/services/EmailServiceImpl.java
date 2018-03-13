@@ -53,8 +53,8 @@ public class EmailServiceImpl implements EmailService {
 	@Autowired
     private Configuration freemarkerConfig;
 	
-	@Value("${mail.admin.user}")
-	private String mailAdminUser;
+	@Value("${mail.to}")
+	private String mailTo;
 	
 	@Value("${mail.app.user}")
 	private String mailAppUser;
@@ -127,13 +127,13 @@ public class EmailServiceImpl implements EmailService {
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed");
-		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
+		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
 		    Template t = freemarkerConfig.getTemplate("studyFileNotFound.ftl");
-		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, new HashMap<String, String>() {{
-		        put("finalFailedStudies",finalFailedStudies);
-		        put("totalTime", totalTime.toString());
-		    }});
-		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
+		    Map<String, String> messageParams = new HashMap<String, String>();
+		    messageParams.put("finalFailedStudies", finalFailedStudies);
+		    messageParams.put("totalTime", totalTime.toString());
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
+		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -158,8 +158,8 @@ public class EmailServiceImpl implements EmailService {
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId);
-		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
-		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
+		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studyError.ftl");
 		    Map<String, String> messageParams = new HashMap<String, String>();
 		    messageParams.put("studyId", studyId);
@@ -192,10 +192,10 @@ public class EmailServiceImpl implements EmailService {
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies");
-		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
-		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
+		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
-		    Map messageParams = new HashMap();
+		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("studies", studies);
 		    messageParams.put("csl_path", csl_path);
 		    messageParams.put("level", level);
@@ -215,10 +215,10 @@ public class EmailServiceImpl implements EmailService {
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: data loading results for new studies");
-		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
-		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
+		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
-		    Map messageParams = new HashMap();
+		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("studies", studiesLoaded);
 		    messageParams.put("csl_path", csl_path);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
@@ -237,8 +237,8 @@ public class EmailServiceImpl implements EmailService {
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: unexpected error");
-		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailAdminUser, false));
-		    msg.setFrom(new InternetAddress("noreply@cbioportal.org", "cBioPortal staging app"));
+		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("genericError.ftl");
 		    Map<String, String> messageParams = new HashMap<String, String>();
 		    messageParams.put("errorMessage", errorMessage);

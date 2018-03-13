@@ -129,12 +129,13 @@ If **none** of the `*.location` attributes points to an S3 bucket, you will have
 
 ### Mail properties
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
-* `mail.admin.user`: address where the app will send the emails to.
-* `mail.app.user` and `mail.app.password`: credentials of the app email. Those parameters should not be changed.
+* `mail.to`: address where the app will send the emails to.
+* `mail.app.user`: email address to be used as sender/"from"
+* `mail.app.password`: (optional) respective credentials of the app email (corresponding to `mail.app.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
 * `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
 * `mail.debug`: boolean, if set to `true` prints debugging logs in the screen. 
 * `mail.transport.protocol`: email transport protocol, usually `smtp`.
-* `mail.smtp.port`: smtp port, in Gmail is `465`.
+* `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is usually `25`
 * `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
 * `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
 * `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
