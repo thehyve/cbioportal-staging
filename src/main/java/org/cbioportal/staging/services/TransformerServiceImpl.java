@@ -21,6 +21,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.app.ScheduledScanner;
@@ -35,9 +37,6 @@ import org.springframework.stereotype.Component;
 public class TransformerServiceImpl implements TransformerService {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 
-	@Value("${transformation.command.location}")
-	private String transformationCommandLocation;
-	
 	@Value("${transformation.command.script}")
 	private String transformationCommandScript;
 	
@@ -48,20 +47,14 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		try {
 			logger.info("Starting transformation for file: "+studyPath.getName());
-			ProcessBuilder transformationCmd;
-			if (!transformationCommandScript.startsWith("docker") && transformationCommandLocation.equals("")) {
-				throw new ConfigurationException("No transformation command location has been specified in the application.properties.");
-			} else if (transformationCommandScript.equals("")) {
+			if (transformationCommandScript.equals("")) {
 				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
-			} else {
-				transformationCmd = new ProcessBuilder(transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
-				if (!transformationCommandScript.startsWith("docker")) {
-					transformationCmd.directory(new File(transformationCommandLocation));
-				}
 			}
 			//Apply transformation command
-			logger.info("Executing command: "+String.join(" ", transformationCmd.command()));
-			Process transformationProcess = transformationCmd.start();
+			String transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
+			transformationCommand = resolveEnvVars(transformationCommand);
+			logger.info("Executing command: " + transformationCommand);
+			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
 			InputStreamReader errorStream = new InputStreamReader(transformationProcess.getErrorStream());
 			//Create error stack for exception
 			StringWriter writer = new StringWriter();
@@ -82,5 +75,28 @@ public class TransformerServiceImpl implements TransformerService {
 		} catch (FileNotFoundException e1) {
 			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
 		}
+	}
+
+
+	/**
+	 * Returns input string with environment variable references expanded, e.g. $SOME_VAR or ${SOME_VAR}
+	 */
+	private String resolveEnvVars(String input)
+	{
+		if (null == input)
+		{
+			return null;
+		}
+		// match ${ENV_VAR_NAME} or $ENV_VAR_NAME
+		Pattern p = Pattern.compile("\\$\\{(\\w+)\\}|\\$(\\w+)");
+		Matcher m = p.matcher(input); // get a matcher object
+		StringBuffer sb = new StringBuffer();
+		while(m.find()){
+			String envVarName = null == m.group(1) ? m.group(2) : m.group(1);
+			String envVarValue = System.getenv(envVarName);
+			m.appendReplacement(sb, null == envVarValue ? "" : envVarValue);
+		}
+		m.appendTail(sb);
+		return sb.toString();
 	}
 }

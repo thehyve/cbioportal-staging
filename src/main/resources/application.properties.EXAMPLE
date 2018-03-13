@@ -40,7 +40,6 @@ time.attempt=5
 
 # Full transformation command and path to execute it
 transformation.command.script=./umccr_wrapper_parser.py
-transformation.command.location=<location-path>
 
 #Validation level
 validation.level = ERROR
