@@ -51,7 +51,7 @@ public class Loader {
 	@Value("${central.share.location}")
 	private String centralShareLocation;
 	
-	@Value("${central.share.location.portal:null}")
+	@Value("${central.share.location.portal:}")
 	private String centralShareLocationPortal;
 	
 	boolean load(Integer id, List<String> studies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException {
@@ -74,7 +74,7 @@ public class Loader {
 				e.printStackTrace();
 			}
 		}
-		if (centralShareLocationPortal == null || centralShareLocationPortal.equals("")) {
+		if (centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
 		}
 		emailService.emailStudiesLoaded(statusStudies, centralShareLocationPortal+"/"+id+"/");

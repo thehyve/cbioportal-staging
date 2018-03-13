@@ -49,7 +49,7 @@ public class Validator {
 	@Value("${central.share.location}")
 	private String centralShareLocation;
 	
-	@Value("${central.share.location.portal:null}")
+	@Value("${central.share.location.portal:}")
 	private String centralShareLocationPortal;
 	
 	@Value("${validation.level:ERROR}")
@@ -114,7 +114,7 @@ public class Validator {
 
 				logger.info("Validation of study "+study+" finished.");
 			}
-			if (centralShareLocationPortal == null || centralShareLocationPortal.equals("")) {
+			if (centralShareLocationPortal.equals("")) {
 				centralShareLocationPortal = centralShareLocation;
 			}
 			emailService.emailValidationReport(validatedStudies, validationLevel, centralShareLocationPortal+"/"+id+"/");
