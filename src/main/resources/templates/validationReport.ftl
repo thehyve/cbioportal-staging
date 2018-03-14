@@ -1,5 +1,5 @@
 Dear cBioPortal Administrator,<br><br>
-New studies were found on S3. They were transformed to cBioPortal staging files and 
+New studies were found at <b>${scanLocation}</b>. They were transformed to cBioPortal staging files and 
 the staging files have been validated. This is the validation status for each of the studies:
 <#list studies as name, status>
   <#if status == "VALID">

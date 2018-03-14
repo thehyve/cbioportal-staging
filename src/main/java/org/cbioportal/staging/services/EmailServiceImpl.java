@@ -82,6 +82,9 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${mail.smtp.starttls.enable:true}")
 	private String mailSmtpStarttlsEnable;
 	
+	@Value("${scan.location}")
+	private String scanLocation;
+	
 	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
 	private Properties getProperties() {
@@ -195,6 +198,7 @@ public class EmailServiceImpl implements EmailService {
 		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
+		    messageParams.put("scanLocation", scanLocation);
 		    messageParams.put("studies", studies);
 		    messageParams.put("csl_path", csl_path);
 		    messageParams.put("level", level);
