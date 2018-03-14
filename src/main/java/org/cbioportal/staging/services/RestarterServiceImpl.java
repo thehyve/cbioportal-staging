@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Restarter;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RestarterServiceImpl implements RestarterService {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;

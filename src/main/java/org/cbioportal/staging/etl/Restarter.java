@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class Restarter {
 
 	@Autowired
-	RestarterService restarterService;
+	private RestarterService restarterService;
 	
 	void restart() throws InterruptedException, IOException, ConfigurationException {
 		restarterService.restart();

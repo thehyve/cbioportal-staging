@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailService;
 import org.slf4j.Logger;
@@ -42,10 +41,10 @@ import org.yaml.snakeyaml.Yaml;
 
 @Component
 class Extractor {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
 	@Autowired
-	EmailService emailService;
+	private EmailService emailService;
 
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;

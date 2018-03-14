@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.cbioportal.staging.app.ScheduledScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,17 +30,17 @@ import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.TransformerService;
 
 @Component
-class Transformer {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+public class Transformer {
+	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;
 	
 	@Autowired
-	EmailService emailService;
+	private EmailService emailService;
 	
 	@Autowired
-	TransformerService transformerService;
+	private TransformerService transformerService;
 
 	void transform(Integer id, List<String> studies, String transformationCommand) throws InterruptedException, ConfigurationException, IOException {
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id);

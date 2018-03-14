@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
-import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.slf4j.Logger;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TransformerServiceImpl implements TransformerService {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
 	@Value("${transformation.command.script}")
 	private String transformationCommandScript;

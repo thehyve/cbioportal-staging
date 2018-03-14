@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 
-import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Validator;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ValidationServiceImpl implements ValidationService {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;

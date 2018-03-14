@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.LoaderService;
 import org.slf4j.Logger;
@@ -37,13 +36,13 @@ import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Loader {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Loader.class);
 	
 	@Autowired
-	EmailService emailService;
+	private EmailService emailService;
 	
 	@Autowired
-	LoaderService loaderService;
+	private LoaderService loaderService;
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;

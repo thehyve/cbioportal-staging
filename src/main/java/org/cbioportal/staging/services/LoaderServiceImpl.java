@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Loader;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+	private static final Logger logger = LoggerFactory.getLogger(Loader.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;
