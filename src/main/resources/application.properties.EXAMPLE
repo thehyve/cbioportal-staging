@@ -6,10 +6,12 @@
 
 # A cron-like expression (UN*X definition)
 scan.cron=0 0 0 * * *
-# number of times to repeat the cron (set to -1 to repeat indefinitely):
-scan.cron.iterations=-1
+# (optional) number of times to repeat the cron (default is set to -1 to repeat indefinitely):
+#scan.cron.iterations=-1
 # location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
 scan.location=file:///tmp
+# (optional) Minutes before trying to find a file specified by the yaml file that has not been found (default is 5 minutes; enable this prop to configure to something else)
+#scan.retry.time=5
 
 # (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
 #etl.working.dir=/custom/working/dir
@@ -24,7 +26,7 @@ scan.location=file:///tmp
 spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
 
 # cbioportal mode, either "local" or "docker".
-cbioportal.mode=local
+cbioportal.mode=docker
 # properties for cbioportal.mode=docker:
 cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
@@ -35,9 +37,6 @@ central.share.location=file:///tmp
 # (optional) Central share location web-portal
 #central.share.location.portal=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
 
-# Minutes before trying to find a file specified by the yaml file that has not been found
-time.attempt=5
-
 # Full transformation command and path to execute it
 transformation.command.script=./umccr_wrapper_parser.py
 
@@ -47,7 +46,7 @@ validation.level = ERROR
 #Mail properties
 mail.to=<email>
 mail.app.user=noreply@test.com
-mail.app.password=test
+mail.app.password=
 mail.smtp.host=<smtp-host>
 mail.debug=<boolean>
 mail.transport.protocol=<transport-protocol>

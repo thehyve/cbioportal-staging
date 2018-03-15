@@ -49,8 +49,8 @@ class Extractor {
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;
 
-	@Value("${time.attempt:5}")
-	private Integer timeAttempt;
+	@Value("${scan.retry.time:5}")
+	private Integer timeRetry;
 
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
@@ -146,7 +146,7 @@ class Extractor {
 									filesNotFound.get(entry.getKey()).add(file);
 								}
 							} else {
-								TimeUnit.MINUTES.sleep(timeAttempt);
+								TimeUnit.MINUTES.sleep(timeRetry);
 							}
 						}
 					}
@@ -161,7 +161,7 @@ class Extractor {
 			}
 			if (!studiesWithErrors.isEmpty()) {
 				try {
-					emailService.emailStudyFileNotFound(filesNotFound, timeAttempt);
+					emailService.emailStudyFileNotFound(filesNotFound, timeRetry);
 				} catch (Exception e) {
 					logger.error("The email could not be sent due to the error specified below.");
 					e.printStackTrace();

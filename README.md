@@ -11,8 +11,11 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
 
 ## Setup
 
-Configure your custom settings in `src/main/resources/application.properties`. See provided example file [src/main/resources/application.properties.EXAMPLE](src/main/resources/application.properties.EXAMPLE). Be sure to at least
-configure `cloud.aws.region.static` there. 
+Configure your custom settings in `src/main/resources/application.properties` or run
+the app wit extra parameter like for example `--spring.config.location=file:///custom/custom.properties`
+(see **Run** section below). For details on how to configure, see provided example
+file [src/main/resources/application.properties.EXAMPLE](src/main/resources/application.properties.EXAMPLE)
+and **Application properties** section below.
 
 ## Build
 
@@ -90,20 +93,32 @@ study2:
 The path to files should be relative to the `scan.location`. For example, if `file1.txt` is located in folder `files` inside `scan.location`, the file path in the yaml should be: `files/file1.txt`.
 
 ## Application properties
-### Cron settings
+
+### Extractor settings
 We can configure the app to run as a cron job by using these parameters:
 * `scan.cron`: expects a cron-like expression, extending the usual UN\*X definition to include triggers on the second as well as minute, hour, day of month, month and day of week.  e.g. `0 * * * * MON-FRI` means once per minute on weekdays (at the top of the minute - the 0th second). Other examples: `0 * * * *` (once every minute), `0 0 * * *` (once every hour), `0 0 0 * *` (once every day).
 * `scan.cron.iterations`: number of times to repeat the cron (set to -1 to repeat indefinitely).
-
-### Location settings
 * `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that it will download and pass on to the transformation step. Local file system example: `scan.location=file:///dir/staging_dir/`; S3 example: `scan.location=s3://bucket/staging_dir`.
+* `scan.retry.time`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
 * `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
+
+### Transformer settings
+* `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+
+### Validation and Loader settings
+* `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
+* `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
+* `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
+* `cbioportal.docker.cbio.container`: name of the running cBioPortal container (e.g. to be restarted after studies are loaded).
+
+
+### Reporting location settings
 * `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
 * `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
 
 ### S3 vs local file system settings:
-If any of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
+If any of the `*.location` attributes above points to an S3 bucket, you will have to configure the following:
 
 * `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
 * `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
@@ -111,21 +126,6 @@ If any of the `*.location` attributes points to an S3 bucket, you will have to c
 If **none** of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
 * `spring.autoconfigure.exclude`: set this to the list of AWS classes to skip in autoconfigure step when starting up the app. Set it to this: `spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration`
 
-
-### cBioPortal settings
-* `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
-* `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
-* `cbioportal.docker.cbio.container`: name of the running cBioPortal container (e.g. to be restarted after studies are loaded).
-
-### Extractor settings
-* `time.attempt`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
-
-### Transformer settings
-* `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
-* `transformation.command.location`: local path where the transformation command will be executed.
-
-### Validation settings
-* `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
 
 ### Mail properties
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
