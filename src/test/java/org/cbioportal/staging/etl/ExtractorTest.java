@@ -67,7 +67,7 @@ public class ExtractorTest {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
-		ReflectionTestUtils.setField(extractor, "timeAttempt", 0);
+		ReflectionTestUtils.setField(extractor, "timeRetry", 0);
 
 		//Run extractor step:
 		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");

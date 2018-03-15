@@ -36,7 +36,7 @@ public class EmailServiceMockupImpl implements EmailService {
 	private boolean isEmailStudiesLoadedSent = false;
 	private boolean isEmailGenericErrorSent = false;
 
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeAttempt) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudyFileNotFoundSent  = true;
 	}
 	

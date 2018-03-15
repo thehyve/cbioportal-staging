@@ -112,7 +112,7 @@ public class EmailServiceImpl implements EmailService {
 				  });
 	}
 	
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeAttempt) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
 		for (String failedStudy : failedStudies.keySet()) {
 			allFailedStudies.append("STUDY: "+failedStudy+"<br>");
@@ -121,7 +121,7 @@ public class EmailServiceImpl implements EmailService {
 			}
 		}
 		final String finalFailedStudies = allFailedStudies.toString();
-		final Integer totalTime = timeAttempt*5;
+		final Integer totalTime = timeRetry*5;
 
 		Properties properties = getProperties();
 		Session session = getSession(properties);
