@@ -55,11 +55,14 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${mail.to}")
 	private String mailTo;
 	
-	@Value("${mail.app.user}")
-	private String mailAppUser;
+	@Value("${mail.from}")
+	private String mailFrom;
 	
-	@Value("${mail.app.password}")
-	private String mailAppPassword;
+	@Value("${mail.smtp.user}")
+	private String mailSmtpUser;
+	
+	@Value("${mail.smtp.password}")
+	private String mailSmtpPassword;
 	
 	@Value("${mail.smtp.host}")
 	private String mailSmtpHost;
@@ -107,7 +110,7 @@ public class EmailServiceImpl implements EmailService {
 		return Session.getInstance(properties,
 				  new javax.mail.Authenticator() {
 					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(mailAppUser, mailAppPassword);
+						return new PasswordAuthentication(mailSmtpUser, mailSmtpPassword);
 					}
 				  });
 	}
@@ -135,7 +138,7 @@ public class EmailServiceImpl implements EmailService {
 		    messageParams.put("finalFailedStudies", finalFailedStudies);
 		    messageParams.put("totalTime", totalTime.toString());
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
-		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());
 		    Transport.send(msg);
@@ -161,7 +164,7 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId);
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studyError.ftl");
 		    Map<String, String> messageParams = new HashMap<String, String>();
 		    messageParams.put("studyId", studyId);
@@ -195,7 +198,7 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("scanLocation", scanLocation);
@@ -219,7 +222,7 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: data loading results for new studies");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("studies", studiesLoaded);
@@ -241,7 +244,7 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("ERROR - cBioPortal staging app: unexpected error");
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-		    msg.setFrom(new InternetAddress(mailAppUser, "cBioPortal staging app"));
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("genericError.ftl");
 		    Map<String, String> messageParams = new HashMap<String, String>();
 		    messageParams.put("errorMessage", errorMessage);

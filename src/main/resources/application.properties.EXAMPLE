@@ -45,8 +45,9 @@ validation.level = ERROR
 
 #Mail properties
 mail.to=<email>
-mail.app.user=noreply@test.com
-mail.app.password=
+mail.from=noreply@test.com
+mail.smtp.user=noreply@test.com
+mail.smtp.password=
 mail.smtp.host=<smtp-host>
 mail.debug=<boolean>
 mail.transport.protocol=<transport-protocol>
