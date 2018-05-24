@@ -76,11 +76,8 @@ public class TransformerServiceImpl implements TransformerService {
 
 	private String logAndReturnProcessStream(InputStream stream, boolean errorStream) throws IOException {
 		InputStreamReader streamReader = new InputStreamReader(stream);
-		// copy it as String for returning
-		StringWriter writer = new StringWriter();
-		IOUtils.copy(streamReader, writer);
-		
-		// also log stream in the log system
+		String result = "";
+		// log stream in the log system
 		BufferedReader reader = new BufferedReader(streamReader);
 		String line = null;
 		while ((line = reader.readLine()) != null)
@@ -90,10 +87,11 @@ public class TransformerServiceImpl implements TransformerService {
 			} else {
 				logger.info(line);
 			}
-			
+			// also copy it as String for returning the full output
+			result += line + "\n";
 		}
 
-		return writer.toString();
+		return result;
 	}
 
 
