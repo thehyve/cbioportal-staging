@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.regex.Matcher;
@@ -55,18 +56,13 @@ public class TransformerServiceImpl implements TransformerService {
 			transformationCommand = resolveEnvVars(transformationCommand);
 			logger.info("Executing command: " + transformationCommand);
 			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
-			InputStreamReader errorStream = new InputStreamReader(transformationProcess.getErrorStream());
-			//Create error stack for exception
-			StringWriter writer = new StringWriter();
-			IOUtils.copy(errorStream, writer);
-			String errorStack = writer.toString();
-			//Print stream in the screen
-			BufferedReader reader = new BufferedReader(errorStream);
-			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				logger.info(line);
-			}
+			
+			//TODO - ideally these two loggers are running in parallel so that we see the stdout and stderr in the same
+			//order as reported by transformation script. This is not yet done below, so we first get all stdout, followed
+			//by all stderr:
+			logAndReturnProcessStream(transformationProcess.getInputStream(), false);
+			String errorStack = logAndReturnProcessStream(transformationProcess.getErrorStream(), true);
+			
 			transformationProcess.waitFor(); //Wait until transformation is finished
 			if (transformationProcess.exitValue() != 0) {
 				throw new RuntimeException("The transformation script has failed: "+errorStack);
@@ -75,6 +71,28 @@ public class TransformerServiceImpl implements TransformerService {
 		} catch (FileNotFoundException e1) {
 			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
 		}
+	}
+
+
+	private String logAndReturnProcessStream(InputStream stream, boolean errorStream) throws IOException {
+		InputStreamReader streamReader = new InputStreamReader(stream);
+		
+		//Print stream in the screen
+		BufferedReader reader = new BufferedReader(streamReader);
+		String line = null;
+		while ((line = reader.readLine()) != null)
+		{
+			if (errorStream) {
+				logger.error(line);
+			} else {
+				logger.info(line);
+			}
+			
+		}
+		// also copy it to as String
+		StringWriter writer = new StringWriter();
+		IOUtils.copy(streamReader, writer);
+		return writer.toString();
 	}
 
 
