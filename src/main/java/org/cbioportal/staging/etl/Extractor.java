@@ -58,11 +58,11 @@ class Extractor {
 	@Value("${scan.location}")
 	private String scanLocation;
 
-	private void copyResource(String resourceName, String resourcePath, File destinationPath) throws IOException {
-		logger.info("Copying resource "+resourceName);
+	private void copyResource(String destinationPath, String resourcePath) throws IOException {
+		logger.info("Copying resource from " + resourcePath + " to "+ destinationPath);
 		InputStream is = resourcePatternResolver.getResource(resourcePath).getInputStream();
-		Files.copy(is, Paths.get(destinationPath+"/"+resourceName));
-		logger.info("File "+resourceName+" has been copied successfully to "+ destinationPath+"/"+resourceName);
+		Files.copy(is, Paths.get(destinationPath));
+		logger.info("File has been copied successfully to "+ destinationPath);
 		is.close();
 	}
 
@@ -107,43 +107,44 @@ class Extractor {
 			id ++;
 			idPath = new File(etlWorkingDir+"/"+id);
 		}
-		if (!idPath.exists()) {
-			idPath.mkdirs();
-		}
+		//make new working sub-dir for this new iteration of the extraction step:
+		ensureDirs(idPath);
 		try {
 			Map<String, List<String>> parsedYaml = parseYaml(indexFile);
 			if (parsedYaml == null) {
 				throw new IOException("Yaml file found to be empty");
 			}
 			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
-				File destinationPath = new File(idPath+"/"+entry.getKey());
-				if (!destinationPath.exists()) {
-					destinationPath.mkdirs();
-				}
+				String studyDir = idPath+"/"+entry.getKey();
 				errors.put(entry.getKey(), 0); //Add error counter for the current study
+				String basePath = getBasePath(entry);
+				//extract each file and place it in jobid/studyid/ folder:
 				for (String filePath : entry.getValue() ) {
-					String[] fullFilePath = filePath.split("/");
-					//logger.info("FULL FILE PATH: "+scanLocation);
-					String file = fullFilePath[fullFilePath.length-1];
-					filePath = scanLocation+"/"+filePath;
+					//this is what the relative file path should be inside local copy of the study folder:
+					String filePathInsideDestination = filePath.substring(basePath.length(), filePath.length());
+					String fullDestinationPath = studyDir + "/" + filePathInsideDestination;
+					//make necessary directory structure:
+					ensureDirs(new File(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/"))));
+					String fullOriginalFilePath = scanLocation+"/"+filePath;
 					int attempt = 1;
 					while (attempt <= 5) {
 						try {
-							copyResource(file, filePath, destinationPath);
+							copyResource(fullDestinationPath, fullOriginalFilePath);
 							break;
 						}
 						catch (IOException f) {
-							logger.error("File "+file+" of study "+entry.getKey()+" does not exist in path: "+filePath+". Tried "+attempt+" times.");
+							logger.error("File "+filePathInsideDestination+" of study "+entry.getKey()+" does not exist in path: "+fullOriginalFilePath+". Tried "+attempt+" times.");
+							logger.debug("Error details: ", f);
 							attempt ++;
 							if (attempt == 5) {
-								logger.error("Tried 5 times. File "+file+" not found, quitting...");
+								logger.error("Tried 5 times. File "+fullOriginalFilePath+" not found, quitting...");
 								errors.put(entry.getKey(), errors.get(entry.getKey())+1);
 								if (filesNotFound.get(entry.getKey()) == null) {
 									ArrayList<String> newList = new ArrayList<String>();
-									newList.add(file);
+									newList.add(fullOriginalFilePath);
 									filesNotFound.put(entry.getKey(), newList);
 								} else {
-									filesNotFound.get(entry.getKey()).add(file);
+									filesNotFound.get(entry.getKey()).add(fullOriginalFilePath);
 								}
 							} else {
 								TimeUnit.MINUTES.sleep(timeRetry);
@@ -177,6 +178,15 @@ class Extractor {
 				e1.printStackTrace();
 			}
 		}
+		catch (ConfigurationException e) {
+			logger.error("The yaml file given has an invalid contents. Please check the file.", e);
+			try {
+				emailService.emailGenericError("The yaml file given has an invalid contents. Please, check the file.", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		}
 		catch (IOException e) {
 			logger.error("The yaml file was empty or not found at "+indexFile);
 			try {
@@ -189,5 +199,49 @@ class Extractor {
 		data = Pair.of(id, studiesLoaded);
 		logger.info("Extractor step finished");
 		return data;
+	}
+
+	private void ensureDirs(File path) {
+		if (!path.exists()) {
+			path.mkdirs();
+		}
+	}
+
+	/**
+	 * This method gets the "base path" of all entries. I.e. it assumes
+	 * all entries share a common parent path on the S3 or other resource folder
+	 * where they are originally shared. So for the following list of files configured in the 
+	 * list of studies yaml as below:
+	 *   study1:
+     *    - folder/study1path/fileA.txt
+     *    - folder/study1path/fileB.txt
+     *    - folder/study1path/mafs/maf1.maf
+     *    - folder/study1path/mafs/mafn.maf
+     * 
+     * this method will return "folder/study1path".
+	 * @throws ConfigurationException 
+	 */
+	private String getBasePath(Entry<String, List<String>> entry) throws ConfigurationException {
+		int shortest = Integer.MAX_VALUE;
+		String shortestPath = "";
+		for (String filePath : entry.getValue() ) {
+			if (filePath.length() < shortest) {
+				shortest = filePath.length();
+				shortestPath = filePath;
+			}
+		}
+		logger.debug("Shortest path: " + shortestPath);
+		String result = "";
+		if (shortestPath.indexOf("/") != -1) {
+			result = shortestPath.substring(0, shortestPath.lastIndexOf("/"));
+		}
+		//validate if main assumption is correct (i.e. all paths contain the shortest path):
+		for (String filePath : entry.getValue() ) {
+			if (!filePath.contains(result)) {
+				throw new ConfigurationException("Study configuration contains mixed locations. Not allowed. E.g. "
+						+ "locations: "+ filePath + " and " + result + "/...");
+			}
+		}
+		return result;
 	}
 }

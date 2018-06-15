@@ -83,14 +83,22 @@ docker run -d --restart=always \
 The app expects a yaml file in the working directory (path specified in `scan.location` of the `application.properties`) with the prefix `list_of_studies` in its name (for example, `list_of_studies_1.yaml`). This file contains all the file names, grouped by study, that will be required for the application to transform them into staging files suitable to be loaded into cBioPortal. The structure of the yaml file must be as follows:
 ```
 study1:
-    - /path/to/file1.txt
-    - /path/to/file2.txt
+    - path/to/file1.txt
+    - path/to/file2.txt
 study2:
-    - /path/to/fileB.txt
-    - /path/to/fileC.txt
+    - path/to/fileB.txt
+    - path/to/fileC.txt
 ```
+Files in the same "study" should be in the same relative paths. For example, this is *not* allowed:
+```
+study1:
+    - path/to/file1.txt
+    - path/to/file2.txt
+    - path_2/to/file3.txt
+```
+To correct it, change `/path_2/to/file3.txt` to `/path/to/file3.txt` in this case.
 
-The path to files should be relative to the `scan.location`. For example, if `file1.txt` is located in folder `files` inside `scan.location`, the file path in the yaml should be: `files/file1.txt`.
+The path to files should be *relative to* the `scan.location`. For example, if `file1.txt` is located in folder `files` inside `scan.location`, the file path in the yaml should be: `files/file1.txt`.
 
 ## Application properties
 

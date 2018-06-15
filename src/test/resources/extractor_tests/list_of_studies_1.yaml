@@ -1,5 +1,7 @@
 study1:
     - study1/fileA.txt
+    - study1/mafs/maf1.maf
+    - study1/mafs/maf2.maf
 
 study2:
     - study2/fileB.txt
