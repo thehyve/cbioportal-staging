@@ -83,7 +83,10 @@ public class TransformerServiceImpl implements TransformerService {
 		while ((line = reader.readLine()) != null)
 		{
 			if (errorStream) {
-				logger.error(line);
+				//Because subprocesses print both warnings and errors to stderr, we log them here as WARNING.
+				//Assumption is that if the transformation process hits a real ERROR, it will exit with exit
+				//status > 0, resulting in an ERROR in the logs.
+				logger.warn(line);
 			} else {
 				logger.info(line);
 			}
