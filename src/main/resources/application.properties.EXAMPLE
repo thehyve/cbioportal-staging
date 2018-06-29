@@ -57,5 +57,5 @@ mail.smtp.ssl.enable=<boolean>
 mail.smtp.starttls.enable=<boolean>
 
 
-# default log level
+# default log level / you can use this to debug and troubleshoot issues
 logging.level.root=INFO
