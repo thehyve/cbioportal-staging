@@ -15,8 +15,11 @@
 */
 package org.cbioportal.staging.app;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.services.EmailService;
@@ -46,7 +49,7 @@ public class ScheduledScanner
 
 	@Value("${scan.location}")
 	private String scanLocation;
-
+	
 	@Value("${scan.cron.iterations:-1}")
 	private Integer scanIterations;
 	private int nrIterations = 0;
@@ -61,30 +64,47 @@ public class ScheduledScanner
 	@Autowired
 	ScheduledScannerService scheduledScannerService;
 	
+	private String S3PREFIX = "s3:";
+	
 	@Scheduled(cron = "${scan.cron}")
 	public boolean scan() {
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
 			nrIterations++;
-			logger.info("Scanning location for the newest yaml file: " + scanLocation);
-			Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
-			logger.info("Found "+ allFilesInFolder.length + " index files");
-	
-			if (allFilesInFolder.length == 0)
-				return false;
-	
-			Resource mostRecentFile = allFilesInFolder[0];
-			for (Resource resource : allFilesInFolder) {
-	
-				if (resource.lastModified() > mostRecentFile.lastModified()) {
-					mostRecentFile = resource;
+			if (scanLocation.startsWith(S3PREFIX)) {
+				logger.info("Scanning location for the newest yaml file: " + scanLocation);
+				Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
+				logger.info("Found "+ allFilesInFolder.length + " index files");
+		
+				if (allFilesInFolder.length == 0)
+					return false;
+		
+				Resource mostRecentFile = allFilesInFolder[0];
+				for (Resource resource : allFilesInFolder) {
+		
+					if (resource.lastModified() > mostRecentFile.lastModified()) {
+						mostRecentFile = resource;
+					}
 				}
+				logger.info("Selected most recent one: "+ mostRecentFile.getFilename());
+		
+				// trigger ETL process:
+				etlProcessRunner.run(mostRecentFile);
+			} else {
+				logger.info("Scanning location to find folders: " + scanLocation);
+				Resource scanLocationResource = resourcePatternResolver.getResource(scanLocation);
+				File scanLocationPath = scanLocationResource.getFile();
+				ArrayList<File> directories = new ArrayList<File>();
+				for (File file : scanLocationPath.listFiles()) {
+			        if (file.isDirectory()) {
+			        	logger.info("Folder found: "+file.getName());
+			            directories.add(file);
+			        }
+				}
+
+				// trigger ETL process:
+				etlProcessRunner.run(directories);
 			}
-			logger.info("Selected most recent one: "+ mostRecentFile.getFilename());
-	
-			// trigger ETL process:
-			etlProcessRunner.run(mostRecentFile);
-	
 	
 			//check if nrRepeats reached the configured max: 
 			if (scanIterations != -1 && nrIterations >= scanIterations) {

@@ -89,7 +89,7 @@ class Extractor {
 	 */
 	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException, IOException, ConfigurationException {
 		//validate:
-		if (etlWorkingDir.startsWith("file:/") || (etlWorkingDir.startsWith("s3:/"))) {
+		if (etlWorkingDir.startsWith("file:") || (etlWorkingDir.startsWith("s3:"))) {
 			throw new ConfigurationException("Invalid configuration: configuration option `etl.working.dir` should point to "
 					+ "a local folder and not to a location (so *not* starting with file:/ or s3:/). "
 					+ "Configuration found: etl.working.dir=" + etlWorkingDir);

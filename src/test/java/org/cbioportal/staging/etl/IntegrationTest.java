@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
+		org.cbioportal.staging.etl.LocalExtractor.class,
 		org.cbioportal.staging.etl.Transformer.class,
 		org.cbioportal.staging.etl.Loader.class,
 		org.cbioportal.staging.etl.Restarter.class,
@@ -109,6 +110,7 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
+		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
@@ -155,6 +157,7 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
+		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
@@ -198,6 +201,7 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
+		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
@@ -240,6 +244,7 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/notfound");
+		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();

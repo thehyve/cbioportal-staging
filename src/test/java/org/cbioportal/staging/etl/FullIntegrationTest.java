@@ -19,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
+		org.cbioportal.staging.etl.LocalExtractor.class,
         org.cbioportal.staging.etl.Transformer.class,
         org.cbioportal.staging.etl.Loader.class,
         org.cbioportal.staging.etl.Restarter.class,
@@ -41,6 +42,9 @@ public class FullIntegrationTest {
 
     @Autowired
     private Extractor extractor;
+    
+    @Autowired
+    private LocalExtractor localExtractor;
 
     @Autowired
     private Transformer transformer;
@@ -97,6 +101,53 @@ public class FullIntegrationTest {
         ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 
         ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
+        ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
+        ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
+
+
+        scheduledScanner.scan();
+
+        //correct emails are sent
+        //check that the correct email is sent
+        assertEquals(false, emailService.isEmailGenericErrorSent());
+        assertEquals(false, emailService.isEmailStudyErrorSent());
+        assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+        assertEquals(true, emailService.isEmailValidationReportSent());
+        assertEquals(false, emailService.isEmailStudiesLoadedSent());
+
+        //assert that the loader reports the studies that are passed by the validation (changes to mockup)
+        List<String> expected = new ArrayList<String>();
+        expected.add("study1");
+        expected.add("study2");
+        expected.add("study3");
+        //TODO - add this method to real loader service as well assertEquals(expected.size(), loaderService.getLoadedStudies().size());
+    }
+    
+    @Test
+    /**
+     * This test assumes local cBioPortal + mySql containers are running.
+     * 
+     */
+    public void allLocalStudiesLoaded() {
+
+        //mock transformation (for now... TODO - later replace by real one):
+		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
+		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
+        
+        //mock email service:
+        ReflectionTestUtils.setField(localExtractor, "emailService", emailService);
+        ReflectionTestUtils.setField(transformer, "emailService", emailService);
+        ReflectionTestUtils.setField(validator, "emailService", emailService);
+        ReflectionTestUtils.setField(loader, "emailService", emailService);
+
+        ReflectionTestUtils.setField(etlProcessRunner, "localExtractor", localExtractor);
+        ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
+        ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
+        ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
+        ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
+
+        ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
+        ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/local_integration");
 
         scheduledScanner.scan();
 

@@ -15,6 +15,7 @@
  */
 package org.cbioportal.staging.etl;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class ETLProcessRunner {
 
 	@Autowired
 	private Extractor extractor;
+	
+	@Autowired
+	private LocalExtractor localExtractor;
 
 	@Autowired
 	private Transformer transformer;
@@ -63,11 +68,45 @@ public class ETLProcessRunner {
 	 * @throws Exception 
 	 */
 	public void run(Resource indexFile) throws Exception {
-		boolean loadSuccessful = false;
 		try  {
 			startProcess();
 			//E (Extract) step:
 			Pair<Integer, List<String>> idAndStudies = extractor.run(indexFile);
+			//Execute Transforming, Validating and Loading steps:
+			runCommon(idAndStudies);
+		}
+		finally
+		{
+			//end process / release lock:
+			endProcess();
+		}
+	}
+	
+	/**
+	 * Runs all the steps of the ETL process.
+	 * 
+	 * @param directories: list of strings with the directory names inside the scanLocation folder.
+	 * @throws Exception 
+	 */
+	public void run(ArrayList<File> directories) throws Exception {
+		try  {
+			startProcess();
+			//E (Extract) step:
+			Pair<Integer, List<String>> idAndStudies = localExtractor.run(directories);
+			logger.debug("ID AND STUDIES: "+idAndStudies.toString());
+			//Execute Transforming, Validating and Loading steps:
+			runCommon(idAndStudies);
+		}
+		finally
+		{
+			//end process / release lock:
+			endProcess();
+		}
+	}
+	
+	private void runCommon(Pair<Integer, List<String>> idAndStudies) throws Exception {
+		boolean loadSuccessful = false;
+		try  {
 			//T (Transform) step:
 			transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
 			//V (Validate) step:
@@ -83,9 +122,6 @@ public class ETLProcessRunner {
 			if (loadSuccessful) {
 				restarter.restart();
 			}
-
-			//end process / release lock:
-			endProcess();
 		}
 	}
 
