@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.Loader.class,
         org.cbioportal.staging.etl.Restarter.class,
         org.cbioportal.staging.etl.Validator.class,
+        org.cbioportal.staging.etl.Publisher.class,
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.services.ValidationServiceImpl.class,
         org.cbioportal.staging.services.LoaderServiceImpl.class,
@@ -31,6 +32,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
 		org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
 		org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
+		org.cbioportal.staging.etl.PublisherServiceMockupImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
         org.cbioportal.staging.app.ScheduledScanner.class})
 @SpringBootTest

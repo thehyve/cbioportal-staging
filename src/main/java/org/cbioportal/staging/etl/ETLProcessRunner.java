@@ -60,6 +60,12 @@ public class ETLProcessRunner {
 
 	@Autowired
 	private Restarter restarter;
+	
+	@Autowired
+	private Publisher publisher;
+	
+	@Value("${study.publish.script}")
+	private String studyPublishScript;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -114,6 +120,10 @@ public class ETLProcessRunner {
 			//L (Load) step:
 			if (validatedStudies.size() > 0) {
 				loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
+				
+				if (!studyPublishScript.isEmpty()) {
+					publisher.publishStudies(validatedStudies);
+				}
 			}
 		}
 		finally
