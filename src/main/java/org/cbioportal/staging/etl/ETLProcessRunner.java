@@ -60,6 +60,12 @@ public class ETLProcessRunner {
 
 	@Autowired
 	private Restarter restarter;
+	
+	@Autowired
+	private Publisher publisher;
+	
+	@Value("${study.publish.command_prefix}")
+	private String studyPublishCommandPrefix;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -106,22 +112,19 @@ public class ETLProcessRunner {
 	
 	private void runCommon(Pair<Integer, List<String>> idAndStudies) throws Exception {
 		boolean loadSuccessful = false;
-		try  {
-			//T (Transform) step:
-			transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
-			//V (Validate) step:
-			ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
-			//L (Load) step:
-			if (validatedStudies.size() > 0) {
-				loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
-			}
-		}
-		finally
-		{
-			//restart cBioPortal:
-			if (loadSuccessful) {
-				restarter.restart();
-			}
+		//T (Transform) step:
+		transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
+		//V (Validate) step:
+		ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+		//L (Load) step:
+		if (validatedStudies.size() > 0) {
+		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
+		    if (loadSuccessful) {
+		        restarter.restart();
+		        if (!studyPublishCommandPrefix.isEmpty()) {
+		            publisher.publishStudies(validatedStudies);
+		        }
+		    }
 		}
 	}
 
