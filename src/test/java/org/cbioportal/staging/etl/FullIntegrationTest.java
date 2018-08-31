@@ -164,6 +164,8 @@ public class FullIntegrationTest {
         expected.add("study1");
         expected.add("study2");
         expected.add("study3");
-        //TODO - add this method to real loader service as well assertEquals(expected.size(), loaderService.getLoadedStudies().size());
+        //TODO - enable assertions after test is fixed - currently test depends on a running database / cbioDB
+        //assertEquals(expected.size(), loaderService.getLoadedStudies().size());
+        
     }
 }
