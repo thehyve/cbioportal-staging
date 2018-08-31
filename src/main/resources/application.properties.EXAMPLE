@@ -12,6 +12,11 @@ scan.cron=0 0 0 * * *
 scan.location=file:///tmp
 # (optional) Minutes before trying to find a file specified by the yaml file that has not been found (default is 5 minutes; enable this prop to configure to something else)
 #scan.retry.time=5
+# (optional, only for non-s3 scan locations for now) comma-separated list of folders to
+# extract from scan location (relative paths, each will be seen as 1 study 
+# to be transformed and loaded):
+#scan.extract.folders=dir1,dir2,etc
+
 
 # (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
 #etl.working.dir=/custom/working/dir

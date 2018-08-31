@@ -84,10 +84,9 @@ public class IntegrationTest {
 	@Rule
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
-	@Test
-	public void allStudiesLoaded() {
+	private void initBasicMockups(String scanLocation, int validationServiceMockExitStatus) {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
+		ReflectionTestUtils.setField(extractor, "scanLocation", scanLocation);
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
@@ -96,7 +95,7 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
-		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
+		ReflectionTestUtils.setField(validationService, "exitStatus", validationServiceMockExitStatus);
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
@@ -109,9 +108,14 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
 		
-		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
+		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", scanLocation);
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
+	}
+	
+	@Test
+	public void allStudiesLoaded() {
+		initBasicMockups("file:src/test/resources/integration", 3);
+		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		
 		scheduledScanner.scan();
 		
@@ -132,33 +136,34 @@ public class IntegrationTest {
 	}
 	
 	@Test
+	public void subsetOfStudiesLoaded() {
+		initBasicMockups("file:src/test/resources/local_integration", 3);
+		ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
+		
+		scheduledScanner.scan();
+		
+		//correct emails are sent
+		//check that the correct email is sent
+		assertEquals(false, emailService.isEmailStudyErrorSent());
+		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+		assertEquals(true, emailService.isEmailValidationReportSent());
+		assertEquals(true, emailService.isEmailStudiesLoadedSent());
+		assertEquals(false, emailService.isEmailGenericErrorSent());
+		
+		//assert that the loader reports the studies that are passed by the validation (changes to mockup)
+		List<String> expected = new ArrayList<String>();
+		expected.add("study1");
+		expected.add("study2");
+		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
+	}
+	
+	
+	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		initBasicMockups("file:src/test/resources/integration", 1);
 		
-		ReflectionTestUtils.setField(transformer, "emailService", emailService);
-		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
-		
-		ReflectionTestUtils.setField(validator, "emailService", emailService);
-		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
-		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
-		
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
-		
-		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-		
-		ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
-		ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
-		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
-		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-		
-		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
 		
@@ -177,32 +182,11 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/integration");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
-		
-		ReflectionTestUtils.setField(transformer, "emailService", emailService);
-		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
-		
-		ReflectionTestUtils.setField(validator, "emailService", emailService);
-		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
-		ReflectionTestUtils.setField(validationService, "exitStatus", 1);
+		initBasicMockups("file:src/test/resources/integration", 1);
+
 		ReflectionTestUtils.setField(validationService, "throwError", true);
 		
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
-		
-		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-		
-		ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
-		ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
-		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
-		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-		
-		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
 		
@@ -221,31 +205,9 @@ public class IntegrationTest {
 	@Test
 	public void noScanLocation() {
 		//set mockups and input parameters for all services
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/notfound");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
-		
-		ReflectionTestUtils.setField(transformer, "emailService", emailService);
-		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
-		
-		ReflectionTestUtils.setField(validator, "emailService", emailService);
-		ReflectionTestUtils.setField(validator, "validationService", validationService);
-		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
-		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
-		
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
-		
-		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-		
-		ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
-		ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
-		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
-		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-		
-		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/notfound");
+		initBasicMockups("file:src/notfound", 3);
+
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 		
 		scheduledScanner.scan();
 		

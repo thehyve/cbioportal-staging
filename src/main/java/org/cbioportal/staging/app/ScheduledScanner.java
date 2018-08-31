@@ -19,7 +19,8 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.services.EmailService;
@@ -50,6 +51,9 @@ public class ScheduledScanner
 	@Value("${scan.location}")
 	private String scanLocation;
 	
+	@Value("${scan.extract.folders: *}")
+	private String scanExtractFolders;
+
 	@Value("${scan.cron.iterations:-1}")
 	private Integer scanIterations;
 	private int nrIterations = 0;
@@ -92,15 +96,22 @@ public class ScheduledScanner
 				etlProcessRunner.run(mostRecentFile);
 			} else {
 				logger.info("Scanning location to find folders: " + scanLocation);
+				List<String> subsetToExtract = Arrays.asList(scanExtractFolders.split(","));
 				Resource scanLocationResource = resourcePatternResolver.getResource(scanLocation);
 				File scanLocationPath = scanLocationResource.getFile();
 				ArrayList<File> directories = new ArrayList<File>();
 				for (File file : scanLocationPath.listFiles()) {
-			        if (file.isDirectory()) {
-			        	logger.info("Folder found: "+file.getName());
-			            directories.add(file);
-			        }
+					if (file.isDirectory()) {
+						if (scanExtractFolders.trim().equals("*") || subsetToExtract.contains(file.getName())) {
+							logger.info("Folder found: "+file.getName());
+							directories.add(file);
+						} else {
+							logger.info("Folder skipped: "+file.getName());
+						}
+					}
 				}
+				if (directories.size() == 0)
+					return false;
 
 				// trigger ETL process:
 				etlProcessRunner.run(directories);
