@@ -80,8 +80,10 @@ public class ScheduledScanner
 				Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
 				logger.info("Found "+ allFilesInFolder.length + " index files");
 		
-				if (allFilesInFolder.length == 0)
+				if (allFilesInFolder.length == 0) {
+					checkIfShouldExit(nrIterations, scanIterations);
 					return false;
+				}
 		
 				Resource mostRecentFile = allFilesInFolder[0];
 				for (Resource resource : allFilesInFolder) {
@@ -110,18 +112,16 @@ public class ScheduledScanner
 						}
 					}
 				}
-				if (directories.size() == 0)
+				if (directories.size() == 0) {
+					checkIfShouldExit(nrIterations, scanIterations);
 					return false;
+				}
 
 				// trigger ETL process:
 				etlProcessRunner.run(directories);
 			}
 	
-			//check if nrRepeats reached the configured max: 
-			if (scanIterations != -1 && nrIterations >= scanIterations) {
-				logger.info("==>>>>> Reached configured number of iterations (" + scanIterations + "). Exiting... <<<<<==");
-				System.exit(0);
-			}
+			checkIfShouldExit(nrIterations, scanIterations);
 			
 		} catch (AmazonS3Exception e) {
 			try {
@@ -148,6 +148,20 @@ public class ScheduledScanner
 		}
 		//return true if a process was triggered
 		return true;
+	}
+
+	/**
+	 * Checks if nrIterations reached the configured max and
+	 * triggers System.exit if this is the case.
+	 * 
+	 * @param nrIterations
+	 * @param max
+	 */
+	private void checkIfShouldExit(int nrIterations, int max) {
+		if (max != -1 && nrIterations >= max) {
+			logger.info("==>>>>> Reached configured number of iterations (" + max + "). Exiting... <<<<<==");
+			System.exit(0);
+		}
 	}
 
 }
