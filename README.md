@@ -50,6 +50,36 @@ or link your own custom properties file, for example:
 ./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
 ```
 
+### Run - other common use cases
+
+As shown above, the staging app can be triggered in different ways. Here are some of the other
+common use cases.
+
+#### Run once and stop
+
+To run once and stop, use the following command:
+```
+./target/cbioportal-staging-*.jar --scan.cron="* * * * * *" --scan.cron.iterations=1
+```
+
+#### Run once, for a specific study, and stop
+
+In this use case, a *local* folder has been configured as the `scan.location`, e.g. 
+`scan.location=file:///data/staging/studies`. This local folder has a number of
+subfolders, one for each study, named `study1_dir/`,`study2_dir/` and `study3_dir/`
+for example. To trigger the data staging app workflow only for **study2**,
+use the following command:
+```
+./target/cbioportal-staging-*.jar \
+--scan.cron="* * * * * *" --scan.cron.iterations=1 --scan.extract.folders=study2_dir
+```
+Since `scan.extract.folders` also supports a list of studies, the following can also be used if
+**study2** and **study3** are to be loaded in the same iteration: 
+```
+./target/cbioportal-staging-*.jar \
+--scan.cron="* * * * * *" --scan.cron.iterations=1 --scan.extract.folders=study2_dir,study3_dir
+```
+
 ### Run in docker
 
 To run in docker, use:
