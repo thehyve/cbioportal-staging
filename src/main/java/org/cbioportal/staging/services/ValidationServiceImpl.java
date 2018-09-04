@@ -100,9 +100,13 @@ public class ValidationServiceImpl implements ValidationService {
 			String line = null;
 			while ((line = reader.readLine()) != null)
 			{
-				logger.info(line);
+				logger.warn(line);//TODO warn, since this is error stream output ^ ?
 			}
 			pInfo.waitFor();
+			if (pInfo.exitValue() != 0) {
+				throw new RuntimeException("Dump portalInfo step failed");
+			}
+
 			logger.info("Dump portalInfo finished. Continuing validation...");
 		
 			//Apply validation command

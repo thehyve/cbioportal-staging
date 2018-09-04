@@ -105,7 +105,10 @@ public class Validator {
 				
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {
+					logger.info("Study " + study + " has PASSED validation");
 					studiesPassed.add(study);
+				} else {
+					logger.warn("Study " + study + " has FAILED validation");
 				}
 
 				//Add validation result for the email validation report
