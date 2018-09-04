@@ -39,19 +39,29 @@ public class TransformerServiceImpl implements TransformerService {
 	@Value("${transformation.command.script}")
 	private String transformationCommandScript;
 	
+	@Value("${skip.transformation:false}")
+	private boolean skipTransformation;
+	
 	@Override
 	public void transform(File studyPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException {
 		if (!finalPath.exists()) {
 			finalPath.mkdir();
 		}
 		try {
+			String transformationCommand = "";
 			logger.info("Starting transformation for file: "+studyPath.getName());
-			if (transformationCommandScript.equals("")) {
-				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
+			if (skipTransformation) {
+				//String[] fPath = finalPath.toString().split("/acc");
+				transformationCommand = "cp -R " + studyPath.toString() + "/. " + finalPath.toString();
+			} else {
+				if (transformationCommandScript.equals("")) {
+					throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
+				}
+				//Apply transformation command
+				transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
+				transformationCommand = resolveEnvVars(transformationCommand);
 			}
-			//Apply transformation command
-			String transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
-			transformationCommand = resolveEnvVars(transformationCommand);
+			//transformationCommand = resolveEnvVars(transformationCommand);
 			logger.info("Executing command: " + transformationCommand);
 			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
 			
