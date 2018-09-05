@@ -64,8 +64,8 @@ public class ETLProcessRunner {
 	@Autowired
 	private Publisher publisher;
 	
-	@Value("${study.publish.script}")
-	private String studyPublishScript;
+	@Value("${study.publish.command_prefix}")
+	private String studyPublishCommandPrefix;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -121,7 +121,7 @@ public class ETLProcessRunner {
 			if (validatedStudies.size() > 0) {
 				loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
 				
-				if (!studyPublishScript.isEmpty()) {
+				if (loadSuccessful & !studyPublishCommandPrefix.isEmpty()) {
 					publisher.publishStudies(validatedStudies);
 				}
 			}

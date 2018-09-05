@@ -70,4 +70,4 @@ mail.smtp.starttls.enable=<boolean>
 logging.level.root=INFO
 
 # add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out)
-#study.publish.command=
+#study.publish.command_prefix=

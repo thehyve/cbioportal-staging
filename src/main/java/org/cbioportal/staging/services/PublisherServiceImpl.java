@@ -31,13 +31,13 @@ import org.springframework.stereotype.Component;
 public class PublisherServiceImpl implements PublisherService {
 	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
 	
-	@Value("${study.publish.script}")
-	private String studyPublishScript;
+	@Value("${study.publish.command_prefix}")
+	private String studyPublishCommandPrefix;
 	
-	public void publishStudies(List<String> studies) throws InterruptedException, IOException, ConfigurationException {
+	public void publishStudies(List<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
-		for (String study : studies) {
-			String command = studyPublishScript + " "+ study;
+		for (String studyId : studyIds) {
+			String command = studyPublishCommandPrefix + " "+ studyId;
 			Process cmdProcess = Runtime.getRuntime().exec(command);
 			logger.info("Executing command: "+command);
 			
@@ -55,6 +55,10 @@ public class PublisherServiceImpl implements PublisherService {
 			}
 			
 			cmdProcess.waitFor();
+			
+			if (cmdProcess.exitValue() != 0) {
+				throw new ConfigurationException("The command "+command+" has failed. Please check your code.");
+			}
 		}
 		
 	}
