@@ -120,7 +120,6 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", scanLocation);
-		ReflectionTestUtils.setField(scheduledScanner, "scanIterations", -1);
 		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 	}
 	
