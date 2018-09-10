@@ -16,6 +16,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.cbioportal.staging.services.PublisherServiceImpl;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
@@ -28,11 +29,10 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.services.ValidationServiceImpl.class,
         org.cbioportal.staging.services.LoaderServiceImpl.class,
-        //org.cbioportal.staging.services.TransformerServiceImpl.class,
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
-		org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
-		org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
-		org.cbioportal.staging.etl.PublisherServiceMockupImpl.class,
+        org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
+        org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
+        org.cbioportal.staging.services.PublisherServiceImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
         org.cbioportal.staging.app.ScheduledScanner.class})
 @SpringBootTest
