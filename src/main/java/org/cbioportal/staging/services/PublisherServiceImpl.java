@@ -57,7 +57,7 @@ public class PublisherServiceImpl implements PublisherService {
 			cmdProcess.waitFor();
 			
 			if (cmdProcess.exitValue() != 0) {
-				throw new ConfigurationException("The command "+command+" has failed. Please check your code.");
+				throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
 			}
 		}
 		

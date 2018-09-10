@@ -119,12 +119,11 @@ public class ETLProcessRunner {
 		//L (Load) step:
 		if (validatedStudies.size() > 0) {
 		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
-
-		    if (loadSuccessful & !studyPublishCommandPrefix.isEmpty()) {
-		        publisher.publishStudies(validatedStudies);
-		    }
 		    if (loadSuccessful) {
 		        restarter.restart();
+		        if (!studyPublishCommandPrefix.isEmpty()) {
+		            publisher.publishStudies(validatedStudies);
+		        }
 		    }
 		}
 	}
