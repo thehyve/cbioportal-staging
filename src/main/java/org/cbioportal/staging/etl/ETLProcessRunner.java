@@ -112,26 +112,20 @@ public class ETLProcessRunner {
 	
 	private void runCommon(Pair<Integer, List<String>> idAndStudies) throws Exception {
 		boolean loadSuccessful = false;
-		try  {
-			//T (Transform) step:
-			transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
-			//V (Validate) step:
-			ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
-			//L (Load) step:
-			if (validatedStudies.size() > 0) {
-				loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
-				
-				if (loadSuccessful & !studyPublishCommandPrefix.isEmpty()) {
-					publisher.publishStudies(validatedStudies);
-				}
-			}
-		}
-		finally
-		{
-			//restart cBioPortal:
-			if (loadSuccessful) {
-				restarter.restart();
-			}
+		//T (Transform) step:
+		transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
+		//V (Validate) step:
+		ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+		//L (Load) step:
+		if (validatedStudies.size() > 0) {
+		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
+
+		    if (loadSuccessful & !studyPublishCommandPrefix.isEmpty()) {
+		        publisher.publishStudies(validatedStudies);
+		    }
+		    if (loadSuccessful) {
+		        restarter.restart();
+		    }
 		}
 	}
 
