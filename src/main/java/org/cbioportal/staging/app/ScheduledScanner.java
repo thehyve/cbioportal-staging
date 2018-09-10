@@ -160,7 +160,7 @@ public class ScheduledScanner
 	private void checkIfShouldExit(int nrIterations, int max) {
 		if (max != -1 && nrIterations >= max) {
 			logger.info("==>>>>> Reached configured number of iterations (" + max + "). Exiting... <<<<<==");
-			System.exit(0);
+			scheduledScannerService.stopApp();
 		}
 	}
 
