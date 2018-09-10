@@ -51,7 +51,7 @@ public class PublisherServiceImpl implements PublisherService {
 			String line2 = null;
 			while ((line2 = reader2.readLine()) != null)
 			{
-				logger.info(line2);
+				logger.warn(line2);
 			}
 			
 			cmdProcess.waitFor();
