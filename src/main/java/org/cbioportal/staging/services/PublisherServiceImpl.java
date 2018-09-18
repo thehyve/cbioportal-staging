@@ -34,10 +34,13 @@ public class PublisherServiceImpl implements PublisherService {
 	@Value("${study.publish.command_prefix}")
 	private String studyPublishCommandPrefix;
 	
+	@Value("${study.curator.email}")
+        private String studyCuratorEmail;
+	
 	public void publishStudies(List<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
 		for (String studyId : studyIds) {
-			String command = studyPublishCommandPrefix + " "+ studyId;
+			String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
 			Process cmdProcess = Runtime.getRuntime().exec(command);
 			logger.info("Executing command: "+command);
 			
