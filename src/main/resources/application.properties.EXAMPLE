@@ -76,3 +76,6 @@ logging.level.root=INFO
 # email of the user which will get automatic access to studies loaded, and also will receive a copy
 # of all emails sent by the staging app.
 study.curator.email=
+
+# uncomment this property if you want to skip the transformation step
+# skip.transformation=true
