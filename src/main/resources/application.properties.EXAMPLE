@@ -82,3 +82,6 @@ study.curator.email=
 
 # Recognizable name for the server, appears in the emails
 server.alias=DEV
+
+# If debug mode is set true, emails will only be sent to the study.curator.email (and not to the mail.smtp.user)
+debug.mode=true 
