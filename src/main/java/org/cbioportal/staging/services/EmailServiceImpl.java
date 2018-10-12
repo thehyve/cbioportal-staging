@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -89,7 +90,10 @@ public class EmailServiceImpl implements EmailService {
 	private String scanLocation;
 	
 	@Value("${study.curator.email}")
-        private String studyCuratorEmail;
+	private String studyCuratorEmail;
+	
+	@Value("${server.alias}")
+	private String serverAlias;
 	
 	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
@@ -223,10 +227,17 @@ public class EmailServiceImpl implements EmailService {
 	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
+		Set<String> studies = studiesLoaded.keySet();
+		String status = "SUCCESS";
+		for (String study : studies) {
+			if (studiesLoaded.get(study).equals("ERRORS")) {
+				status = "ERROR";
+			}
+		}
 		
 		Message msg = new MimeMessage(session);
 		try {
-		    msg.setSubject("INFO - cBioPortal staging app: data loading results for new studies");
+		    msg.setSubject(status+" - cBioPortal study loading report. Server: "+serverAlias+". Studies: "+studies);
 		    msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
 		    msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
 		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));

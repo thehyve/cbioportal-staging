@@ -79,3 +79,6 @@ study.curator.email=
 
 # uncomment this property if you want to skip the transformation step
 # skip.transformation=true
+
+# Recognizable name for the server, appears in the emails
+server.alias=DEV
