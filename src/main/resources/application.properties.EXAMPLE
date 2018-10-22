@@ -70,7 +70,7 @@ mail.smtp.starttls.enable=<boolean>
 logging.level.root=INFO
 
 # add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out)
-# the staging app will append the study id, the study.curator.email and the server.alias to this command.
+# the staging app will append the study id and the study.curator.email to this command.
 #study.publish.command_prefix=
 
 # email of the user which will get automatic access to studies loaded, and also will receive a copy
