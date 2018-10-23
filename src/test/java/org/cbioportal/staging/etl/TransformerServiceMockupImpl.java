@@ -24,9 +24,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class TransformerServiceMockupImpl implements TransformerService {
 	
-	
 	@Override
 	public void transform(File originPath, File finalPath) throws TransformerException {
+		
+	}
+
+	@Override
+	public void copyStudy(File originPath, File finalPath) throws TransformerException {
 		
 	}
 	

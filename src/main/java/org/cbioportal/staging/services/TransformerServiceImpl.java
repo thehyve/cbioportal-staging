@@ -39,9 +39,6 @@ public class TransformerServiceImpl implements TransformerService {
 	@Value("${transformation.command.script}")
 	private String transformationCommandScript;
 	
-	@Value("${skip.transformation:false}")
-	private boolean skipTransformation;
-	
 	@Override
 	public void transform(File studyPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException {
 		if (!finalPath.exists()) {
@@ -49,19 +46,14 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		try {
 			String transformationCommand = "";
-			logger.info("Starting transformation for file: "+studyPath.getName());
-			if (skipTransformation) {
-				//String[] fPath = finalPath.toString().split("/acc");
-				transformationCommand = "cp -R " + studyPath.toString() + "/. " + finalPath.toString();
-			} else {
-				if (transformationCommandScript.equals("")) {
-					throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
-				}
-				//Apply transformation command
-				transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
-				transformationCommand = resolveEnvVars(transformationCommand);
+			logger.info("Starting transformation for study: "+studyPath.getName());
+			//Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
+			if (transformationCommandScript.equals("")) {
+				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
 			}
-			//transformationCommand = resolveEnvVars(transformationCommand);
+			//Apply transformation command
+			transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
+			transformationCommand = resolveEnvVars(transformationCommand);
 			logger.info("Executing command: " + transformationCommand);
 			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
 			
@@ -126,5 +118,32 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 		m.appendTail(sb);
 		return sb.toString();
+	}
+
+	@Override
+	public void copyStudy(File studyPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException {
+		if (!finalPath.exists()) {
+			finalPath.mkdir();
+		}
+		logger.info("Skipping transformation for study: "+studyPath);
+		String transformationCommand = "cp -R " + studyPath.toString() + "/. " + finalPath.toString();
+		logger.info("Executing command: " + transformationCommand);
+		try {
+			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
+			
+			//TODO - ideally these two loggers are running in parallel so that we see the stdout and stderr in the same
+			//order as reported by transformation script. This is not yet done below, so we first get all stdout, followed
+			//by all stderr:
+			logAndReturnProcessStream(transformationProcess.getInputStream(), false);
+			String errorStack = logAndReturnProcessStream(transformationProcess.getErrorStream(), true);
+			
+			transformationProcess.waitFor(); //Wait until transformation is finished
+			if (transformationProcess.exitValue() != 0) {
+				throw new RuntimeException("The command has failed: "+errorStack);
+			}
+			logger.info("Finished copying for study: "+studyPath.getName());
+		} catch (FileNotFoundException e1) {
+			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
+		}
 	}
 }
