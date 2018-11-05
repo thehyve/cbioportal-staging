@@ -11,7 +11,9 @@ the staging files have been validated. This is the validation status for each of
   </#if>
 </#list>
 <br><br>The validation reports and log files can be found here:
-<p>- <a href="${csl_path}">${csl_path}</a>
+<#list files as name, url>
+<p>- ${name}: <a href="${url}">${url}</a>
+</#list>
 <br><br>The system will proceed and attempt loading the 
 <#if level == "ERROR">
 <b><font style="color: #04B404">VALID</font></b> and <b><font style="color: #FFBF00">VALID with WARNINGS</font></b>

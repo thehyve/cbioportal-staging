@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class PublisherServiceImpl implements PublisherService {
 	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
 	
-	@Value("${study.publish.command_prefix}")
+	@Value("${study.publish.command_prefix:null}")
 	private String studyPublishCommandPrefix;
 	
 	@Value("${study.curator.email}")
@@ -39,30 +39,31 @@ public class PublisherServiceImpl implements PublisherService {
 	
 	public void publishStudies(List<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
-		for (String studyId : studyIds) {
-			String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
-			Process cmdProcess = Runtime.getRuntime().exec(command);
-			logger.info("Executing command: "+command);
-			
-			BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
-			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				logger.info(line);
-			}
-			BufferedReader reader2 = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()));
-			String line2 = null;
-			while ((line2 = reader2.readLine()) != null)
-			{
-				logger.warn(line2);
-			}
-			
-			cmdProcess.waitFor();
-			
-			if (cmdProcess.exitValue() != 0) {
-				throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
+		if (!studyPublishCommandPrefix.equals("null")) {
+			for (String studyId : studyIds) {
+				String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
+				Process cmdProcess = Runtime.getRuntime().exec(command);
+				logger.info("Executing command: "+command);
+				
+				BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
+				String line = null;
+				while ((line = reader.readLine()) != null)
+				{
+					logger.info(line);
+				}
+				BufferedReader reader2 = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()));
+				String line2 = null;
+				while ((line2 = reader2.readLine()) != null)
+				{
+					logger.warn(line2);
+				}
+				
+				cmdProcess.waitFor();
+				
+				if (cmdProcess.exitValue() != 0) {
+					throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
+				}
 			}
 		}
-		
 	}
 }

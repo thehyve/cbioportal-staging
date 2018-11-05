@@ -31,9 +31,9 @@ public interface EmailService {
 	
 	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException;
 	
-	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 	
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 

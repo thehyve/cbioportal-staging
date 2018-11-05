@@ -198,7 +198,7 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
@@ -228,7 +228,7 @@ public class EmailServiceImpl implements EmailService {
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("scanLocation", scanLocation);
 		    messageParams.put("studies", studies);
-		    messageParams.put("csl_path", csl_path);
+		    messageParams.put("files", filesPath);
 		    messageParams.put("level", level);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
@@ -239,7 +239,7 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		Set<String> studies = studiesLoaded.keySet();
@@ -263,7 +263,7 @@ public class EmailServiceImpl implements EmailService {
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
 		    messageParams.put("studies", studiesLoaded);
-		    messageParams.put("csl_path", csl_path);
+		    messageParams.put("files", filesPath);
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		    msg.setContent(message, "text/html; charset=utf-8");
 		    msg.setSentDate(new Date());

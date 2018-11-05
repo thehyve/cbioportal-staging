@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
@@ -70,8 +71,10 @@ public class Validator {
 		}
 	}
 	
-	ArrayList<String> validate(Integer id, List<String> studies) throws IllegalArgumentException, Exception {
+	List<Entry<ArrayList<String>, Map<String, String>>> validate(Integer id, List<String> studies) throws IllegalArgumentException, Exception {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
+		Map<String, String> filePaths = new HashMap<String, String>();
+		List<Entry<ArrayList<String>, Map<String, String>>> result = new ArrayList<Entry<ArrayList<String>, Map<String, String>>>();
 		try {
 			//Get studies from appropriate staging folder
 			File originPath = new File(etlWorkingDir+"/"+id+"/staging");
@@ -86,6 +89,8 @@ public class Validator {
 				String logFileName = study+"_validation_log_"+timeStamp+".log";
 				File logFile = new File(etlWorkingDir+"/"+id+"/"+logFileName);
 				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
+				filePaths.put(study+" validation log", centralShareLocation+"/"+id+"/"+logFile.getName());
+				filePaths.put(study+" validation report", centralShareLocation+"/"+id+"/"+reportName);
 				
 				//Put report and log file in the share location
 				//First, make the "id" dir in the share location if it is local
@@ -119,7 +124,7 @@ public class Validator {
 			if (centralShareLocationPortal.equals("")) {
 				centralShareLocationPortal = centralShareLocation;
 			}
-			emailService.emailValidationReport(validatedStudies, validationLevel, centralShareLocationPortal+"/"+id+"/");
+			emailService.emailValidationReport(validatedStudies, validationLevel, filePaths);
 		} catch (ValidatorException e) {
 			//tell about error, continue with next study
 			logger.error(e.getMessage()+". The app will skip this study.");
@@ -130,6 +135,7 @@ public class Validator {
 				e1.printStackTrace();
 			}
 		}
-		return studiesPassed;
+		result.add(new java.util.AbstractMap.SimpleEntry<ArrayList<String>, Map<String, String>>(studiesPassed, filePaths));
+		return result;
 	}
 }
