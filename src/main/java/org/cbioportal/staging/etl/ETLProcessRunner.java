@@ -22,6 +22,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
@@ -64,7 +66,7 @@ public class ETLProcessRunner {
 	@Autowired
 	private Publisher publisher;
 	
-	@Value("${study.publish.command_prefix}")
+	@Value("${study.publish.command_prefix:null}")
 	private String studyPublishCommandPrefix;
 
 	/**
@@ -115,13 +117,16 @@ public class ETLProcessRunner {
 		//T (Transform) step:
 		transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
 		//V (Validate) step:
-		ArrayList<String> validatedStudies = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+		List<Entry<ArrayList<String>, Map<String, String>>> validatedStudiesAndLogFiles = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+		Entry<ArrayList<String>, Map<String, String>> entry = validatedStudiesAndLogFiles.get(0);
+		ArrayList<String> validatedStudies = entry.getKey();
+		Map<String, String> filePaths = entry.getValue();
 		//L (Load) step:
 		if (validatedStudies.size() > 0) {
-		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies);
+		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, filePaths);
 		    if (loadSuccessful) {
 		        restarter.restart();
-		        if (!studyPublishCommandPrefix.isEmpty()) {
+		        if (!studyPublishCommandPrefix.equals("null")) {
 		            publisher.publishStudies(validatedStudies);
 		        }
 		    }

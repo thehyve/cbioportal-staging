@@ -53,15 +53,19 @@ public class Loader {
 	@Value("${central.share.location.portal:}")
 	private String centralShareLocationPortal;
 	
-	boolean load(Integer id, List<String> studies) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException {
+	boolean load(Integer id, List<String> studies, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException {
 		Map<String, String> statusStudies = new HashMap<String, String>();
 		//Get studies from appropriate staging folder
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+		if (centralShareLocationPortal.equals("")) {
+			centralShareLocationPortal = centralShareLocation;
+		}
 		for (String study : studies) {
 			try {
 				logger.info("Starting loading of study "+study+". This can take some minutes.");
 				File studyPath = new File(originPath+"/"+study);
-				loaderService.load(study, studyPath, id, centralShareLocation+"/"+id);
+				String loadingLog = loaderService.load(study, studyPath, id, centralShareLocation+"/"+id);
+				filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+loadingLog);
 				logger.info("Loading of study "+study+" finished.");
 				statusStudies.put(study, "SUCCESSFULLY LOADED");
 			} catch (RuntimeException e) {
@@ -73,10 +77,7 @@ public class Loader {
 				e.printStackTrace();
 			}
 		}
-		if (centralShareLocationPortal.equals("")) {
-			centralShareLocationPortal = centralShareLocation;
-		}
-		emailService.emailStudiesLoaded(statusStudies, centralShareLocationPortal+"/"+id+"/");
+		emailService.emailStudiesLoaded(statusStudies, filesPath);
 		return true;
 	}
 }

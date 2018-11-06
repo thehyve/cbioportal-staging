@@ -127,7 +127,7 @@ public class IntegrationTest {
 	public void allStudiesLoaded() {
 		initBasicMockups("file:src/test/resources/integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "");
+		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 		
 		scheduledScanner.scan();
 		
@@ -151,7 +151,7 @@ public class IntegrationTest {
 	public void subsetOfStudiesLoaded() {
 		initBasicMockups("file:src/test/resources/local_integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "");
+		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 		
 		scheduledScanner.scan();
 		

@@ -19,6 +19,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -114,10 +117,12 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validator, "etlWorkingDir", "src/test/resources/validator_tests");
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
-		List<String> studies = new ArrayList<String>();
+		ArrayList<String> studies = new ArrayList<String>();
 		studies.add("lgg_ucsf_2014");
-		ArrayList<String> result = validator.validate(0, studies);
-		assertEquals(studies, result); //The study passed has passed validation,
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
+		ArrayList<String> validatedStudies = entry.getKey();
+		assertEquals(studies, validatedStudies); //The study passed has passed validation,
 		
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -139,8 +144,10 @@ public class ValidatorTest {
 
 		List<String> studies = new ArrayList<String>();
 		studies.add("lgg_ucsf_2014");
-		ArrayList<String> result = validator.validate(0, studies);
-		assertEquals(0, result.size()); //The study added has failed validation, is not going to be loaded
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
+		ArrayList<String> validatedStudies = entry.getKey();
+		assertEquals(0, validatedStudies.size()); //The study added has failed validation, is not going to be loaded
 		
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -161,8 +168,10 @@ public class ValidatorTest {
 
 		List<String> studies = new ArrayList<String>();
 		studies.add("lgg_ucsf_2014");
-		ArrayList<String> result = validator.validate(0, studies);
-		assertEquals(0, result.size());
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
+		ArrayList<String> validatedStudies = entry.getKey();
+		assertEquals(0, validatedStudies.size());
 		
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());

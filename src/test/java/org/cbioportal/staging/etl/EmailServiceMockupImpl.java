@@ -44,11 +44,11 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailStudyErrorSent  = true;
 	}
 	
-	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded, String csl_path) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudiesLoadedSent = true;
 	}
 	

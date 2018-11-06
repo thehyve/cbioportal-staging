@@ -79,3 +79,9 @@ study.curator.email=
 
 # uncomment this property if you want to skip the transformation step
 # skip.transformation=true
+
+# Recognizable name for the server, appears in the emails
+server.alias=DEV
+
+# If debug mode is set true, emails will only be sent to the study.curator.email (and not to the mail.smtp.user)
+debug.mode=true 

@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -69,8 +71,9 @@ public class LoaderTest {
 		ReflectionTestUtils.setField(loader, "etlWorkingDir", etlWorkingDir);
 
 		List<String> studies = new ArrayList<String>();
+		Map<String, String> studyPaths = new HashMap<String, String>();
 		studies.add("lgg_ucsf_2014");
-		loader.load(0, studies);
+		loader.load(0, studies, studyPaths);
 		
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());

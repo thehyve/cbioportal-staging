@@ -35,12 +35,23 @@ public class Transformer {
 
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;
+
+	@Value("${skip.transformation:false}")
+	private boolean skipTransformation;
 	
 	@Autowired
 	private EmailService emailService;
 	
 	@Autowired
 	private TransformerService transformerService;
+
+	boolean skipTransformation(File originPath) {
+		File metaStudyFile = new File(originPath+"/meta_study.txt");
+		if (skipTransformation || metaStudyFile.exists() && metaStudyFile.isFile()) {
+			return true;
+		}
+		return false;
+	}
 
 	void transform(Integer id, List<String> studies, String transformationCommand) throws InterruptedException, ConfigurationException, IOException {
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id);
@@ -52,7 +63,11 @@ public class Transformer {
 			try {
 				File dir = new File(originPath+"/"+study);
 				File finalPath = new File(destinationPath+"/"+study);
-				transformerService.transform(dir, finalPath);
+				if (skipTransformation(dir)) {
+					transformerService.copyStudy(dir, finalPath);
+				} else {
+					transformerService.transform(dir, finalPath);
+				}
 			} catch (TransformerException e) {
 				//tell about error, continue with next study
 				logger.error(e.getMessage()+". The app will skip this study.");

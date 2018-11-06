@@ -142,6 +142,7 @@ We can configure the app to run as a cron job by using these parameters:
 
 ### Transformer settings
 * `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+* `skip.transformation`: set this parameter to `true` if you want to skip the transformation step.
 
 ### Validation and Loader settings
 * `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
@@ -178,3 +179,14 @@ The app sends emails to keep the user informed about the status of the tasks per
 * `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
 * `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
 * `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
+* `study.curator.email`: email of the user which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
+
+#### Debug settings:
+* `logging.level.root`: default log level / you can use this to debug and troubleshoot issues (default `INFO`)
+* `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.email` (and not to the `mail.smtp.user`)
+
+
+### Other:
+* `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.email` to this command.
+* `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
+ 
