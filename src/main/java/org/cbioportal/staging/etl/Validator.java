@@ -75,6 +75,9 @@ public class Validator {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
 		Map<String, String> filePaths = new HashMap<String, String>();
 		List<Entry<ArrayList<String>, Map<String, String>>> result = new ArrayList<Entry<ArrayList<String>, Map<String, String>>>();
+		if (centralShareLocationPortal.equals("")) {
+			centralShareLocationPortal = centralShareLocation;
+		}
 		try {
 			//Get studies from appropriate staging folder
 			File originPath = new File(etlWorkingDir+"/"+id+"/staging");
@@ -89,8 +92,8 @@ public class Validator {
 				String logFileName = study+"_validation_log_"+timeStamp+".log";
 				File logFile = new File(etlWorkingDir+"/"+id+"/"+logFileName);
 				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
-				filePaths.put(study+" validation log", centralShareLocation+"/"+id+"/"+logFile.getName());
-				filePaths.put(study+" validation report", centralShareLocation+"/"+id+"/"+reportName);
+				filePaths.put(study+" validation log", centralShareLocationPortal+"/"+id+"/"+logFile.getName());
+				filePaths.put(study+" validation report", centralShareLocationPortal+"/"+id+"/"+reportName);
 				
 				//Put report and log file in the share location
 				//First, make the "id" dir in the share location if it is local
@@ -120,9 +123,6 @@ public class Validator {
 				validatedStudies.put(study, exitStatus);
 
 				logger.info("Validation of study "+study+" finished.");
-			}
-			if (centralShareLocationPortal.equals("")) {
-				centralShareLocationPortal = centralShareLocation;
 			}
 			emailService.emailValidationReport(validatedStudies, validationLevel, filePaths);
 		} catch (ValidatorException e) {

@@ -57,12 +57,15 @@ public class Loader {
 		Map<String, String> statusStudies = new HashMap<String, String>();
 		//Get studies from appropriate staging folder
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
+		if (centralShareLocationPortal.equals("")) {
+			centralShareLocationPortal = centralShareLocation;
+		}
 		for (String study : studies) {
 			try {
 				logger.info("Starting loading of study "+study+". This can take some minutes.");
 				File studyPath = new File(originPath+"/"+study);
 				String loadingLog = loaderService.load(study, studyPath, id, centralShareLocation+"/"+id);
-				filesPath.put(study+" loading log", loadingLog);
+				filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+loadingLog);
 				logger.info("Loading of study "+study+" finished.");
 				statusStudies.put(study, "SUCCESSFULLY LOADED");
 			} catch (RuntimeException e) {
@@ -73,9 +76,6 @@ public class Loader {
 				statusStudies.put(study, "ERRORS");
 				e.printStackTrace();
 			}
-		}
-		if (centralShareLocationPortal.equals("")) {
-			centralShareLocationPortal = centralShareLocation;
 		}
 		emailService.emailStudiesLoaded(statusStudies, filesPath);
 		return true;
