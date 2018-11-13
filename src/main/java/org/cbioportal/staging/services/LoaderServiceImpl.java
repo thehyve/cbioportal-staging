@@ -77,7 +77,7 @@ public class LoaderServiceImpl implements LoaderService {
 		logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
 		String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
 		String logName = study+"_loading_log_"+logTimeStamp+".log";
-		File logFile = new File(etlWorkingDir+"/"+id+logName);
+		File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
 		loaderCmd.redirectErrorStream(true);
 		loaderCmd.redirectOutput(Redirect.appendTo(logFile));
 		try {
