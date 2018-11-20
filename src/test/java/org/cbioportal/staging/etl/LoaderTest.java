@@ -42,7 +42,8 @@ import freemarker.template.TemplateNotFoundException;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
-		org.cbioportal.staging.etl.LoaderServiceMockupImpl.class})
+        org.cbioportal.staging.etl.LoaderServiceMockupImpl.class,
+        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -55,31 +56,53 @@ public class LoaderTest {
 	private EmailServiceMockupImpl emailService;
 	
 	@Autowired
-	private LoaderServiceMockupImpl loaderService;
-	
+    private LoaderServiceMockupImpl loaderService;
+    	
 	@Before
 	public void setUp() throws Exception {
 		emailService.reset();
+        loaderService.reset();
 	}
-	
-	@Test
-	public void studyLoaded() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+     
+    @Test
+	public void studyLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
-		File etlWorkingDir = new File("src/test/resources/loader_tests");
-		ReflectionTestUtils.setField(loader, "etlWorkingDir", etlWorkingDir);
+		ReflectionTestUtils.setField(loaderService, "throwError", false);
+		ReflectionTestUtils.setField(loaderService, "exitStatus", 0);
 
-		List<String> studies = new ArrayList<String>();
-		Map<String, String> studyPaths = new HashMap<String, String>();
+        ArrayList<String> studies = new ArrayList<String>();
+        Map<String, String> studyStatus = new HashMap<String, String>();
 		studies.add("lgg_ucsf_2014");
-		loader.load(0, studies, studyPaths);
+		Boolean result = loader.load(0, studies, studyStatus);
+		assertEquals(true, result); //The study has been loaded
 		
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent()); 
-	}
+        assertEquals(false, emailService.isEmailGenericErrorSent());
+    }
+    
+    @Test
+	public void studyNotLoaded() throws Exception {
+		ReflectionTestUtils.setField(loader, "emailService", emailService);
+		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
+		ReflectionTestUtils.setField(loaderService, "throwError", false);
+		ReflectionTestUtils.setField(loaderService, "exitStatus", 1);
+
+        ArrayList<String> studies = new ArrayList<String>();
+        Map<String, String> studyStatus = new HashMap<String, String>();
+        studies.add("lgg_ucsf_2014");
+		Boolean result = loader.load(0, studies, studyStatus);
+		assertEquals(false, result); //The study has not been loaded
+		
+		//Check that the correct email is sent
+		assertEquals(false, emailService.isEmailStudyErrorSent());
+		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+		assertEquals(false, emailService.isEmailValidationReportSent());
+		assertEquals(true, emailService.isEmailStudiesLoadedSent());
+        assertEquals(false, emailService.isEmailGenericErrorSent());
+    } 
 }

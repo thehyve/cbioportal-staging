@@ -108,7 +108,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
+		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
 		
 		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
 		ReflectionTestUtils.setField(publisher, "publisherService", publisherService);
@@ -138,13 +138,6 @@ public class IntegrationTest {
 		assertEquals(true, emailService.isEmailValidationReportSent());
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-		//assert that the loader reports the studies that are passed by the validation (changes to mockup)
-		List<String> expected = new ArrayList<String>();
-		expected.add("study1");
-		expected.add("study2");
-		expected.add("study3");
-		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
 	}
 	
 	@Test
@@ -162,12 +155,6 @@ public class IntegrationTest {
 		assertEquals(true, emailService.isEmailValidationReportSent());
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-		//assert that the loader reports the studies that are passed by the validation (changes to mockup)
-		List<String> expected = new ArrayList<String>();
-		expected.add("study1");
-		expected.add("study2");
-		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
 	}
 	
 	
@@ -186,10 +173,6 @@ public class IntegrationTest {
 		assertEquals(true, emailService.isEmailValidationReportSent());
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-		//assert that the loader reports the studies that are passed by the validation (changes to mockup)
-		List<String> expected = new ArrayList<String>(); //No studies are loaded
-		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
 	}
 	
 	@Test
@@ -209,10 +192,6 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailValidationReportSent()); 
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(true, emailService.isEmailGenericErrorSent());
-		
-		//no studies are loaded due to the error
-		List<String> expected = new ArrayList<String>();
-		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
 	}
 	
 	@Test
@@ -230,10 +209,6 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailValidationReportSent()); 
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-		//no studies are loaded
-		List<String> expected = new ArrayList<String>();
-		assertEquals(expected.size(), loaderService.getLoadedStudies().size());
 	}
 	
 	@Test
