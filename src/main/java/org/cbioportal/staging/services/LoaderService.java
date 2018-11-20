@@ -19,9 +19,10 @@ import java.io.File;
 import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.LoaderException;
 
 public interface LoaderService {
 	
-	public String load(String study, File studyPath, int id, String centralShareLocation) throws IOException, InterruptedException, ConfigurationException, Exception;
+	public int load(String study, File studyPath, File logFile) throws ConfigurationException, IOException, LoaderException;
 
 }

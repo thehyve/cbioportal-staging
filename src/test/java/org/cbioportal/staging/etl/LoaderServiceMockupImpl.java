@@ -16,33 +16,28 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceMockupImpl implements LoaderService {
 	
-	private String testFile;
-	private List<String> loadedStudies = new ArrayList<String>();
+	private int exitStatus;
+	private boolean throwError = false;
 	
 	@Override
-	public String load(String study, File studyPath, int id, String centralShareLocation) throws IOException, InterruptedException, ConfigurationException {
-		File logFile = new File(testFile);
-		loadedStudies.add(study);
-		return logFile.toString(); 
+	public int load(String study, File studyPath, File logFile) throws LoaderException {
+        if (throwError) {
+			throw new LoaderException("dummy test error");
+		}
+		return exitStatus;
 	}
-	
-	public List<String> getLoadedStudies() {
-		return this.loadedStudies;
-	}
-	
+
 	public void reset() {
-		this.loadedStudies = new ArrayList<String>();
+		this.throwError = false;
+		this.exitStatus = 0;
 	}
 	
 }

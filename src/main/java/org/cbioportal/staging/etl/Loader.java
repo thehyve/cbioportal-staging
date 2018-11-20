@@ -21,13 +21,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
@@ -42,7 +46,10 @@ public class Loader {
 	private EmailService emailService;
 	
 	@Autowired
-	private LoaderService loaderService;
+    private LoaderService loaderService;
+    
+    @Autowired
+	private ValidationService validationService;
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private File etlWorkingDir;
@@ -51,10 +58,12 @@ public class Loader {
 	private String centralShareLocation;
 	
 	@Value("${central.share.location.portal:}")
-	private String centralShareLocationPortal;
+    private String centralShareLocationPortal;
+    
 	
-	boolean load(Integer id, List<String> studies, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException {
-		Map<String, String> statusStudies = new HashMap<String, String>();
+	boolean load(Integer id, List<String> studies, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
+        Map<String, String> statusStudies = new HashMap<String, String>();
+        int studiesNotLoaded = 0;
 		//Get studies from appropriate staging folder
 		File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
 		if (centralShareLocationPortal.equals("")) {
@@ -63,21 +72,40 @@ public class Loader {
 		for (String study : studies) {
 			try {
 				logger.info("Starting loading of study "+study+". This can take some minutes.");
-				File studyPath = new File(originPath+"/"+study);
-				String loadingLog = loaderService.load(study, studyPath, id, centralShareLocation+"/"+id);
-				filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+loadingLog);
-				logger.info("Loading of study "+study+" finished.");
-				statusStudies.put(study, "SUCCESSFULLY LOADED");
+                
+                //Create loading log file
+                String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
+                String logName = study+"_loading_log_"+logTimeStamp+".log";
+                File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
+
+                File studyPath = new File(originPath+"/"+study);
+                int loadingStatus = loaderService.load(study, studyPath, logFile);
+                validationService.copyToResource(logFile, centralShareLocation);
+
+                //Add loading result for the email loading report
+                if (loadingStatus == 0) {
+                    statusStudies.put(study, "SUCCESSFULLY LOADED");
+                } else {
+                    statusStudies.put(study, "ERRORS");
+                    studiesNotLoaded += 1;
+                }
+                logger.info("Loading of study "+study+" finished.");
 			} catch (RuntimeException e) {
 				throw new RuntimeException(e);
 			} catch (Exception e) {
 				//tell about error, continue with next study
 				logger.error(e.getMessage()+". The app will skip this study.");
-				statusStudies.put(study, "ERRORS");
+                statusStudies.put(study, "ERRORS");
+                studiesNotLoaded += 1;
 				e.printStackTrace();
 			}
-		}
-		emailService.emailStudiesLoaded(statusStudies, filesPath);
+        }
+        
+        emailService.emailStudiesLoaded(statusStudies, filesPath);
+        //Return false if no studies have been loaded
+        if (studies.size() == studiesNotLoaded) {
+            return false;
+        } 
 		return true;
 	}
 }

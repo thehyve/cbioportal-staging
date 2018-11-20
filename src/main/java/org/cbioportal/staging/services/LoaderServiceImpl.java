@@ -20,15 +20,12 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.cbioportal.staging.etl.Loader;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -50,12 +47,9 @@ public class LoaderServiceImpl implements LoaderService {
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;
-	
-	@Autowired
-	ValidationService validationService;
-	
+		
 	@Override
-	public String load(String study, File studyPath, int id, String centralShareLocation) throws ConfigurationException, IOException, Exception {
+	public int load(String study, File studyPath, File logFile) throws ConfigurationException, IOException, LoaderException {
 		ProcessBuilder loaderCmd;
 		if (cbioportalMode.equals("local")) {
 			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
@@ -75,16 +69,13 @@ public class LoaderServiceImpl implements LoaderService {
 
 		//Apply loader command
 		logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
-		String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-		String logName = study+"_loading_log_"+logTimeStamp+".log";
-		File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
 		loaderCmd.redirectErrorStream(true);
 		loaderCmd.redirectOutput(Redirect.appendTo(logFile));
 		try {
 			Process loadProcess = loaderCmd.start();
 			loadProcess.waitFor(); //Wait until loading is finished
-			validationService.copyToResource(logFile, centralShareLocation);
-			return logName;
+            int exitValue = loadProcess.exitValue();
+			return exitValue;
 		} catch (IOException e) {
 			throw new IOException(e);
 		} catch (Exception e) {
