@@ -70,34 +70,33 @@ public class Loader {
 			centralShareLocationPortal = centralShareLocation;
 		}
 		for (String study : studies) {
+            logger.info("Starting loading of study "+study+". This can take some minutes.");
+            int loadingStatus = -1;                 
+            //Create loading log file
+            String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
+            String logName = study+"_loading_log_"+logTimeStamp+".log";
+            File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
 			try {
-				logger.info("Starting loading of study "+study+". This can take some minutes.");
-                
-                //Create loading log file
-                String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-                String logName = study+"_loading_log_"+logTimeStamp+".log";
-                File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
-
                 File studyPath = new File(originPath+"/"+study);
-                int loadingStatus = loaderService.load(study, studyPath, logFile);
+                loadingStatus = loaderService.load(study, studyPath, logFile);
+            } catch (RuntimeException e) {
+				throw new RuntimeException(e);
+			} catch (Exception e) {
+				//tell about error, continue with next study
+				logger.error(e.getMessage()+". The app will skip this study.");
+				e.printStackTrace();
+			} finally {
                 validationService.copyToResource(logFile, centralShareLocation);
 
                 //Add loading result for the email loading report
                 if (loadingStatus == 0) {
                     statusStudies.put(study, "SUCCESSFULLY LOADED");
+                    logger.info("Loading of study "+study+" finished successfully.");
                 } else {
                     statusStudies.put(study, "ERRORS");
                     studiesNotLoaded += 1;
+                    logger.error("Loading process of study "+study+" failed.");
                 }
-                logger.info("Loading of study "+study+" finished.");
-			} catch (RuntimeException e) {
-				throw new RuntimeException(e);
-			} catch (Exception e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will skip this study.");
-                statusStudies.put(study, "ERRORS");
-                studiesNotLoaded += 1;
-				e.printStackTrace();
 			}
         }
         
