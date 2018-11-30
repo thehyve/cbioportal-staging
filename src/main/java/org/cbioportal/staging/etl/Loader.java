@@ -87,6 +87,7 @@ public class Loader {
 				e.printStackTrace();
 			} finally {
                 validationService.copyToResource(logFile, centralShareLocation);
+                filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+logName);	
 
                 //Add loading result for the email loading report
                 if (loadingStatus == 0) {
