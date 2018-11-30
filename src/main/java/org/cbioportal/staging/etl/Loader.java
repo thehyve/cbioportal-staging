@@ -86,7 +86,7 @@ public class Loader {
 				logger.error(e.getMessage()+". The app will skip this study.");
 				e.printStackTrace();
 			} finally {
-                validationService.copyToResource(logFile, centralShareLocation);
+                validationService.copyToResource(logFile, centralShareLocation+"/"+id);
                 filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+logName);	
 
                 //Add loading result for the email loading report
