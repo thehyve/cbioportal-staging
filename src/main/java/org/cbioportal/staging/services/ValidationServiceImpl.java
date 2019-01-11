@@ -14,13 +14,15 @@
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.services;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.FileInputStream;
 import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Validator;
@@ -147,16 +149,12 @@ public class ValidationServiceImpl implements ValidationService {
 		}
 		else {
 			resource = this.resourcePatternResolver.getResource(resourcePath);
-		}
+        }
 		WritableResource writableResource = (WritableResource) resource;
-		try (OutputStream outputStream = writableResource.getOutputStream(); 
-				BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-			String line = null;
-			while ((line = br.readLine()) != null)
-			{
-				outputStream.write(line.getBytes());
-			}
+        try (OutputStream outputStream = writableResource.getOutputStream(); 
+            InputStream inputStream = new FileInputStream(filePath)) {
+                IOUtils.copy(inputStream, outputStream);
 		}
-	}
+    }
 
 }
