@@ -37,21 +37,21 @@ public class RestarterServiceImpl implements RestarterService {
 	@Value("${cbioportal.docker.cbio.container}")
 	private String cbioContainer;
 	
-	@Value("${portal.home:.}")
-	private String portalHome;
+	@Value("${portal.source:.}")
+	private String portalSource;
 	
 	@Override
 	public void restart() throws InterruptedException, IOException, ConfigurationException {
 		if (cbioportalMode.equals("local")) {
 			logger.info("Stopping Tomcat...");
 			ProcessBuilder stopCmd = new ProcessBuilder("catalina", "stop", "-force");
-			stopCmd.directory(new File(portalHome));
+			stopCmd.directory(new File(portalSource));
 			logger.info("Executing command: "+String.join(" ", stopCmd.command()));
 			Process stopProcess = stopCmd.start();
 			stopProcess.waitFor();
 			logger.info("Tomcat successfully stopped. Restarting Tomcat...");
 			ProcessBuilder startCmd = new ProcessBuilder("catalina", "start");
-			startCmd.directory(new File(portalHome));
+			startCmd.directory(new File(portalSource));
 			Process startProcess = startCmd.start();
 			startProcess.waitFor();
 			logger.info("Tomcat successfully restarted.");

@@ -50,10 +50,13 @@ public class ValidationServiceImpl implements ValidationService {
 	private String cbioportalDockerImage;
 	
 	@Value("${cbioportal.docker.network}")
-	private String cbioportalDockerNetwork;
+    private String cbioportalDockerNetwork;
+    
+    @Value("${cbioportal.docker.properties}")
+    private String cbioportalDockerProperties;
 	
-	@Value("${portal.home:.}")
-	private String portalHome;
+	@Value("${portal.source:.}")
+	private String portalSource;
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;
@@ -71,8 +74,8 @@ public class ValidationServiceImpl implements ValidationService {
 			if (cbioportalMode.equals("local")) {
 				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.toString(), "-p", portalInfoFolder.toString(), "-html", reportPath, "-v");
 				portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoFolder.toString());
-				portalInfoCmd.directory(new File(portalHome+"/core/src/main/scripts"));
-				validationCmd.directory(new File(portalHome+"/core/src/main/scripts/importer"));
+				portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
+				validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
 			} else if (cbioportalMode.equals("docker")) {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
 					//make sure report file exists first, otherwise docker will map it as a folder:
@@ -82,10 +85,13 @@ public class ValidationServiceImpl implements ValidationService {
 					//docker command:
 					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
 							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+":/outreport.html",
-							"-v", portalInfoFolder.toString()+ ":/portalinfo:ro", cbioportalDockerImage,
+                            "-v", portalInfoFolder.toString()+ ":/portalinfo:ro", 
+                            "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
 					portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork,
-							"-v", portalInfoFolder.toString()+":/portalinfo", "-w", "/cbioportal/core/src/main/scripts",
+                            "-v", portalInfoFolder.toString()+":/portalinfo",
+                            "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro",
+                            "-w", "/cbioportal/core/src/main/scripts",
 							cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
 				} else {
 					throw new ConfigurationException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
@@ -133,7 +139,7 @@ public class ValidationServiceImpl implements ValidationService {
 				throw new ConfigurationException("Error during validation execution: check if Docker is installed, check whether the current"
 						+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.", e);
 			} else {
-				throw new ConfigurationException("Check if portal home is correctly set in application.properties. Configured portal home is: "+portalHome, e);
+				throw new ConfigurationException("Check if portal source is correctly set in application.properties. Configured portal source is: "+portalSource, e);
 			}
 		}
 		catch (Exception e) {

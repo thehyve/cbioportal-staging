@@ -40,10 +40,13 @@ public class LoaderServiceImpl implements LoaderService {
 	private String cbioportalDockerImage;
 	
 	@Value("${cbioportal.docker.network}")
-	private String cbioportalDockerNetwork;
+    private String cbioportalDockerNetwork;
+    
+    @Value("${cbioportal.docker.properties}")
+    private String cbioportalDockerProperties;
 	
-	@Value("${portal.home:.}")
-	private String portalHome;
+	@Value("${portal.source:.}")
+	private String portalSource;
 	
 	@Value("${etl.working.dir:java.io.tmpdir}")
 	private String etlWorkingDir;
@@ -53,11 +56,13 @@ public class LoaderServiceImpl implements LoaderService {
 		ProcessBuilder loaderCmd;
 		if (cbioportalMode.equals("local")) {
 			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
-			loaderCmd.directory(new File(portalHome+"/core/src/main/scripts/importer"));
+			loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
 		} else if (cbioportalMode.equals("docker")) {
 			if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
 				loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
-						"-v", studyPath.toString()+":/study:ro", cbioportalDockerImage,
+                        "-v", studyPath.toString()+":/study:ro",
+                        "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", 
+                        cbioportalDockerImage,
 						"cbioportalImporter.py", "-s", "/study");
 			} else {
 				throw new ConfigurationException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");

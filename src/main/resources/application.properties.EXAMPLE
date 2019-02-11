@@ -36,10 +36,10 @@ cbioportal.mode=docker
 cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
 cbioportal.docker.cbio.container=<cbio-container>
+cbioportal.docker.properties=<path-to-portal.properties>
 
 #properties for cbioportal.mode=local:
-# if portal.home is not set in the environment, do it here:
-# portal.home=<path-to-portal-home>
+# portal.source=<path-to-source-code>
 
 # Central share location (for validation reports and log files, can also be a S3 location).
 central.share.location=file:///tmp
