@@ -6,8 +6,8 @@
 
 # A cron-like expression (UN*X definition)
 scan.cron=0 0 0 * * *
-# (optional) number of times to repeat the cron (default is set to -1 to repeat indefinitely):
-#scan.cron.iterations=-1
+# (optional) number of times to repeat the cron (default is 1; set to -1 to repeat indefinitely):
+#scan.cron.iterations=1
 # location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
 scan.location=file:///tmp
 # (optional) Minutes before trying to find a file specified by the yaml file that has not been found (default is 5 minutes; enable this prop to configure to something else)
