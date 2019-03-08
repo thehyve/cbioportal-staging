@@ -16,7 +16,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.cbioportal.staging.services.PublisherServiceImpl;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
@@ -32,8 +31,8 @@ import org.cbioportal.staging.services.PublisherServiceImpl;
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
         org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
         org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
-        org.cbioportal.staging.services.PublisherServiceImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
+        org.cbioportal.staging.services.PublisherServiceImpl.class,	
         org.cbioportal.staging.app.ScheduledScanner.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
@@ -64,10 +63,13 @@ public class FullIntegrationTest {
 
     @Autowired
     private Restarter restarter;
-	@Autowired
-	private RestarterServiceMockupImpl restarterService;
 
+    @Autowired
+    private Publisher publisher;
     
+    @Autowired
+    private RestarterServiceMockupImpl restarterService;
+        
     @Autowired
     private ETLProcessRunner etlProcessRunner;
 
@@ -88,7 +90,8 @@ public class FullIntegrationTest {
 
         //mock transformation (for now... TODO - later replace by real one):
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
-		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
+        ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
+
         
         //mock email service:
         ReflectionTestUtils.setField(extractor, "emailService", emailService);
@@ -96,16 +99,19 @@ public class FullIntegrationTest {
         ReflectionTestUtils.setField(validator, "emailService", emailService);
         ReflectionTestUtils.setField(loader, "emailService", emailService);
 
+
         ReflectionTestUtils.setField(etlProcessRunner, "extractor", extractor);
         ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
         ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
         ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
         ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
+        ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
+        ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 
         ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
         ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
         ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
-
+        ReflectionTestUtils.setField(scheduledScanner, "emailService", emailService);
 
         scheduledScanner.scan();
 
@@ -134,7 +140,7 @@ public class FullIntegrationTest {
 
         //mock transformation (for now... TODO - later replace by real one):
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
-		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
+        ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
         
         //mock email service:
         ReflectionTestUtils.setField(localExtractor, "emailService", emailService);
