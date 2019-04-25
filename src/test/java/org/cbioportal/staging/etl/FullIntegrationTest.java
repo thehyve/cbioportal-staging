@@ -28,7 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.services.ValidationServiceImpl.class,
         org.cbioportal.staging.services.LoaderServiceImpl.class,
-        org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
+        org.cbioportal.staging.services.TransformerServiceImpl.class,
         org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
         org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
@@ -49,8 +49,6 @@ public class FullIntegrationTest {
 
     @Autowired
     private Transformer transformer;
-	@Autowired
-	private TransformerServiceMockupImpl transformerService;
 
     @Autowired
     private Validator validator;
@@ -89,7 +87,6 @@ public class FullIntegrationTest {
     public void allStudiesLoaded() {
 
         //mock transformation (for now... TODO - later replace by real one):
-		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
         ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
 
         
@@ -120,6 +117,7 @@ public class FullIntegrationTest {
         assertEquals(false, emailService.isEmailGenericErrorSent());
         assertEquals(false, emailService.isEmailStudyErrorSent());
         assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+        assertEquals(false, emailService.isEmailTransformedStudiesSent()); //Study is already transformed
         assertEquals(true, emailService.isEmailValidationReportSent());
         assertEquals(false, emailService.isEmailStudiesLoadedSent());
 
@@ -139,7 +137,6 @@ public class FullIntegrationTest {
     public void allLocalStudiesLoaded() {
 
         //mock transformation (for now... TODO - later replace by real one):
-		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
         ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
         
         //mock email service:
@@ -164,6 +161,7 @@ public class FullIntegrationTest {
         assertEquals(false, emailService.isEmailGenericErrorSent());
         assertEquals(false, emailService.isEmailStudyErrorSent());
         assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+        assertEquals(false, emailService.isEmailTransformedStudiesSent()); //Study is already transformed
         assertEquals(true, emailService.isEmailValidationReportSent());
         assertEquals(false, emailService.isEmailStudiesLoadedSent());
 

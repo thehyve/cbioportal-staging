@@ -21,6 +21,7 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -113,17 +114,19 @@ public class ETLProcessRunner {
 	}
 	
 	private void runCommon(Pair<Integer, List<String>> idAndStudies) throws Exception {
+        Map<String, String> filesPaths = new HashMap<String, String>();
 		boolean loadSuccessful = false;
 		//T (Transform) step:
-		transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
-		//V (Validate) step:
-		List<Entry<ArrayList<String>, Map<String, String>>> validatedStudiesAndLogFiles = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
+		List<String> transformedStudies = transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command", filesPaths);
+        //V (Validate) step:
+        //TODO: simplify output, we can probably get those from filesPaths
+		List<Entry<ArrayList<String>, Map<String, String>>> validatedStudiesAndLogFiles = validator.validate(idAndStudies.getKey(), transformedStudies, filesPaths);
 		Entry<ArrayList<String>, Map<String, String>> entry = validatedStudiesAndLogFiles.get(0);
 		ArrayList<String> validatedStudies = entry.getKey();
-		Map<String, String> filePaths = entry.getValue();
+		Map<String, String> pathsMap = entry.getValue();
 		//L (Load) step:
 		if (validatedStudies.size() > 0) {
-		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, filePaths);
+		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, pathsMap);
 		    if (loadSuccessful) {
 		        restarter.restart();
 		        if (!studyPublishCommandPrefix.equals("null")) {

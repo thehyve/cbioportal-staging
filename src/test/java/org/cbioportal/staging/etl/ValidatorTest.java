@@ -115,11 +115,13 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validationService, "exitStatus", 3);
 
 		ReflectionTestUtils.setField(validator, "etlWorkingDir", "src/test/resources/validator_tests");
-		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
-
+        ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
+        
 		ArrayList<String> studies = new ArrayList<String>();
-		studies.add("lgg_ucsf_2014");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+        studies.add("lgg_ucsf_2014");
+        Map<String, String> filesPaths = new HashMap<String, String>();
+        filesPaths.put("lgg_ucsf_2014", "/path");
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
 		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
 		ArrayList<String> validatedStudies = entry.getKey();
 		assertEquals(studies, validatedStudies); //The study passed has passed validation,
@@ -143,8 +145,10 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
 		List<String> studies = new ArrayList<String>();
-		studies.add("lgg_ucsf_2014");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+        studies.add("lgg_ucsf_2014");
+        Map<String, String> filesPaths = new HashMap<String, String>();
+        filesPaths.put("lgg_ucsf_2014", "/path");
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
 		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
 		ArrayList<String> validatedStudies = entry.getKey();
 		assertEquals(0, validatedStudies.size()); //The study added has failed validation, is not going to be loaded
@@ -167,8 +171,10 @@ public class ValidatorTest {
 		
 
 		List<String> studies = new ArrayList<String>();
-		studies.add("lgg_ucsf_2014");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies);
+        studies.add("lgg_ucsf_2014");
+        Map<String, String> filesPaths = new HashMap<String, String>();
+        filesPaths.put("lgg_ucsf_2014", "/path");
+		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
 		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
 		ArrayList<String> validatedStudies = entry.getKey();
 		assertEquals(0, validatedStudies.size());

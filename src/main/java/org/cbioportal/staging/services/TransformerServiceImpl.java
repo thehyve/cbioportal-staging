@@ -21,8 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -40,34 +39,28 @@ public class TransformerServiceImpl implements TransformerService {
 	private String transformationCommandScript;
 	
 	@Override
-	public void transform(File studyPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException {
+	public int transform(File studyPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException {
 		if (!finalPath.exists()) {
 			finalPath.mkdir();
-		}
+        }
 		try {
-			String transformationCommand = "";
+			ProcessBuilder transformationCommand;
 			logger.info("Starting transformation for study: "+studyPath.getName());
 			//Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
 			if (transformationCommandScript.equals("")) {
 				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
-			}
-			//Apply transformation command
-			transformationCommand = transformationCommandScript +  " -i " + studyPath.toString() + " -o " + finalPath.toString();
-			transformationCommand = resolveEnvVars(transformationCommand);
-			logger.info("Executing command: " + transformationCommand);
-			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
+            }
+
+			//Run transformation command
+            transformationCommand = new ProcessBuilder (transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString(), 
+                "-l", logFile.getAbsolutePath());
+            logger.info("Executing command: " + String.join(" ", transformationCommand.command()));
+            transformationCommand.redirectErrorStream(true);
+		    transformationCommand.redirectOutput(Redirect.appendTo(logFile));
+            Process transformationProcess = transformationCommand.start();
 			
-			//TODO - ideally these two loggers are running in parallel so that we see the stdout and stderr in the same
-			//order as reported by transformation script. This is not yet done below, so we first get all stdout, followed
-			//by all stderr:
-			logAndReturnProcessStream(transformationProcess.getInputStream(), false);
-			String errorStack = logAndReturnProcessStream(transformationProcess.getErrorStream(), true);
-			
-			transformationProcess.waitFor(); //Wait until transformation is finished
-			if (transformationProcess.exitValue() != 0) {
-				throw new RuntimeException("The transformation script has failed: "+errorStack);
-			}
-			logger.info("Finished transformation for file: "+studyPath.getName());
+            transformationProcess.waitFor(); //Wait until transformation is finished
+            return transformationProcess.exitValue();
 		} catch (FileNotFoundException e1) {
 			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
 		}
@@ -95,29 +88,6 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 
 		return result;
-	}
-
-
-	/**
-	 * Returns input string with environment variable references expanded, e.g. $SOME_VAR or ${SOME_VAR}
-	 */
-	private String resolveEnvVars(String input)
-	{
-		if (null == input)
-		{
-			return null;
-		}
-		// match ${ENV_VAR_NAME} or $ENV_VAR_NAME
-		Pattern p = Pattern.compile("\\$\\{(\\w+)\\}|\\$(\\w+)");
-		Matcher m = p.matcher(input); // get a matcher object
-		StringBuffer sb = new StringBuffer();
-		while(m.find()){
-			String envVarName = null == m.group(1) ? m.group(2) : m.group(1);
-			String envVarValue = System.getenv(envVarName);
-			m.appendReplacement(sb, null == envVarValue ? "" : envVarValue);
-		}
-		m.appendTail(sb);
-		return sb.toString();
 	}
 
 	@Override
