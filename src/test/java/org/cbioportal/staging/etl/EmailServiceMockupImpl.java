@@ -31,7 +31,8 @@ import freemarker.template.TemplateNotFoundException;
 public class EmailServiceMockupImpl implements EmailService {
 	
 	private boolean isEmailStudyErrorSent = false;
-	private boolean isEmailStudyFileNotFoundSent = false;
+    private boolean isEmailStudyFileNotFoundSent = false;
+    private boolean isEmailTransformedStudiesSent = false;
 	private boolean isEmailValidationReportSent = false;
 	private boolean isEmailStudiesLoadedSent = false;
 	private boolean isEmailGenericErrorSent = false;
@@ -42,7 +43,11 @@ public class EmailServiceMockupImpl implements EmailService {
 	
 	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
 		this.isEmailStudyErrorSent  = true;
-	}
+    }
+    
+    public void emailTransformedStudies(Map<String,Integer> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+        this.isEmailTransformedStudiesSent  = true;
+    }
 	
 	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
@@ -62,6 +67,10 @@ public class EmailServiceMockupImpl implements EmailService {
 	
 	public boolean isEmailStudyFileNotFoundSent() {
 		return this.isEmailStudyFileNotFoundSent;
+    }
+    
+    public boolean isEmailTransformedStudiesSent() {
+		return this.isEmailTransformedStudiesSent;
 	}
 	
 	public boolean isEmailValidationReportSent() {
@@ -78,7 +87,8 @@ public class EmailServiceMockupImpl implements EmailService {
 	
 	public void reset() {
 		this.isEmailStudyErrorSent = false;
-		this.isEmailStudyFileNotFoundSent = false;
+        this.isEmailStudyFileNotFoundSent = false;
+        this.isEmailTransformedStudiesSent = false;
 		this.isEmailValidationReportSent = false;
 		this.isEmailStudiesLoadedSent = false;
 		this.isEmailGenericErrorSent = false;

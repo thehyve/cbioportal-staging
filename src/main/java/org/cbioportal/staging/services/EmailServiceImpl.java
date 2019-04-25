@@ -196,6 +196,45 @@ public class EmailServiceImpl implements EmailService {
 		} catch(MessagingException me) {
 		    logger.error(me.getMessage(), me);
 		}
+    }
+    
+    public void emailTransformedStudies(Map<String,Integer> transformedStudies, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+		Properties properties = getProperties();
+		Session session = getSession(properties);
+		
+		Map<String, String> studies = new HashMap<String, String>();
+		for (String study : transformedStudies.keySet()) {
+			if (transformedStudies.get(study) == 0) {
+				studies.put(study, "VALID"); 
+			}
+			else if (transformedStudies.get(study) == 3) { //Study with warnings and no errors
+				studies.put(study, "VALID with WARNINGS");
+			} else { //Study with errors
+				studies.put(study, "ERRORS");
+			}
+		}
+		
+		Message msg = new MimeMessage(session);
+		try {
+		    msg.setSubject("INFO - cBioPortal staging app: validation results for transformed studies");
+		    if (debugMode) {
+				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+			} else {
+				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
+			}
+		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
+		    Template t = freemarkerConfig.getTemplate("transformedStudies.ftl");
+		    Map<String, Object> messageParams = new HashMap<String, Object>();
+		    messageParams.put("studies", studies);
+		    messageParams.put("files", filesPaths);
+		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
+		    msg.setContent(message, "text/html; charset=utf-8");
+		    msg.setSentDate(new Date());
+		    Transport.send(msg);
+		} catch(MessagingException me) {
+		    logger.error(me.getMessage(), me);
+		}
 	}
 	
 	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
