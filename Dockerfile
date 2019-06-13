@@ -13,12 +13,10 @@ LABEL maintainers=" \
 # install build and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		maven \
-		python \
-		python-pip && \
-		pip install setuptools && \
-		pip install awscli --upgrade --user && \
-		apt-get purge -y --auto-remove python-pip && \
-		apt-get purge -y --auto-remove python
+		python3 \
+		python3-pip && \
+		pip3 install setuptools && \
+		pip3 install awscli --upgrade --user
 
 # install dependency for running docker client in this container
 RUN apt-get update && apt-get install -y libltdl7 && rm -rf /var/lib/apt/lists/*
