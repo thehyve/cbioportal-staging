@@ -41,8 +41,11 @@ public class PublisherServiceImpl implements PublisherService {
 		
 		if (!studyPublishCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
-				String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
-				Process cmdProcess = Runtime.getRuntime().exec(command);
+                ProcessBuilder command = new ProcessBuilder(studyPublishCommandPrefix, studyId, studyCuratorEmail);
+                command.redirectErrorStream(true);
+                Process cmdProcess = command.start();
+
+				//Process cmdProcess = Runtime.getRuntime().exec(command);
 				logger.info("Executing command: "+command);
 				
 				BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
