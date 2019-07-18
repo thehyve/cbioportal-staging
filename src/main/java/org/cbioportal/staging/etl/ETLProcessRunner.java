@@ -119,21 +119,19 @@ public class ETLProcessRunner {
 		//T (Transform) step:
 		List<String> transformedStudies = transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command", filesPaths);
         //V (Validate) step:
-        //TODO: simplify output, we can probably get those from filesPaths
-		List<Entry<ArrayList<String>, Map<String, String>>> validatedStudiesAndLogFiles = validator.validate(idAndStudies.getKey(), transformedStudies, filesPaths);
-		Entry<ArrayList<String>, Map<String, String>> entry = validatedStudiesAndLogFiles.get(0);
-		ArrayList<String> validatedStudies = entry.getKey();
-		Map<String, String> pathsMap = entry.getValue();
-		//L (Load) step:
-		if (validatedStudies.size() > 0) {
-		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, pathsMap);
-		    if (loadSuccessful) {
-		        restarter.restart();
-		        if (!studyPublishCommandPrefix.equals("null")) {
-		            publisher.publishStudies(validatedStudies);
-		        }
-		    }
-		}
+        if (transformedStudies.size() > 0) {
+            List<String> validatedStudies = validator.validate(idAndStudies.getKey(), transformedStudies, filesPaths);
+            //L (Load) step:
+            if (validatedStudies.size() > 0) {
+                loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, filesPaths);
+                if (loadSuccessful) {
+                    restarter.restart();
+                    if (!studyPublishCommandPrefix.equals("null")) {
+                        publisher.publishStudies(validatedStudies);
+                    }
+                }
+            }
+        }
 	}
 
 	/**
