@@ -71,9 +71,8 @@ public class Validator {
 		}
 	}
 	
-	List<Entry<ArrayList<String>, Map<String, String>>> validate(Integer id, List<String> studies, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
+	List<String> validate(Integer id, List<String> studies, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
 		ArrayList<String> studiesPassed = new ArrayList<String>();
-		List<Entry<ArrayList<String>, Map<String, String>>> result = new ArrayList<Entry<ArrayList<String>, Map<String, String>>>();
 		if (centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
 		}
@@ -134,7 +133,6 @@ public class Validator {
 				e1.printStackTrace();
 			}
 		}
-		result.add(new java.util.AbstractMap.SimpleEntry<ArrayList<String>, Map<String, String>>(studiesPassed, filesPaths));
-		return result;
+		return studiesPassed;
 	}
 }

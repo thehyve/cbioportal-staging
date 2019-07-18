@@ -121,9 +121,7 @@ public class ValidatorTest {
         studies.add("lgg_ucsf_2014");
         Map<String, String> filesPaths = new HashMap<String, String>();
         filesPaths.put("lgg_ucsf_2014", "/path");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
-		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
-		ArrayList<String> validatedStudies = entry.getKey();
+		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(studies, validatedStudies); //The study passed has passed validation,
 		
 		//Check that the correct email is sent
@@ -148,9 +146,7 @@ public class ValidatorTest {
         studies.add("lgg_ucsf_2014");
         Map<String, String> filesPaths = new HashMap<String, String>();
         filesPaths.put("lgg_ucsf_2014", "/path");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
-		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
-		ArrayList<String> validatedStudies = entry.getKey();
+		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(0, validatedStudies.size()); //The study added has failed validation, is not going to be loaded
 		
 		//Check that the correct email is sent
@@ -174,9 +170,7 @@ public class ValidatorTest {
         studies.add("lgg_ucsf_2014");
         Map<String, String> filesPaths = new HashMap<String, String>();
         filesPaths.put("lgg_ucsf_2014", "/path");
-		List<Entry<ArrayList<String>, Map<String, String>>> result = validator.validate(0, studies, filesPaths);
-		Entry<ArrayList<String>, Map<String, String>> entry = result.get(0);
-		ArrayList<String> validatedStudies = entry.getKey();
+		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(0, validatedStudies.size());
 		
 		//Check that the correct email is sent
