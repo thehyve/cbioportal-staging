@@ -20,15 +20,14 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.EmailService;
@@ -43,9 +42,6 @@ import freemarker.template.TemplateNotFoundException;
 @Component
 public class Transformer {
 	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
-
-	@Value("${etl.working.dir:java.io.tmpdir}")
-	private File etlWorkingDir;
 
 	@Value("${skip.transformation:false}")
     private boolean skipTransformation;
@@ -73,17 +69,15 @@ public class Transformer {
 		return false;
 	}
 
-	List<String> transform(Integer id, List<String> studies, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
-		File originPath = new File(etlWorkingDir.toPath()+"/"+id);
-		File destinationPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
-		if (!destinationPath.exists()) {
-			destinationPath.mkdir();
-        }
+	Map<String, File> transform(Integer cslId, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
         Map<String, Integer> statusStudies = new HashMap<String, Integer>();
-        List<String> transformedStudies = new ArrayList<String>();
-		for (String study : studies) {
-            File dir = new File(originPath+"/"+study);
-            File finalPath = new File(destinationPath+"/"+study);
+        Map<String, File> transformedStudies = new HashMap<String, File>();
+		for (String study : studyPaths.keySet()) {
+            File studyOriginPath = studyPaths.get(study);
+            File finalPath = new File(studyOriginPath+"/staging"); //TODO: Add timestamp if no working dir
+            if (!finalPath.exists()) {
+                finalPath.mkdir();
+            }
             if (centralShareLocationPortal.equals("")) {
                 centralShareLocationPortal = centralShareLocation;
             }
@@ -91,13 +85,13 @@ public class Transformer {
             //Create transformation log file
             String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
             String logName = study+"_transformation_log_"+logTimeStamp+".log";
-            File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
+            File logFile = new File(studyOriginPath+"/"+logName);
 			try {
-				if (skipTransformation(dir)) {
-                    transformerService.copyStudy(dir, finalPath);
-                    transformedStudies.add(study);
+				if (skipTransformation(studyOriginPath)) {
+                    FileUtils.copyDirectory(studyOriginPath, finalPath);
+                    transformedStudies.put(study, studyOriginPath);
 				} else {
-					transformationStatus = transformerService.transform(dir, finalPath, logFile);
+					transformationStatus = transformerService.transform(studyOriginPath, finalPath, logFile);
 				}
 			} catch (TransformerException e) {
 				//tell about error, continue with next study
@@ -111,10 +105,10 @@ public class Transformer {
 				}
 			} finally {
                 //Only copy the files if the transformation has been performed
-                if (!skipTransformation(dir)) {
-                    String centralShareLocationPath = centralShareLocation+"/"+id;
+                if (!skipTransformation(studyOriginPath)) {
+                    String centralShareLocationPath = centralShareLocation+"/"+cslId;
                     if (!centralShareLocationPath.startsWith("s3:")) {
-                        File cslPath = new File(centralShareLocation+"/"+id);
+                        File cslPath = new File(centralShareLocation+"/"+cslId);
                         if (centralShareLocationPath.startsWith("file:")) {
                             cslPath = new File(centralShareLocationPath.replace("file:", ""));
                         }
@@ -144,7 +138,7 @@ public class Transformer {
         //Return the list of the successfully transformed studies to pass to the validator
         for (Map.Entry<String, Integer> entry : statusStudies.entrySet()) {
             if (entry.getValue().equals(0)) {
-                transformedStudies.add(entry.getKey());
+                transformedStudies.put(entry.getKey(), studyPaths.get(entry.getKey()));
             }
         }
         return transformedStudies;

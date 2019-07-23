@@ -19,8 +19,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -32,7 +30,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
@@ -65,16 +62,14 @@ public class TransformerTest {
     @Test
     public void transformStudyWithTransformation() throws TemplateNotFoundException, MalformedTemplateNameException,
             ParseException, InterruptedException, ConfigurationException, IOException, TemplateException {
-        File etlWorkingDir = new File("src/test/resources/transformer_tests/");
-        ReflectionTestUtils.setField(transformer, "etlWorkingDir", etlWorkingDir);
         Map<String, String> filesPaths = new HashMap<String, String>();
         String transformationCommand = "test";
-        List<String> studies = new ArrayList<String>();
-        studies.add("study1");
-        List<String> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
+        Map<String, File> studies = new HashMap<String, File>();
+        studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
+        Map<String, File> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
 		
         assertEquals(1, transformedStudy.size());
-        assertEquals("study1", transformedStudy.get(0));
+        assertEquals(studies, transformedStudy);
 	}
 
     @Test
@@ -90,16 +85,14 @@ public class TransformerTest {
     @Test
     public void transformStudyWithNoTransformation() throws TemplateNotFoundException, MalformedTemplateNameException,
             ParseException, InterruptedException, ConfigurationException, IOException, TemplateException {
-        File etlWorkingDir = new File("src/test/resources/transformer_tests/");
-        ReflectionTestUtils.setField(transformer, "etlWorkingDir", etlWorkingDir);
         Map<String, String> filesPaths = new HashMap<String, String>();
         String transformationCommand = "test";
-        List<String> studies = new ArrayList<String>();
-        studies.add("study2");
-        List<String> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
+        Map<String, File> studies = new HashMap<String, File>();
+        studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
+        Map<String, File> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
 		
         assertEquals(1, transformedStudy.size());
-        assertEquals("study2", transformedStudy.get(0));
+        assertEquals(studies, transformedStudy);
 	}
 
 	@Test

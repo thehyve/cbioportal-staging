@@ -18,7 +18,6 @@ package org.cbioportal.staging.etl;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.LoaderException;
@@ -51,7 +50,7 @@ public class Loader {
     @Autowired
 	private ValidationService validationService;
 	
-	@Value("${etl.working.dir:java.io.tmpdir}")
+	@Value("${etl.working.dir:${java.io.tmpdir}}")
 	private File etlWorkingDir;
 
 	@Value("${central.share.location}")
@@ -61,23 +60,21 @@ public class Loader {
     private String centralShareLocationPortal;
     
 	
-	boolean load(Integer id, List<String> studies, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
+	boolean load(Integer id, Map<String, File> studyPaths, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
         Map<String, String> statusStudies = new HashMap<String, String>();
         int studiesNotLoaded = 0;
-		//Get studies from appropriate staging folder
-		File originPath = new File(etlWorkingDir.toPath()+"/"+id+"/staging");
 		if (centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
 		}
-		for (String study : studies) {
+		for (String study : studyPaths.keySet()) {
             logger.info("Starting loading of study "+study+". This can take some minutes.");
+            File studyPath = new File(studyPaths.get(study)+"/staging");
             int loadingStatus = -1;                 
             //Create loading log file
             String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
             String logName = study+"_loading_log_"+logTimeStamp+".log";
-            File logFile = new File(etlWorkingDir+"/"+id+"/"+logName);
+            File logFile = new File(studyPaths.get(study)+"/"+logName);
 			try {
-                File studyPath = new File(originPath+"/"+study);
                 loadingStatus = loaderService.load(study, studyPath, logFile);
             } catch (RuntimeException e) {
 				throw new RuntimeException(e);
@@ -103,7 +100,7 @@ public class Loader {
         
         emailService.emailStudiesLoaded(statusStudies, filesPath);
         //Return false if no studies have been loaded
-        if (studies.size() == studiesNotLoaded) {
+        if (studyPaths.keySet().size() == studiesNotLoaded) {
             return false;
         } 
 		return true;

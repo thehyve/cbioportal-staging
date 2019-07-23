@@ -17,12 +17,9 @@ package org.cbioportal.staging.etl;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
@@ -41,9 +38,12 @@ public class Validator {
 	private EmailService emailService;
 	
 	@Autowired
-	private ValidationService validationService;
+    private ValidationService validationService;
+    
+    @Autowired
+    private LocalExtractor localExtractor;
 	
-	@Value("${etl.working.dir:java.io.tmpdir}")
+	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 	
 	@Value("${central.share.location}")
@@ -71,33 +71,32 @@ public class Validator {
 		}
 	}
 	
-	List<String> validate(Integer id, List<String> studies, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
-		ArrayList<String> studiesPassed = new ArrayList<String>();
+	Map<String, File> validate(Integer id, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
+		Map<String, File> studiesPassed = new HashMap<String, File>();
 		if (centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
 		}
 		try {
 			//Get studies from appropriate staging folder
-			File originPath = new File(etlWorkingDir+"/"+id+"/staging");
 			Map<String,Integer> validatedStudies = new HashMap<String,Integer>();
-			for (String study : studies) {
+			for (String study : studyPaths.keySet()) {
 				logger.info("Starting validation of study "+study);
 				//Get the paths for the study and validate it
-				File studyPath = new File(originPath+"/"+study);
 				String timeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
 				String reportName = study+"_validation_report_"+timeStamp+".html";
-				String reportPath = etlWorkingDir+"/"+id+"/"+reportName;
+				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
 				String logFileName = study+"_validation_log_"+timeStamp+".log";
-				File logFile = new File(etlWorkingDir+"/"+id+"/"+logFileName);
-				int exitStatus = validationService.validate(study, studyPath.getAbsolutePath(), reportPath, logFile, id);
+				File logFile = new File(studyPaths.get(study)+"/"+logFileName);
+				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, id);
 				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+id+"/"+logFile.getName());
-				filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+id+"/"+reportName);
+                filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+id+"/"+reportName);
 				
 				//Put report and log file in the share location
-				//First, make the "id" dir in the share location if it is local
-				String centralShareLocationPath = centralShareLocation+"/"+id;
+                //First, make the "id" dir in the share location if it is local
+                Integer cslId = localExtractor.getNewId(new File(centralShareLocation));
+				String centralShareLocationPath = centralShareLocation+"/"+cslId;
 				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+id);
+					File cslPath = new File(centralShareLocation+"/"+cslId);
 					if (centralShareLocationPath.startsWith("file:")) {
 						cslPath = new File(centralShareLocationPath.replace("file:", ""));
 					}
@@ -112,7 +111,7 @@ public class Validator {
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {
 					logger.info("Study " + study + " has PASSED validation");
-					studiesPassed.add(study);
+					studiesPassed.put(study, studyPaths.get(study));
 				} else {
 					logger.warn("Study " + study + " has FAILED validation");
 				}

@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
+import java.util.Set;
 
 import org.cbioportal.staging.etl.Restarter;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -37,7 +37,7 @@ public class PublisherServiceImpl implements PublisherService {
 	@Value("${study.curator.email}")
 	private String studyCuratorEmail;
 	
-	public void publishStudies(List<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
+	public void publishStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
 		if (!studyPublishCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
