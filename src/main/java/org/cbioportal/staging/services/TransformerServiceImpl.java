@@ -52,8 +52,7 @@ public class TransformerServiceImpl implements TransformerService {
             }
 
 			//Run transformation command
-            transformationCommand = new ProcessBuilder (transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString(), 
-                "-l", logFile.getAbsolutePath());
+            transformationCommand = new ProcessBuilder (transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
             logger.info("Executing command: " + String.join(" ", transformationCommand.command()));
             transformationCommand.redirectErrorStream(true);
 		    transformationCommand.redirectOutput(Redirect.appendTo(logFile));
@@ -88,32 +87,5 @@ public class TransformerServiceImpl implements TransformerService {
 		}
 
 		return result;
-	}
-
-	@Override
-	public void copyStudy(File studyPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException {
-		if (!finalPath.exists()) {
-			finalPath.mkdir();
-		}
-		logger.info("Skipping transformation for study: "+studyPath);
-		String transformationCommand = "cp -R " + studyPath.toString() + "/. " + finalPath.toString();
-		logger.info("Executing command: " + transformationCommand);
-		try {
-			Process transformationProcess = Runtime.getRuntime().exec(transformationCommand);
-			
-			//TODO - ideally these two loggers are running in parallel so that we see the stdout and stderr in the same
-			//order as reported by transformation script. This is not yet done below, so we first get all stdout, followed
-			//by all stderr:
-			logAndReturnProcessStream(transformationProcess.getInputStream(), false);
-			String errorStack = logAndReturnProcessStream(transformationProcess.getErrorStream(), true);
-			
-			transformationProcess.waitFor(); //Wait until transformation is finished
-			if (transformationProcess.exitValue() != 0) {
-				throw new RuntimeException("The command has failed: "+errorStack);
-			}
-			logger.info("Finished copying for study: "+studyPath.getName());
-		} catch (FileNotFoundException e1) {
-			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
-		}
 	}
 }

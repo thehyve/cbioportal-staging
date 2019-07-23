@@ -28,10 +28,5 @@ public class TransformerServiceMockupImpl implements TransformerService {
 	public int transform(File originPath, File finalPath, File logFile) throws TransformerException {
 		return 0;
 	}
-
-	@Override
-	public void copyStudy(File originPath, File finalPath) throws TransformerException {
-		
-	}
 	
 }

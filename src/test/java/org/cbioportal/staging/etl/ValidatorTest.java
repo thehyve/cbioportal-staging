@@ -17,10 +17,8 @@ package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -36,7 +34,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Validator.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
-		org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
+        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class,
+        org.cbioportal.staging.etl.LocalExtractor.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -49,12 +48,12 @@ public class ValidatorTest {
 	private EmailServiceMockupImpl emailService;
 	
 	@Autowired
-	private ValidationServiceMockupImpl validationService;
-	
+    private ValidationServiceMockupImpl validationService;
+    
 	@Before
 	public void setUp() throws Exception {
 		emailService.reset();
-		validationService.reset();
+        validationService.reset();
 	}
 	
 	@Test
@@ -117,11 +116,10 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validator, "etlWorkingDir", "src/test/resources/validator_tests");
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
         
-		ArrayList<String> studies = new ArrayList<String>();
-        studies.add("lgg_ucsf_2014");
         Map<String, String> filesPaths = new HashMap<String, String>();
-        filesPaths.put("lgg_ucsf_2014", "/path");
-		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
+        Map<String, File> studies = new HashMap<String, File>();
+        studies.put("lgg_ucsf_2014", new File("/path"));
+		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(studies, validatedStudies); //The study passed has passed validation,
 		
 		//Check that the correct email is sent
@@ -142,11 +140,10 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validator, "etlWorkingDir", "src/test/resources/validator_tests");
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
-		List<String> studies = new ArrayList<String>();
-        studies.add("lgg_ucsf_2014");
-        Map<String, String> filesPaths = new HashMap<String, String>();
-        filesPaths.put("lgg_ucsf_2014", "/path");
-		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
+		Map<String, String> filesPaths = new HashMap<String, String>();
+        Map<String, File> studies = new HashMap<String, File>();
+        studies.put("lgg_ucsf_2014", new File("/path"));
+		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(0, validatedStudies.size()); //The study added has failed validation, is not going to be loaded
 		
 		//Check that the correct email is sent
@@ -166,11 +163,10 @@ public class ValidatorTest {
 		ReflectionTestUtils.setField(validator, "etlWorkingDir", "src/test/resources/validator_tests");
 		
 
-		List<String> studies = new ArrayList<String>();
-        studies.add("lgg_ucsf_2014");
-        Map<String, String> filesPaths = new HashMap<String, String>();
-        filesPaths.put("lgg_ucsf_2014", "/path");
-		List<String> validatedStudies = validator.validate(0, studies, filesPaths);
+		Map<String, String> filesPaths = new HashMap<String, String>();
+        Map<String, File> studies = new HashMap<String, File>();
+        studies.put("lgg_ucsf_2014", new File("/path"));
+		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
 		assertEquals(0, validatedStudies.size());
 		
 		//Check that the correct email is sent

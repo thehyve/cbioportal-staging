@@ -25,6 +25,4 @@ public interface TransformerService {
 	
 	public int transform(File originPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException;
 
-	public void copyStudy(File originPath, File finalPath) throws TransformerException, InterruptedException, ConfigurationException, IOException;
-
 }

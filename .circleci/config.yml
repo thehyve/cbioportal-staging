@@ -38,6 +38,9 @@ jobs:
             - attach_workspace:
                 at: /tmp/
             - run:
+                name: update apt-get
+                command: sudo apt-get update
+            - run:
                 name: install maven
                 command: sudo apt-get install maven
             - run:

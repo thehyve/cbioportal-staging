@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailService;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ class LocalExtractor {
 	@Autowired
 	private EmailService emailService;
 
-	@Value("${etl.working.dir:java.io.tmpdir}")
+	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 
 	@Value("${scan.retry.time:5}")
@@ -58,8 +57,8 @@ class LocalExtractor {
 	 * @throws IOException 
 	 * @throws ConfigurationException 
 	 */
-	Pair<Integer, List<String>> run(ArrayList<File> directories) throws InterruptedException, IOException, ConfigurationException {
-		//validate:
+	Map<String, File> extractInWorkingDir(ArrayList<File> directories, Integer id) throws InterruptedException, IOException, ConfigurationException {
+        //validate:
 		if (etlWorkingDir.startsWith("file:") || (etlWorkingDir.startsWith("s3:"))) {
 			throw new ConfigurationException("Invalid configuration: configuration option `etl.working.dir` should point to "
 					+ "a local folder and not to a location (so *not* starting with file:/ or s3:/). "
@@ -67,16 +66,10 @@ class LocalExtractor {
 		}
 		logger.info("Extract step: downloading files to " + etlWorkingDir);
 		//Parse the indexFile and download all referred files to the working directory.
-		Pair<Integer, List<String>> data;
-		List<String> studiesLoaded = new ArrayList<String>();
+		Map<String, File> studiesLoadedPaths = new HashMap<String, File>();
 		List<String> studiesWithErrors = new ArrayList<String>();
-		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
-		Integer id = 0;
+        Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
 		File idPath = new File(etlWorkingDir+"/"+id);
-		while (idPath.exists()) {
-			id ++;
-			idPath = new File(etlWorkingDir+"/"+id);
-		}
 		//make new working sub-dir for this new iteration of the extraction step:
 		ensureDirs(idPath);
 		try {
@@ -86,7 +79,7 @@ class LocalExtractor {
 				File destinationDir = new File(idPath+"/"+studyName);
 				try {
 				    FileUtils.copyDirectory(originDir, destinationDir);
-				    studiesLoaded.add(studyName);
+				    studiesLoadedPaths.put(studyName, destinationDir);
 				} catch (IOException e) {
 					studiesWithErrors.add(studyName);
 					logger.error("There has been an error when copying the directory "+directory.getAbsolutePath(), e);
@@ -113,15 +106,34 @@ class LocalExtractor {
 			}
 		}
 
-		data = Pair.of(id, studiesLoaded);
 		logger.info("Extractor step finished");
-		return data;
+		return studiesLoadedPaths;
+    }
+    
+    Map<String, File> extractWithoutWorkingDir(ArrayList<File> directories) throws InterruptedException, IOException, ConfigurationException {
+		//Parse the indexFile and download all referred files to the working directory.
+		Map<String, File> studiesLoadedPaths = new HashMap<String, File>();
+        for (File directory : directories) {
+            String studyName = directory.getName();
+            studiesLoadedPaths.put(studyName, directory);
+        }
+		return studiesLoadedPaths;
 	}
 
 	private void ensureDirs(File path) {
 		if (!path.exists()) {
 			path.mkdirs();
 		}
-	}
+    }
+    
+    Integer getNewId(File folderPath) {
+        Integer id = 0;
+        File idPath = new File(folderPath+"/"+id);
+		while (idPath.exists()) {
+            id ++;
+            idPath = new File(folderPath+"/"+id);
+        }
+        return id;
+    }
 
 }

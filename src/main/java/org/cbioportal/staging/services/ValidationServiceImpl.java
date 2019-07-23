@@ -58,7 +58,7 @@ public class ValidationServiceImpl implements ValidationService {
 	@Value("${portal.source:.}")
 	private String portalSource;
 	
-	@Value("${etl.working.dir:java.io.tmpdir}")
+	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 	
 	@Autowired
@@ -67,7 +67,10 @@ public class ValidationServiceImpl implements ValidationService {
 	@Override
 	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception {
 		try {
-			File portalInfoFolder = new File(etlWorkingDir+"/"+id+"/portalInfo");
+            File portalInfoFolder = new File(etlWorkingDir+"/"+id+"/portalInfo");
+            if (etlWorkingDir.equals("false")){
+                portalInfoFolder = new File(studyPath+"/portalInfo");
+            }
 			
 			ProcessBuilder validationCmd;
 			ProcessBuilder portalInfoCmd;
