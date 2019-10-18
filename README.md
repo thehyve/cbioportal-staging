@@ -179,7 +179,7 @@ If **none** of the `*.location` attributes points to an S3 bucket, you will have
 
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
 
-* `mail.to`: address where the app will send the emails to.
+* `mail.to`: comma-separated addresses where the app will send the emails to.
 * `mail.from`: email address to be used as sender/"from"
 * `mail.smtp.user`: smtp user name.
 * `mail.smtp.password`: (optional) respective credentials of the app email (corresponding to `mail.smtp.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
@@ -190,14 +190,14 @@ The app sends emails to keep the user informed about the status of the tasks per
 * `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
 * `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
 * `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
-* `study.curator.email`: email of the user which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
+* `study.curator.emails`: comma-separated emails of the users which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
 
 ### Debug settings
 
 * `logging.level.root`: default log level / you can use this to debug and troubleshoot issues (default `INFO`)
-* `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.email` (and not to the `mail.smtp.user`)
+* `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.emails` (and not to the `mail.smtp.user`)
 
 ### Other
 
-* `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.email` to this command.
+* `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
 * `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.

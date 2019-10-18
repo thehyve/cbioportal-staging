@@ -1,5 +1,5 @@
 <div>Dear cBioPortal Administrator,<br><br>
-An unexpected error occurred while running one of the steps by the user ${user}. Error details:<br> 
+An unexpected error occurred while running one of the steps by the user/users ${users}. Error details:<br> 
 ${errorMessage} <br><br>
 ${displayError}
 <br>Please check if the necessary dependencies are up and running and 

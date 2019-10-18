@@ -89,8 +89,8 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${scan.location}")
 	private String scanLocation;
 	
-	@Value("${study.curator.email}")
-	private String studyCuratorEmail;
+	@Value("${study.curator.emails}")
+	private String studyCuratorEmails;
 	
 	@Value("${server.alias}")
 	private String serverAlias;
@@ -139,27 +139,34 @@ public class EmailServiceImpl implements EmailService {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
-		Message msg = new MimeMessage(session);
-		try {
-			msg.setSubject("ERROR - cBioPortal staging app: transformation step failed");
-			if (debugMode) {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-			} else {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
-			}
-			Template t = freemarkerConfig.getTemplate("studyFileNotFound.ftl");
-			Map<String, String> messageParams = new HashMap<String, String>();
-			messageParams.put("finalFailedStudies", finalFailedStudies);
-			messageParams.put("totalTime", totalTime.toString());
-			String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
-			msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
-			msg.setContent(message, "text/html; charset=utf-8");
-			msg.setSentDate(new Date());
-			Transport.send(msg);
-		} catch(MessagingException me) {
-			logger.error(me.getMessage(), me);
-		}
+        Message msg = new MimeMessage(session);
+        try {
+            msg.setSubject("ERROR - cBioPortal staging app: transformation step failed");
+        if (debugMode) {
+            for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+            }
+        } else {
+            for (String mailToEmail : mailTo.split(",")) {
+                msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+            }
+            for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+            }
+        }
+        Template t = freemarkerConfig.getTemplate("studyFileNotFound.ftl");
+        Map<String, String> messageParams = new HashMap<String, String>();
+        messageParams.put("finalFailedStudies", finalFailedStudies);
+        messageParams.put("totalTime", totalTime.toString());
+        String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
+        msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
+        msg.setContent(message, "text/html; charset=utf-8");
+        msg.setSentDate(new Date());
+        Transport.send(msg);
+        } catch(MessagingException me) {
+            logger.error(me.getMessage(), me);
+        }
+			
 	}
 	
 	private String displayError(Throwable t) {
@@ -175,27 +182,33 @@ public class EmailServiceImpl implements EmailService {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
-		Message msg = new MimeMessage(session);
-		try {
-		    msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId);
-		    if (debugMode) {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-			} else {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
-			}
-		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
-		    Template t = freemarkerConfig.getTemplate("studyError.ftl");
-		    Map<String, String> messageParams = new HashMap<String, String>();
-		    messageParams.put("studyId", studyId);
-		    messageParams.put("displayError", displayError(e));
-		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
-		    msg.setContent(message, "text/html; charset=utf-8");
-		    msg.setSentDate(new Date());
-		    Transport.send(msg);
-		} catch(MessagingException me) {
-		    logger.error(me.getMessage(), me);
-		}
+        Message msg = new MimeMessage(session);
+        try {
+            msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId);
+            if (debugMode) {
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
+            } else {
+                for (String mailToEmail : mailTo.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
+            }
+            msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
+            Template t = freemarkerConfig.getTemplate("studyError.ftl");
+            Map<String, String> messageParams = new HashMap<String, String>();
+            messageParams.put("studyId", studyId);
+            messageParams.put("displayError", displayError(e));
+            String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
+            msg.setContent(message, "text/html; charset=utf-8");
+            msg.setSentDate(new Date());
+            Transport.send(msg);
+        } catch(MessagingException me) {
+            logger.error(me.getMessage(), me);
+        }
     }
     
     public void emailTransformedStudies(Map<String,Integer> transformedStudies, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
@@ -218,11 +231,17 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for transformed studies");
 		    if (debugMode) {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			} else {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
-			}
+                for (String mailToEmail : mailTo.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
+            }
 		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("transformedStudies.ftl");
 		    Map<String, Object> messageParams = new HashMap<String, Object>();
@@ -257,10 +276,16 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies");
 		    if (debugMode) {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			} else {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
+				for (String mailToEmail : mailTo.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
+				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			}
 		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("validationReport.ftl");
@@ -293,10 +318,16 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg.setSubject(status+" - cBioPortal study loading report. Server: "+serverAlias+". Studies: "+studies);
 		    if (debugMode) {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			} else {
-				msg.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
-				msg.setRecipient(Message.RecipientType.CC, new InternetAddress(studyCuratorEmail, false));
+				for (String mailToEmail : mailTo.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
+				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			}
 		    msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
@@ -321,7 +352,9 @@ public class EmailServiceImpl implements EmailService {
             Message msg = new MimeMessage(session);
             try {
                 msg.setSubject("ERROR - cBioPortal staging app: unexpected error");
-                msg.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
                 msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
                 Template t = freemarkerConfig.getTemplate("genericErrorUser.ftl");
                 Map<String, String> messageParams = new HashMap<String, String>();
@@ -342,14 +375,18 @@ public class EmailServiceImpl implements EmailService {
 		try {
 		    msg2.setSubject("ERROR - cBioPortal staging app: unexpected error");
 		    if (debugMode) {
-				msg2.setRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg2.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
 			} else {
-				msg2.setRecipient(Message.RecipientType.TO, new InternetAddress(mailTo, false));
+				for (String mailToEmail : mailTo.split(",")) {
+                    msg2.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
 			}
 		    msg2.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 		    Template t = freemarkerConfig.getTemplate("genericError.ftl");
             Map<String, String> messageParams = new HashMap<String, String>();
-            messageParams.put("user", studyCuratorEmail);
+            messageParams.put("users", studyCuratorEmails);
 		    messageParams.put("errorMessage", errorMessage);
 		    messageParams.put("displayError", displayError(e));
 		    String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);

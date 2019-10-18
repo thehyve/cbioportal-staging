@@ -70,12 +70,12 @@ mail.smtp.starttls.enable=<boolean>
 logging.level.root=INFO
 
 # add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out)
-# the staging app will append the study id and the study.curator.email to this command.
+# the staging app will append the study id and the study.curator.emails to this command.
 #study.publish.command_prefix=
 
-# email of the user which will get automatic access to studies loaded, and also will receive a copy
+# email of the users, comma-separated, which will get automatic access to studies loaded, and also will receive a copy
 # of all emails sent by the staging app.
-study.curator.email=
+study.curator.emails=
 
 # uncomment this property if you want to skip the transformation step
 # skip.transformation=true
@@ -83,5 +83,5 @@ study.curator.email=
 # Recognizable name for the server, appears in the emails
 server.alias=DEV
 
-# If debug mode is set true, emails will only be sent to the study.curator.email (and not to the mail.smtp.user)
+# If debug mode is set true, emails will only be sent to the study.curator.emails (and not to the mail.smtp.user)
 debug.mode=true 
