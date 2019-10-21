@@ -82,10 +82,9 @@ public class Validator {
 			for (String study : studyPaths.keySet()) {
 				logger.info("Starting validation of study "+study);
 				//Get the paths for the study and validate it
-				String timeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-				String reportName = study+"_validation_report_"+timeStamp+".html";
+				String reportName = study+"_validation_report.html";
 				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
-				String logFileName = study+"_validation_log_"+timeStamp+".log";
+				String logFileName = study+"_validation_log.log";
 				File logFile = new File(studyPaths.get(study)+"/"+logFileName);
 				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, id);
 				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+id+"/"+logFile.getName());

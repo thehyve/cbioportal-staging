@@ -71,8 +71,7 @@ public class Loader {
             File studyPath = new File(studyPaths.get(study)+"/staging");
             int loadingStatus = -1;                 
             //Create loading log file
-            String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-            String logName = study+"_loading_log_"+logTimeStamp+".log";
+            String logName = study+"_loading_log.log";
             File logFile = new File(studyPaths.get(study)+"/"+logName);
 			try {
                 loadingStatus = loaderService.load(study, studyPath, logFile);

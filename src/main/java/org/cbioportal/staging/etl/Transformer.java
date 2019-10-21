@@ -83,8 +83,7 @@ public class Transformer {
             }
             int transformationStatus = -1;  
             //Create transformation log file
-            String logTimeStamp = new SimpleDateFormat("yyyy_MM_dd_HH.mm.ss").format(new Date());
-            String logName = study+"_transformation_log_"+logTimeStamp+".log";
+            String logName = study+"_transformation_log.log";
             File logFile = new File(studyOriginPath+"/"+logName);
 			try {
 				if (skipTransformation(studyOriginPath)) {
