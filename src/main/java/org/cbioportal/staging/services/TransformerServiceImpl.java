@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -51,41 +53,25 @@ public class TransformerServiceImpl implements TransformerService {
 				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
             }
 
-			//Run transformation command
-            transformationCommand = new ProcessBuilder (transformationCommandScript, "-i", studyPath.toString(), "-o", finalPath.toString());
+            //Build transformation command
+            ArrayList<String> transformationCmd = new ArrayList<String>();
+            for(String part:transformationCommandScript.split(" ")) { //Remove potential spaces in Transformation Command Script
+                transformationCmd.add(part);
+            }
+            Collections.addAll(transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
+
+            //Run transformation command
+            transformationCommand = new ProcessBuilder(transformationCmd);
+            //transformationCommand = new ProcessBuilder (transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
             logger.info("Executing command: " + String.join(" ", transformationCommand.command()));
             transformationCommand.redirectErrorStream(true);
-		    transformationCommand.redirectOutput(Redirect.appendTo(logFile));
+            transformationCommand.redirectOutput(Redirect.appendTo(logFile));
             Process transformationProcess = transformationCommand.start();
-			
+            
             transformationProcess.waitFor(); //Wait until transformation is finished
             return transformationProcess.exitValue();
 		} catch (FileNotFoundException e1) {
 			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
 		}
-	}
-
-
-	private String logAndReturnProcessStream(InputStream stream, boolean errorStream) throws IOException {
-		InputStreamReader streamReader = new InputStreamReader(stream);
-		String result = "";
-		// log stream in the log system
-		BufferedReader reader = new BufferedReader(streamReader);
-		String line = null;
-		while ((line = reader.readLine()) != null)
-		{
-			if (errorStream) {
-				//Because subprocesses print both warnings and errors to stderr, we log them here as WARNING.
-				//Assumption is that if the transformation process hits a real ERROR, it will exit with exit
-				//status > 0, resulting in an ERROR in the logs.
-				logger.warn(line);
-			} else {
-				logger.info(line);
-			}
-			// also copy it as String for returning the full output
-			result += line + "\n";
-		}
-
-		return result;
 	}
 }
