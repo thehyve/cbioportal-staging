@@ -35,7 +35,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.LoaderServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
+        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class,
+        org.cbioportal.staging.etl.LocalExtractor.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -49,6 +50,9 @@ public class LoaderTest {
 	
 	@Autowired
     private LoaderServiceMockupImpl loaderService;
+
+    @Autowired
+    private LocalExtractor localExtractor;
     	
 	@Before
 	public void setUp() throws Exception {
@@ -59,7 +63,8 @@ public class LoaderTest {
     @Test
 	public void studyLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
+        ReflectionTestUtils.setField(loader, "loaderService", loaderService);
+        ReflectionTestUtils.setField(loader, "localExtractor", localExtractor);
 		ReflectionTestUtils.setField(loaderService, "throwError", false);
 		ReflectionTestUtils.setField(loaderService, "exitStatus", 0);
 
@@ -80,7 +85,8 @@ public class LoaderTest {
     @Test
 	public void studyNotLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
-		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
+        ReflectionTestUtils.setField(loader, "loaderService", loaderService);
+        ReflectionTestUtils.setField(loader, "localExtractor", localExtractor);
 		ReflectionTestUtils.setField(loaderService, "throwError", false);
 		ReflectionTestUtils.setField(loaderService, "exitStatus", 1);
 

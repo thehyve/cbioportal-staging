@@ -184,7 +184,7 @@ public class EmailServiceImpl implements EmailService {
 		
         Message msg = new MimeMessage(session);
         try {
-            msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId". Server: "+serverAlias);
+            msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId+". Server: "+serverAlias);
             if (debugMode) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
                 msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
@@ -229,7 +229,7 @@ public class EmailServiceImpl implements EmailService {
 		
 		Message msg = new MimeMessage(session);
 		try {
-		    msg.setSubject("INFO - cBioPortal staging app: validation results for transformed studies. Server: "+serverAlias+". Studies: "+studies);
+		    msg.setSubject("INFO - cBioPortal staging app: validation results for transformed studies. Server: "+serverAlias+". Studies: "+studies.keySet());
 		    if (debugMode) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
                     msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
@@ -274,7 +274,7 @@ public class EmailServiceImpl implements EmailService {
 		
 		Message msg = new MimeMessage(session);
 		try {
-		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies. Server: "+serverAlias+". Studies: "+studies);
+		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies. Server: "+serverAlias+". Studies: "+studies.keySet());
 		    if (debugMode) {
 				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
                     msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));

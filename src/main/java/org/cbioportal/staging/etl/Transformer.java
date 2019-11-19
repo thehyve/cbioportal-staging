@@ -67,7 +67,7 @@ public class Transformer {
 		return false;
 	}
 
-	Map<String, File> transform(Integer cslId, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
+	Map<String, File> transform(Integer id, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
         Map<String, Integer> statusStudies = new HashMap<String, Integer>();
         Map<String, File> transformedStudies = new HashMap<String, File>();
 		for (String study : studyPaths.keySet()) {
@@ -103,9 +103,9 @@ public class Transformer {
 			} finally {
                 //Only copy the files if the transformation has been performed
                 if (!skipTransformation(studyOriginPath)) {
-                    String centralShareLocationPath = centralShareLocation+"/"+cslId;
+                    String centralShareLocationPath = centralShareLocation+"/"+id;
                     if (!centralShareLocationPath.startsWith("s3:")) {
-                        File cslPath = new File(centralShareLocation+"/"+cslId);
+                        File cslPath = new File(centralShareLocation+"/"+id);
                         if (centralShareLocationPath.startsWith("file:")) {
                             cslPath = new File(centralShareLocationPath.replace("file:", ""));
                         }
@@ -114,8 +114,8 @@ public class Transformer {
                             cslPath.mkdirs();
                         }
                     }
-                    validationService.copyToResource(logFile, centralShareLocationPortal);
-                    filesPaths.put(study+" transformation log", centralShareLocationPortal+"/"+logName);
+                    validationService.copyToResource(logFile, centralShareLocationPath);
+                    filesPaths.put(study+" transformation log", centralShareLocationPortal+"/"+id+"/"+logName);
                     //Add transformation status for the email loading report
                     statusStudies.put(study, transformationStatus);
                     if (transformationStatus == 0) {

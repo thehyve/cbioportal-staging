@@ -48,7 +48,10 @@ public class Loader {
     private LoaderService loaderService;
     
     @Autowired
-	private ValidationService validationService;
+    private ValidationService validationService;
+    
+    @Autowired
+    private LocalExtractor localExtractor;
 	
 	@Value("${etl.working.dir:${java.io.tmpdir}}")
 	private File etlWorkingDir;
@@ -82,7 +85,20 @@ public class Loader {
 				logger.error(e.getMessage()+". The app will skip this study.");
 				e.printStackTrace();
 			} finally {
-                validationService.copyToResource(logFile, centralShareLocation+"/"+id);
+                //Put report and log file in the share location
+                //First, make the "id" dir in the share location if it is local
+				String centralShareLocationPath = centralShareLocation+"/"+id;
+				if (!centralShareLocationPath.startsWith("s3:")) {
+					File cslPath = new File(centralShareLocation+"/"+id);
+					if (centralShareLocationPath.startsWith("file:")) {
+						cslPath = new File(centralShareLocationPath.replace("file:", ""));
+					}
+					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
+					if (!cslPath.exists()) {
+						cslPath.mkdirs();
+					}
+				}
+                validationService.copyToResource(logFile, centralShareLocationPath);
                 filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+logName);	
 
                 //Add loading result for the email loading report

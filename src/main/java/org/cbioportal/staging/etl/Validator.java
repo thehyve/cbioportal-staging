@@ -92,10 +92,9 @@ public class Validator {
 				
 				//Put report and log file in the share location
                 //First, make the "id" dir in the share location if it is local
-                Integer cslId = localExtractor.getNewId(new File(centralShareLocation));
-				String centralShareLocationPath = centralShareLocation+"/"+cslId;
+				String centralShareLocationPath = centralShareLocation+"/"+id;
 				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+cslId);
+					File cslPath = new File(centralShareLocation+"/"+id);
 					if (centralShareLocationPath.startsWith("file:")) {
 						cslPath = new File(centralShareLocationPath.replace("file:", ""));
 					}
