@@ -114,8 +114,8 @@ public class Transformer {
                             cslPath.mkdirs();
                         }
                     }
-                    validationService.copyToResource(logFile, centralShareLocationPath);
-                    filesPaths.put(study+" transformation log", centralShareLocationPath+"/"+logName);
+                    validationService.copyToResource(logFile, centralShareLocationPortal);
+                    filesPaths.put(study+" transformation log", centralShareLocationPortal+"/"+logName);
                     //Add transformation status for the email loading report
                     statusStudies.put(study, transformationStatus);
                     if (transformationStatus == 0) {
