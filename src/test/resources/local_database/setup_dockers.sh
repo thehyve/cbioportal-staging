@@ -49,7 +49,7 @@ migrate_db() {
     docker run --rm \
         --net=cbio-net \
         -v "$TEST_HOME/portal.properties:/cbioportal/portal.properties:ro" \
-        cbioportal/cbioportal:3.0.3 \
+        cbioportal/cbioportal:3.1.4 \
         python3 /cbioportal/core/src/main/scripts/migrate_db.py -y -p /cbioportal/portal.properties -s /cbioportal/db-scripts/src/main/resources/migration.sql
 
     cd $curdir

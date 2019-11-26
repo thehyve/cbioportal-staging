@@ -120,6 +120,8 @@ public class Transformer {
                     statusStudies.put(study, transformationStatus);
                     if (transformationStatus == 0) {
                         logger.info("Transformation of study "+study+" finished successfully.");
+                    } else if (transformationStatus == 3) {
+                        logger.info("Transformation of study "+study+" finished successfully with warnings.");
                     } else {
                         logger.error("Transformation process of study "+study+" failed.");
                     }
@@ -134,7 +136,7 @@ public class Transformer {
         
         //Return the list of the successfully transformed studies to pass to the validator
         for (Map.Entry<String, Integer> entry : statusStudies.entrySet()) {
-            if (entry.getValue().equals(0)) {
+            if (entry.getValue().equals(0) || entry.getValue().equals(3)) {
                 transformedStudies.put(entry.getKey(), studyPaths.get(entry.getKey()));
             }
         }
