@@ -84,7 +84,7 @@ public class Validator {
 				//Get the paths for the study and validate it
 				String reportName = study+"_validation_report.html";
 				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
-				String logFileName = study+"_validation_log.log";
+				String logFileName = study+"_validation_log.txt";
 				File logFile = new File(studyPaths.get(study)+"/"+logFileName);
 				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, id);
 				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+id+"/"+logFile.getName());

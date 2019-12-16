@@ -81,7 +81,7 @@ public class Transformer {
             }
             int transformationStatus = -1;  
             //Create transformation log file
-            String logName = study+"_transformation_log.log";
+            String logName = study+"_transformation_log.txt";
             File logFile = new File(studyOriginPath+"/"+logName);
 			try {
 				if (skipTransformation(studyOriginPath)) {

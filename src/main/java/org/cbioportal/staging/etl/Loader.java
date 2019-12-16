@@ -74,7 +74,7 @@ public class Loader {
             File studyPath = new File(studyPaths.get(study)+"/staging");
             int loadingStatus = -1;                 
             //Create loading log file
-            String logName = study+"_loading_log.log";
+            String logName = study+"_loading_log.txt";
             File logFile = new File(studyPaths.get(study)+"/"+logName);
 			try {
                 loadingStatus = loaderService.load(study, studyPath, logFile);

@@ -105,7 +105,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
+		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.txt");
 		
 		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
 		ReflectionTestUtils.setField(publisher, "publisherService", publisherService);
