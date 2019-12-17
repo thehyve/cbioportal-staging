@@ -15,7 +15,7 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.util.List;
+import java.util.Set;
 
 import org.cbioportal.staging.services.PublisherService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class Publisher {
 	@Autowired
 	private PublisherService publisherService;
 	
-	void publishStudies(List<String> studies) throws Exception {
+	void publishStudies(Set<String> studies) throws Exception {
 		publisherService.publishStudies(studies);
 	}
 }

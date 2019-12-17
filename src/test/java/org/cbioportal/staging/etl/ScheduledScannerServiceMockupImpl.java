@@ -23,6 +23,10 @@ public class ScheduledScannerServiceMockupImpl implements ScheduledScannerServic
 	
 	@Override
 	public void stopApp() {
+    }
+    
+    @Override
+	public void stopAppWithSuccess() {
 	}
 
 }

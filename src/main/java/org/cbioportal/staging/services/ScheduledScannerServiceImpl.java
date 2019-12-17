@@ -23,6 +23,11 @@ public class ScheduledScannerServiceImpl implements ScheduledScannerService {
 	@Override
 	public void stopApp() {
 		System.exit(1);
+    }
+    
+    @Override
+	public void stopAppWithSuccess() {
+		System.exit(0);
 	}
 
 }

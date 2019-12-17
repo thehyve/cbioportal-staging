@@ -15,10 +15,10 @@
 */
 package org.cbioportal.staging.services;
 
-import java.util.List;
+import java.util.Set;
 
 public interface PublisherService {
 	
-	public void publishStudies(List<String> studies) throws Exception;
+	public void publishStudies(Set<String> studies) throws Exception;
 
 }

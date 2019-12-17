@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
+import java.util.Set;
 
 import org.cbioportal.staging.etl.Restarter;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -34,39 +34,38 @@ public class PublisherServiceImpl implements PublisherService {
 	@Value("${study.publish.command_prefix:null}")
 	private String studyPublishCommandPrefix;
 	
-	@Value("${study.curator.email}")
-	private String studyCuratorEmail;
+	@Value("${study.curator.emails}")
+	private String studyCuratorEmails;
 	
-	public void publishStudies(List<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
+	public void publishStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
 		if (!studyPublishCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
-                ProcessBuilder command = new ProcessBuilder(studyPublishCommandPrefix, studyId, studyCuratorEmail);
-                command.redirectErrorStream(true);
-                Process cmdProcess = command.start();
-
-				//Process cmdProcess = Runtime.getRuntime().exec(command);
-				logger.info("Executing command: "+command);
-				
-				BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
-				String line = null;
-				while ((line = reader.readLine()) != null)
-				{
-					logger.info(line);
-				}
-				BufferedReader reader2 = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()));
-				String line2 = null;
-				while ((line2 = reader2.readLine()) != null)
-				{
-					logger.warn(line2);
-				}
-				
-				cmdProcess.waitFor();
-				
-				if (cmdProcess.exitValue() != 0) {
-					throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
-				}
-			}
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
+                    Process cmdProcess = Runtime.getRuntime().exec(command);
+                    logger.info("Executing command: "+command);
+                    
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
+                    String line = null;
+                    while ((line = reader.readLine()) != null)
+                    {
+                        logger.info(line);
+                    }
+                    BufferedReader reader2 = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()));
+                    String line2 = null;
+                    while ((line2 = reader2.readLine()) != null)
+                    {
+                        logger.warn(line2);
+                    }
+                    
+                    cmdProcess.waitFor();
+                    
+                    if (cmdProcess.exitValue() != 0) {
+                        throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
+                    }
+                }
+            }
 		}
 	}
 }

@@ -21,13 +21,10 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +64,13 @@ public class ETLProcessRunner {
 	private Publisher publisher;
 	
 	@Value("${study.publish.command_prefix:null}")
-	private String studyPublishCommandPrefix;
+    private String studyPublishCommandPrefix;
+    
+    @Value("${central.share.location}")
+    private String centralShareLocation;
+
+    @Value("${etl.working.dir:false}")
+	private String etlWorkingDir;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -78,10 +81,20 @@ public class ETLProcessRunner {
 	public void run(Resource indexFile) throws Exception {
 		try  {
 			startProcess();
-			//E (Extract) step:
-			Pair<Integer, List<String>> idAndStudies = extractor.run(indexFile);
+            //E (Extract) step:
+            Map<String, File> studyPaths = new HashMap<String, File>();
+            if (etlWorkingDir.equals("false")) {
+                throw new Exception("When providing a yaml file instead of a directory, you need to define a working directory.");
+            } else {
+                studyPaths = extractor.run(indexFile);
+            }
+			File cslPath = new File(centralShareLocation);
+            if (centralShareLocation.startsWith("file:")) {
+                cslPath = new File(centralShareLocation.replace("file:", ""));
+            }
+			Integer cslId = localExtractor.getNewId(cslPath);
 			//Execute Transforming, Validating and Loading steps:
-			runCommon(idAndStudies);
+			runCommon(cslId, studyPaths);
 		}
 		finally
 		{
@@ -98,12 +111,23 @@ public class ETLProcessRunner {
 	 */
 	public void run(ArrayList<File> directories) throws Exception {
 		try  {
-			startProcess();
-			//E (Extract) step:
-			Pair<Integer, List<String>> idAndStudies = localExtractor.run(directories);
-			logger.debug("ID AND STUDIES: "+idAndStudies.toString());
+            startProcess();
+            //E (Extract) step:
+            Map<String, File> studyPaths = new HashMap<String, File>();
+            File cslPath = new File(centralShareLocation);
+            Integer cslId = localExtractor.getNewId(cslPath);
+            if (centralShareLocation.startsWith("file:")) {
+                cslPath = new File(centralShareLocation.replace("file:", ""));
+            }
+            if (etlWorkingDir.equals("false")) {
+                studyPaths = localExtractor.extractWithoutWorkingDir(directories);
+            } else {
+                cslId = localExtractor.getNewId(new File(etlWorkingDir));
+                studyPaths = localExtractor.extractInWorkingDir(directories, cslId);
+            }
+			
 			//Execute Transforming, Validating and Loading steps:
-			runCommon(idAndStudies);
+			runCommon(cslId, studyPaths);
 		}
 		finally
 		{
@@ -112,25 +136,25 @@ public class ETLProcessRunner {
 		}
 	}
 	
-	private void runCommon(Pair<Integer, List<String>> idAndStudies) throws Exception {
+	private void runCommon(Integer cslId, Map<String, File> studyPaths) throws Exception {
+        Map<String, String> logPaths = new HashMap<String, String>();
 		boolean loadSuccessful = false;
 		//T (Transform) step:
-		transformer.transform(idAndStudies.getKey(), idAndStudies.getValue(), "command");
-		//V (Validate) step:
-		List<Entry<ArrayList<String>, Map<String, String>>> validatedStudiesAndLogFiles = validator.validate(idAndStudies.getKey(), idAndStudies.getValue());
-		Entry<ArrayList<String>, Map<String, String>> entry = validatedStudiesAndLogFiles.get(0);
-		ArrayList<String> validatedStudies = entry.getKey();
-		Map<String, String> filePaths = entry.getValue();
-		//L (Load) step:
-		if (validatedStudies.size() > 0) {
-		    loadSuccessful = loader.load(idAndStudies.getKey(), validatedStudies, filePaths);
-		    if (loadSuccessful) {
-		        restarter.restart();
-		        if (!studyPublishCommandPrefix.equals("null")) {
-		            publisher.publishStudies(validatedStudies);
-		        }
-		    }
-		}
+		Map<String, File> transformedStudiesPaths = transformer.transform(cslId, studyPaths, "command", logPaths);
+        //V (Validate) step:
+        if (transformedStudiesPaths.keySet().size() > 0) {
+            Map<String, File> validatedStudies = validator.validate(cslId, transformedStudiesPaths, logPaths);
+            //L (Load) step:
+            if (validatedStudies.size() > 0) {
+                loadSuccessful = loader.load(cslId, validatedStudies, logPaths);
+                if (loadSuccessful) {
+                    restarter.restart();
+                    if (!studyPublishCommandPrefix.equals("null")) {
+                        publisher.publishStudies(validatedStudies.keySet());
+                    }
+                }
+            }
+        }
 	}
 
 	/**

@@ -17,6 +17,8 @@ package org.cbioportal.staging.services;
 
 public interface ScheduledScannerService {
 	
-	public void stopApp();
+    public void stopApp();
+    
+    public void stopAppWithSuccess();
 
 }

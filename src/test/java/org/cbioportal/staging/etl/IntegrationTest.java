@@ -2,9 +2,6 @@ package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.junit.Before;
 import org.junit.Rule;
@@ -96,7 +93,7 @@ public class IntegrationTest {
 	private void initBasicMockups(String scanLocation, int validationServiceMockExitStatus) {
 		//set mockups and input parameters for all services
 		ReflectionTestUtils.setField(extractor, "scanLocation", scanLocation);
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
 		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
@@ -108,7 +105,7 @@ public class IntegrationTest {
 		
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.log");
+		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.txt");
 		
 		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
 		ReflectionTestUtils.setField(publisher, "publisherService", publisherService);
@@ -117,10 +114,11 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
 		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-		ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
+        ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
+        ReflectionTestUtils.setField(etlProcessRunner, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 		
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", scanLocation);
-		ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
+        ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 	}
 	
 	@Test

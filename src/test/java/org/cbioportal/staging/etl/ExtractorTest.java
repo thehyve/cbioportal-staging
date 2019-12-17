@@ -16,12 +16,13 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,7 +39,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class, 
+@ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
+        org.cbioportal.staging.etl.LocalExtractor.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
@@ -46,7 +48,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 public class ExtractorTest {
 
 	@Autowired
-	private Extractor extractor;
+    private Extractor extractor;
+    
+    @Autowired
+	private LocalExtractor localExtractor;
 	
 	@Autowired
 	private EmailServiceMockupImpl emailService;
@@ -66,12 +71,13 @@ public class ExtractorTest {
 	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		ReflectionTestUtils.setField(extractor, "timeRetry", 0);
 
 		//Run extractor step:
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");
-		Pair<Integer, List<String>> result = extractor.run(indexFile);
+        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");
+        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+		Map<String, File> result = extractor.run(indexFile);
 
 		//check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -80,21 +86,21 @@ public class ExtractorTest {
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
 		
-		//Build the expected outcome and check that is the same as the function output
-		List<String> erList = new ArrayList<String>();
-		erList.add("study1");
-		Pair<Integer, List<String>> expectedResult = Pair.of(0, erList);
+        //Build the expected outcome and check that is the same as the function output
+		Map<String, File> expectedResult = new HashMap<String, File>();
+		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+id+"/study1"));
 		assertEquals(expectedResult, result);
-	}
+    }
 
 	@Test
 	public void allFilesFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
-		Pair<Integer, List<String>> result = extractor.run(indexFile);
+        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
+        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+		Map<String, File> result = extractor.run(indexFile);
 
 		//check that no emails are sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -103,10 +109,9 @@ public class ExtractorTest {
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
 		
-		//Build the expected outcome and check that is the same as the function output
-		List<String> erList = new ArrayList<String>();
-		erList.add("study1");
-		Pair<Integer, List<String>> expectedResult = Pair.of(0, erList);
+        //Build the expected outcome and check that is the same as the function output
+        Map<String, File> expectedResult = new HashMap<String, File>();
+        expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+id+"/study1"));
 		assertEquals(expectedResult, result);
 	}
 	
@@ -114,7 +119,7 @@ public class ExtractorTest {
 	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
 		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_3.yaml");
 		extractor.run(indexFile);
@@ -131,7 +136,7 @@ public class ExtractorTest {
 	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot().toString());
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
 		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_4.yaml");
 		extractor.run(indexFile);

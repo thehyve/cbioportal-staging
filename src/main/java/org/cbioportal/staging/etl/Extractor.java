@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailService;
 import org.slf4j.Logger;
@@ -44,10 +43,13 @@ class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
 	@Autowired
-	private EmailService emailService;
+    private EmailService emailService;
+    
+    @Autowired
+	private LocalExtractor localExtractor;
 
-	@Value("${etl.working.dir:java.io.tmpdir}")
-	private String etlWorkingDir;
+	@Value("${etl.working.dir:${java.io.tmpdir}}")
+	private File etlWorkingDir;
 
 	@Value("${scan.retry.time:5}")
 	private Integer timeRetry;
@@ -87,26 +89,21 @@ class Extractor {
 	 * @throws IOException 
 	 * @throws ConfigurationException 
 	 */
-	Pair<Integer, List<String>> run(Resource indexFile) throws InterruptedException, IOException, ConfigurationException {
+	Map<String, File> run(Resource indexFile) throws InterruptedException, IOException, ConfigurationException {
 		//validate:
-		if (etlWorkingDir.startsWith("file:") || (etlWorkingDir.startsWith("s3:"))) {
+		if (etlWorkingDir.toString().startsWith("file:") || (etlWorkingDir.toString().startsWith("s3:"))) {
 			throw new ConfigurationException("Invalid configuration: configuration option `etl.working.dir` should point to "
 					+ "a local folder and not to a location (so *not* starting with file:/ or s3:/). "
 					+ "Configuration found: etl.working.dir=" + etlWorkingDir);
 		}
 		logger.info("Extract step: downloading files to " + etlWorkingDir);
-		//Parse the indexFile and download all referred files to the working directory.
-		Pair<Integer, List<String>> data;
-		List<String> studiesLoaded = new ArrayList<String>();
+        //Parse the indexFile and download all referred files to the working directory.
+        Map<String, File> studiesLoadedPath = new HashMap<String, File>();
+		//List<String> studiesLoaded = new ArrayList<String>();
 		List<String> studiesWithErrors = new ArrayList<String>();
 		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
-		Map<String, Integer> errors = new HashMap<String, Integer>();
-		Integer id = 0;
+		Integer id = localExtractor.getNewId(etlWorkingDir);
 		File idPath = new File(etlWorkingDir+"/"+id);
-		while (idPath.exists()) {
-			id ++;
-			idPath = new File(etlWorkingDir+"/"+id);
-		}
 		//make new working sub-dir for this new iteration of the extraction step:
 		ensureDirs(idPath);
 		try {
@@ -116,7 +113,7 @@ class Extractor {
 			}
 			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
 				String studyDir = idPath+"/"+entry.getKey();
-				errors.put(entry.getKey(), 0); //Add error counter for the current study
+				//errors.put(entry.getKey(), 0); //Add error counter for the current study
 				String basePath = getBasePath(entry);
 				//extract each file and place it in jobid/studyid/ folder:
 				for (String filePath : entry.getValue() ) {
@@ -129,7 +126,7 @@ class Extractor {
 					int attempt = 1;
 					while (attempt <= 5) {
 						try {
-							copyResource(fullDestinationPath, fullOriginalFilePath);
+                            copyResource(fullDestinationPath, fullOriginalFilePath);
 							break;
 						}
 						catch (IOException f) {
@@ -138,7 +135,7 @@ class Extractor {
 							attempt ++;
 							if (attempt == 5) {
 								logger.error("Tried 5 times. File "+fullOriginalFilePath+" not found, quitting...");
-								errors.put(entry.getKey(), errors.get(entry.getKey())+1);
+								studiesWithErrors.add(entry.getKey());
 								if (filesNotFound.get(entry.getKey()) == null) {
 									ArrayList<String> newList = new ArrayList<String>();
 									newList.add(fullOriginalFilePath);
@@ -151,15 +148,14 @@ class Extractor {
 							}
 						}
 					}
-				}
-			}
-			for (String study : errors.keySet()) {
-				if (errors.get(study) == 0) {
-					studiesLoaded.add(study);
-				} else {
-					studiesWithErrors.add(study);
-				}
-			}
+                }
+                
+            }
+            for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
+                if (!studiesWithErrors.contains(entry.getKey())) {
+                    studiesLoadedPath.put(entry.getKey(), new File(idPath+"/"+entry.getKey()));
+                }
+            }
 			if (!studiesWithErrors.isEmpty()) {
 				try {
 					emailService.emailStudyFileNotFound(filesNotFound, timeRetry);
@@ -196,16 +192,15 @@ class Extractor {
 				e1.printStackTrace();
 			}
 		}
-		data = Pair.of(id, studiesLoaded);
 		logger.info("Extractor step finished");
-		return data;
+		return studiesLoadedPath;
 	}
 
 	private void ensureDirs(File path) {
 		if (!path.exists()) {
 			path.mkdirs();
 		}
-	}
+    }
 
 	/**
 	 * This method gets the "base path" of all entries. I.e. it assumes
