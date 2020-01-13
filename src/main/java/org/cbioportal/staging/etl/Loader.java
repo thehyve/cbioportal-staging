@@ -81,18 +81,7 @@ public class Loader {
 				e.printStackTrace();
 			} finally {
                 //Put report and log file in the share location
-                //First, make the "id" dir in the share location if it is local
-				String centralShareLocationPath = centralShareLocation+"/"+date;
-				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+date);
-					if (centralShareLocationPath.startsWith("file:")) {
-						cslPath = new File(centralShareLocationPath.replace("file:", ""));
-					}
-					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-					if (!cslPath.exists()) {
-						cslPath.mkdirs();
-					}
-				}
+				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
                 validationService.copyToResource(logFile, centralShareLocationPath);
                 filesPath.put(study+" loading log", centralShareLocationPortal+"/"+date+"/"+logName);	
 

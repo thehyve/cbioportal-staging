@@ -85,18 +85,7 @@ public class Validator {
                 filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+date+"/"+reportName);
 				
 				//Put report and log file in the share location
-                //First, make the "id" dir in the share location if it is local
-				String centralShareLocationPath = centralShareLocation+"/"+date;
-				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+date);
-					if (centralShareLocationPath.startsWith("file:")) {
-						cslPath = new File(centralShareLocationPath.replace("file:", ""));
-					}
-					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-					if (!cslPath.exists()) {
-						cslPath.mkdirs();
-					}
-				}
+				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
 				validationService.copyToResource(new File(reportPath), centralShareLocationPath);
 				validationService.copyToResource(logFile, centralShareLocationPath);
 				

@@ -166,4 +166,20 @@ public class ValidationServiceImpl implements ValidationService {
 		}
     }
 
+    public String getCentralShareLocationPath(String centralShareLocation, String date) {
+        String centralShareLocationPath = centralShareLocation+"/"+date;
+        if (!centralShareLocationPath.startsWith("s3:")) {
+            File cslPath = new File(centralShareLocation+"/"+date);
+            if (centralShareLocationPath.startsWith("file:")) {
+                cslPath = new File(centralShareLocationPath.replace("file:", ""));
+            }
+            logger.info("Central Share Location path: "+cslPath.getAbsolutePath());
+            //If the Central Share Location path does not exist, create it:
+            if (!cslPath.exists()) {
+                cslPath.mkdirs();
+            }
+        }
+        return centralShareLocationPath;
+    }
+
 }

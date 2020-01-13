@@ -43,5 +43,9 @@ public class ValidationServiceMockupImpl implements ValidationService {
 	}
 	
 	public void copyToResource(File reportFile, String centralShareLocation) throws IOException {
-	}
+    }
+    
+    public String getCentralShareLocationPath(String centralShareLocation, String date) {
+        return centralShareLocation+"/"+date;
+    }
 }
