@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +47,6 @@ class Extractor {
 	@Autowired
     private EmailService emailService;
     
-    @Autowired
-	private LocalExtractor localExtractor;
-
 	@Value("${etl.working.dir:${java.io.tmpdir}}")
 	private File etlWorkingDir;
 
@@ -102,8 +101,8 @@ class Extractor {
 		//List<String> studiesLoaded = new ArrayList<String>();
 		List<String> studiesWithErrors = new ArrayList<String>();
 		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
-		Integer id = localExtractor.getNewId(etlWorkingDir);
-		File idPath = new File(etlWorkingDir+"/"+id);
+		String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		File idPath = new File(etlWorkingDir+"/"+date);
 		//make new working sub-dir for this new iteration of the extraction step:
 		ensureDirs(idPath);
 		try {

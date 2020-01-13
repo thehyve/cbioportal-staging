@@ -23,7 +23,7 @@ import org.cbioportal.staging.exceptions.ValidatorException;
 
 public interface ValidationService {
 	
-	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception;
+	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException, Exception;
 
 	public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
 

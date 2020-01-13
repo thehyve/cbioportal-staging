@@ -57,7 +57,7 @@ class LocalExtractor {
 	 * @throws IOException 
 	 * @throws ConfigurationException 
 	 */
-	Map<String, File> extractInWorkingDir(ArrayList<File> directories, Integer id) throws InterruptedException, IOException, ConfigurationException {
+	Map<String, File> extractInWorkingDir(ArrayList<File> directories, String date) throws InterruptedException, IOException, ConfigurationException {
         //validate:
 		if (etlWorkingDir.startsWith("file:") || (etlWorkingDir.startsWith("s3:"))) {
 			throw new ConfigurationException("Invalid configuration: configuration option `etl.working.dir` should point to "
@@ -69,14 +69,14 @@ class LocalExtractor {
 		Map<String, File> studiesLoadedPaths = new HashMap<String, File>();
 		List<String> studiesWithErrors = new ArrayList<String>();
         Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
-		File idPath = new File(etlWorkingDir+"/"+id);
+		File path = new File(etlWorkingDir+"/"+date);
 		//make new working sub-dir for this new iteration of the extraction step:
-		ensureDirs(idPath);
+		ensureDirs(path);
 		try {
 			for (File directory : directories) {
 				String studyName = directory.getName();
 				File originDir = directory;
-				File destinationDir = new File(idPath+"/"+studyName);
+				File destinationDir = new File(path+"/"+studyName);
 				try {
 				    FileUtils.copyDirectory(originDir, destinationDir);
 				    studiesLoadedPaths.put(studyName, destinationDir);
@@ -124,16 +124,6 @@ class LocalExtractor {
 		if (!path.exists()) {
 			path.mkdirs();
 		}
-    }
-    
-    Integer getNewId(File folderPath) {
-        Integer id = 0;
-        File idPath = new File(folderPath+"/"+id);
-		while (idPath.exists()) {
-            id ++;
-            idPath = new File(folderPath+"/"+id);
-        }
-        return id;
     }
 
 }

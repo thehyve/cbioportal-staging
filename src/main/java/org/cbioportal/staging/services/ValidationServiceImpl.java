@@ -65,9 +65,9 @@ public class ValidationServiceImpl implements ValidationService {
 	private ResourcePatternResolver resourcePatternResolver;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception {
+	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException, Exception {
 		try {
-            File portalInfoFolder = new File(etlWorkingDir+"/"+id+"/portalInfo");
+            File portalInfoFolder = new File(etlWorkingDir+"/"+date+"/portalInfo");
             if (etlWorkingDir.equals("false")){
                 portalInfoFolder = new File(studyPath+"/portalInfo");
             }

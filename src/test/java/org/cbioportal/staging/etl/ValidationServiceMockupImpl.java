@@ -30,7 +30,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 	private boolean throwError = false;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException {
+	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException {
 		if (throwError) {
 			throw new ValidatorException("dummy test error");
 		}

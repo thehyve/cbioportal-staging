@@ -18,7 +18,9 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -34,8 +36,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Validator.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class,
-        org.cbioportal.staging.etl.LocalExtractor.class})
+        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -119,7 +120,8 @@ public class ValidatorTest {
         Map<String, String> filesPaths = new HashMap<String, String>();
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("/path"));
-		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		Map<String, File> validatedStudies = validator.validate(date, studies, filesPaths);
 		assertEquals(studies, validatedStudies); //The study passed has passed validation,
 		
 		//Check that the correct email is sent
@@ -143,7 +145,8 @@ public class ValidatorTest {
 		Map<String, String> filesPaths = new HashMap<String, String>();
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("/path"));
-		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		Map<String, File> validatedStudies = validator.validate(date, studies, filesPaths);
 		assertEquals(0, validatedStudies.size()); //The study added has failed validation, is not going to be loaded
 		
 		//Check that the correct email is sent
@@ -166,7 +169,8 @@ public class ValidatorTest {
 		Map<String, String> filesPaths = new HashMap<String, String>();
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("/path"));
-		Map<String, File> validatedStudies = validator.validate(0, studies, filesPaths);
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		Map<String, File> validatedStudies = validator.validate(date, studies, filesPaths);
 		assertEquals(0, validatedStudies.size());
 		
 		//Check that the correct email is sent

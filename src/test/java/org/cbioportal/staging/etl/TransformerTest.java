@@ -19,7 +19,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -66,7 +68,8 @@ public class TransformerTest {
         String transformationCommand = "test";
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
-        Map<String, File> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+        Map<String, File> transformedStudy = transformer.transform(date, studies, transformationCommand, filesPaths);
 		
         assertEquals(1, transformedStudy.size());
         assertEquals(studies, transformedStudy);
@@ -89,7 +92,8 @@ public class TransformerTest {
         String transformationCommand = "test";
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
-        Map<String, File> transformedStudy = transformer.transform(1, studies, transformationCommand, filesPaths);
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+        Map<String, File> transformedStudy = transformer.transform(date, studies, transformationCommand, filesPaths);
 		
         assertEquals(1, transformedStudy.size());
         assertEquals(studies, transformedStudy);
