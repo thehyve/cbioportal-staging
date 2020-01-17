@@ -19,45 +19,48 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Map;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
+@ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class,
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.LoaderServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
+		org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
+@TestPropertySource(
+	properties = {
+		"central.share.location=/tmp/share"
+	}
+)
 @SpringBootTest
-@Import(MyTestConfiguration.class)
-
 public class LoaderTest {
-	
+
 	@Autowired
 	private Loader loader;
-	
+
 	@Autowired
 	private EmailServiceMockupImpl emailService;
-	
+
 	@Autowired
     private LoaderServiceMockupImpl loaderService;
-    	
+
 	@Before
 	public void setUp() throws Exception {
 		emailService.reset();
         loaderService.reset();
 	}
-     
+
     @Test
 	public void studyLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
@@ -71,7 +74,7 @@ public class LoaderTest {
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Boolean result = loader.load(date, studies, studyStatus);
 		assertEquals(true, result); //The study has been loaded
-		
+
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
@@ -79,7 +82,7 @@ public class LoaderTest {
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
         assertEquals(false, emailService.isEmailGenericErrorSent());
     }
-    
+
     @Test
 	public void studyNotLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
@@ -93,12 +96,12 @@ public class LoaderTest {
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Boolean result = loader.load(date, studies, studyStatus);
 		assertEquals(false, result); //The study has not been loaded
-		
+
 		//Check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
 		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
         assertEquals(false, emailService.isEmailGenericErrorSent());
-    } 
+    }
 }

@@ -40,6 +40,15 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
+
+/* 
+	Copies all files from scan.location to the etl.working.directory.
+*/
+// TODO: this class is only needed when files are copied from a remote
+// source to be ETLed on the local server. This class may be removed in 
+// certain cases.
+// TODO: this class is only relevant ATM when working in S3 context since 
+// the other environment 'local filesystem' does not require copying. 
 @Component
 class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
@@ -58,22 +67,6 @@ class Extractor {
 
 	@Value("${scan.location}")
 	private String scanLocation;
-
-	private void copyResource(String destinationPath, String resourcePath) throws IOException {
-		logger.info("Copying resource from " + resourcePath + " to "+ destinationPath);
-		InputStream is = resourcePatternResolver.getResource(resourcePath).getInputStream();
-		Files.copy(is, Paths.get(destinationPath));
-		logger.info("File has been copied successfully to "+ destinationPath);
-		is.close();
-	}
-
-	private Map<String, List<String>> parseYaml(Resource resource) throws IOException {
-		InputStream is = resource.getInputStream();
-		Yaml yaml = new Yaml();
-		@SuppressWarnings("unchecked")
-		Map<String, List<String>> result = (Map<String, List<String>>) yaml.load(is);
-		return result;
-	}
 
 	/**
 	 * Function that parses the yaml file and copies the files specified in the yaml to a folder in the etlWorkingDir
@@ -96,24 +89,31 @@ class Extractor {
 					+ "Configuration found: etl.working.dir=" + etlWorkingDir);
 		}
 		logger.info("Extract step: downloading files to " + etlWorkingDir);
-        //Parse the indexFile and download all referred files to the working directory.
-        Map<String, File> studiesLoadedPath = new HashMap<String, File>();
+
+		//Parse the indexFile and download all referred files to the working directory.
+		Map<String, File> studiesLoadedPath = new HashMap<String, File>();
+		
 		//List<String> studiesLoaded = new ArrayList<String>();
 		List<String> studiesWithErrors = new ArrayList<String>();
+		
 		Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
 		String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		File idPath = new File(etlWorkingDir+"/"+date);
+		
 		//make new working sub-dir for this new iteration of the extraction step:
 		ensureDirs(idPath);
+		
 		try {
 			Map<String, List<String>> parsedYaml = parseYaml(indexFile);
 			if (parsedYaml == null) {
 				throw new IOException("Yaml file found to be empty");
 			}
 			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
+
 				String studyDir = idPath+"/"+entry.getKey();
 				//errors.put(entry.getKey(), 0); //Add error counter for the current study
 				String basePath = getBasePath(entry);
+
 				//extract each file and place it in jobid/studyid/ folder:
 				for (String filePath : entry.getValue() ) {
 					//this is what the relative file path should be inside local copy of the study folder:
@@ -125,7 +125,7 @@ class Extractor {
 					int attempt = 1;
 					while (attempt <= 5) {
 						try {
-                            copyResource(fullDestinationPath, fullOriginalFilePath);
+							copyResource(fullDestinationPath, fullOriginalFilePath);
 							break;
 						}
 						catch (IOException f) {
@@ -147,14 +147,14 @@ class Extractor {
 							}
 						}
 					}
-                }
-                
-            }
-            for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
-                if (!studiesWithErrors.contains(entry.getKey())) {
-                    studiesLoadedPath.put(entry.getKey(), new File(idPath+"/"+entry.getKey()));
-                }
-            }
+				}
+				
+			}
+			for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
+				if (!studiesWithErrors.contains(entry.getKey())) {
+					studiesLoadedPath.put(entry.getKey(), new File(idPath+"/"+entry.getKey()));
+				}
+			}
 			if (!studiesWithErrors.isEmpty()) {
 				try {
 					emailService.emailStudyFileNotFound(filesNotFound, timeRetry);
@@ -193,6 +193,22 @@ class Extractor {
 		}
 		logger.info("Extractor step finished");
 		return studiesLoadedPath;
+	}
+
+	private void copyResource(String destinationPath, String resourcePath) throws IOException {
+		logger.info("Copying resource from " + resourcePath + " to "+ destinationPath);
+		InputStream is = resourcePatternResolver.getResource(resourcePath).getInputStream();
+		Files.copy(is, Paths.get(destinationPath));
+		logger.info("File has been copied successfully to "+ destinationPath);
+		is.close();
+	}
+
+	private Map<String, List<String>> parseYaml(Resource resource) throws IOException {
+		InputStream is = resource.getInputStream();
+		Yaml yaml = new Yaml();
+		@SuppressWarnings("unchecked")
+		Map<String, List<String>> result = (Map<String, List<String>>) yaml.load(is);
+		return result;
 	}
 
 	private void ensureDirs(File path) {

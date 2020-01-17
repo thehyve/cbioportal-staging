@@ -32,7 +32,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,13 +42,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
 @SpringBootTest
-@Import(MyTestConfiguration.class)
 
 public class ExtractorTest {
 
 	@Autowired
     private Extractor extractor;
-    	
+
 	@Autowired
 	private EmailServiceMockupImpl emailService;
 	

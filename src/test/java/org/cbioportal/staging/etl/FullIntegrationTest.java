@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -19,26 +18,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
-		org.cbioportal.staging.etl.LocalExtractor.class,
-        org.cbioportal.staging.etl.Transformer.class,
-        org.cbioportal.staging.etl.Loader.class,
-        org.cbioportal.staging.etl.Restarter.class,
-        org.cbioportal.staging.etl.Validator.class,
-        org.cbioportal.staging.etl.Publisher.class,
-        org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
-        org.cbioportal.staging.services.ValidationServiceImpl.class,
-        org.cbioportal.staging.services.LoaderServiceImpl.class,
-        org.cbioportal.staging.services.TransformerServiceImpl.class,
-        org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
-        org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ETLProcessRunner.class,
-        org.cbioportal.staging.services.PublisherServiceImpl.class,	
-        org.cbioportal.staging.app.ScheduledScanner.class})
+    org.cbioportal.staging.etl.LocalExtractor.class,
+    org.cbioportal.staging.etl.Transformer.class,
+    org.cbioportal.staging.etl.Loader.class,
+    org.cbioportal.staging.etl.Restarter.class,
+    org.cbioportal.staging.etl.Validator.class,
+    org.cbioportal.staging.etl.Publisher.class,
+    org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
+    org.cbioportal.staging.services.ValidationServiceImpl.class,
+    org.cbioportal.staging.services.LoaderServiceImpl.class,
+    org.cbioportal.staging.services.TransformerServiceImpl.class,
+    org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
+    org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
+    org.cbioportal.staging.etl.ETLProcessRunner.class,
+    org.cbioportal.staging.services.PublisherServiceImpl.class,	
+    org.cbioportal.staging.app.ScheduledScanner.class})
+@TestPropertySource(locations="classpath:integration_test.properties")
 @SpringBootTest
-@Import(MyTestConfiguration.class)
-@TestPropertySource(locations="classpath:full_integration_test.properties")
-
-
 public class FullIntegrationTest {
 
     @Autowired

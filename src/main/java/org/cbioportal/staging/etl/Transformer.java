@@ -20,17 +20,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.TransformerService;
 import org.cbioportal.staging.services.ValidationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
@@ -68,21 +68,28 @@ public class Transformer {
 	}
 
 	Map<String, File> transform(String date, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
+
         Map<String, Integer> statusStudies = new HashMap<String, Integer>();
         Map<String, File> transformedStudies = new HashMap<String, File>();
-		for (String study : studyPaths.keySet()) {
+
+        for (String study : studyPaths.keySet()) {
+
             File studyOriginPath = studyPaths.get(study);
             File finalPath = new File(studyOriginPath+"/staging"); //TODO: Add timestamp if no working dir
             if (!finalPath.exists()) {
+
                 finalPath.mkdir();
             }
+
             if (centralShareLocationPortal.equals("")) {
                 centralShareLocationPortal = centralShareLocation;
             }
-            int transformationStatus = -1;  
+
             //Create transformation log file
             String logName = study+"_transformation_log.txt";
             File logFile = new File(studyOriginPath+"/"+logName);
+            
+            int transformationStatus = -1;
 			try {
 				if (skipTransformation(studyOriginPath)) {
                     FileUtils.copyDirectory(studyOriginPath, finalPath);

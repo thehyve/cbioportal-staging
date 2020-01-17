@@ -14,21 +14,21 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
 
 - [Setup](#Setup)
 - [Docker usage (recommended)](#docker-usage-recommended)
-    - [Build](#build)
-    - [Run](#run)
+  - [Build](#build)
+  - [Run](#run)
 - [Local usage](#Local-usage)
-    - [Build](#build-1)
-    - [Run](#run-1)
+  - [Build](#build-1)
+  - [Run](#run-1)
 - [Yaml file format and location of study files](#yaml-file-format-and-location-of-study-files)
 - [Application properties](#Application-properties)
-    - [Extractor settings](#extractor-settings)
-    - [Transformer settings](#transformer-settings)
-    - [Validation and Loader settings](#validation-and-loader-settings)
-    - [Reporting location settings](#reporting-location-settings)
-    - [S3 vs local file system settings](#s3-vs-local-file-system-settings)
-    - [Mail properties](#mail-properties)
-    - [Debug settings](#debug-settings)
-    - [Other](#other)
+  - [Extractor settings](#extractor-settings)
+  - [Transformer settings](#transformer-settings)
+  - [Validation and Loader settings](#validation-and-loader-settings)
+  - [Reporting location settings](#reporting-location-settings)
+  - [S3 vs local file system settings](#s3-vs-local-file-system-settings)
+  - [Mail properties](#mail-properties)
+  - [Debug settings](#debug-settings)
+  - [Other](#other)
 
 ## Setup
 
@@ -45,7 +45,7 @@ and **Application properties** section below.
 Docker builds are made automatically at [https://hub.docker.com/r/thehyve/cbioportal-staging/](https://hub.docker.com/r/thehyve/cbioportal-staging/).
 To manually build a local image use:
 
-```
+```sh
 docker build -t cbio-staging .
 ```
 
@@ -53,7 +53,7 @@ docker build -t cbio-staging .
 
 To run in Docker, use:
 
-```
+```sh
 docker run -d --restart=always \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -69,7 +69,7 @@ properties that you want to overrid).
 Furthermore, you can still override individual parameters on top of that by
 adding them directly to the end of the docker command, e.g.:
 
-```
+```sh
 docker run -d --restart=always \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -82,34 +82,49 @@ docker run -d --restart=always \
 
 ### Build
 
-To build and run tests execute:
-```
+To build and run unit tests execute:
+
+```sh
 mvn clean install
 ```
 
-You can skip tests with extra argument `-DskipTests`.
+You can skip tests with extra argument `-DskipTests`:
+
+```sh
+mvn clean install -DskipTests
+```
+
+To build and run unit tetst __and__ integration tests execute:
+
+```sh
+mvn clean install -P integration-test
+```
 
 ### Run
 
 To run use:
-```
+
+```sh
 ./target/cbioportal-staging-*.jar
 ```
 
 You can override application properties at runtime by adding them as parameters, for example:
-```
+
+```sh
 ./target/cbioportal-staging-*.jar --scan.cron="* * * * * *"
 ```
 
 or link your own custom properties file, for example:
-```
+
+```sh
 ./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
 ```
 
 ## Yaml file format and location of study files
 
 The app expects a yaml file in the working directory (path specified in `scan.location` of the `application.properties`) with the prefix `list_of_studies` in its name (for example, `list_of_studies_1.yaml`). This file contains all the file names, grouped by study, that will be required for the application to transform them into staging files suitable to be loaded into cBioPortal. The structure of the yaml file must be as follows:
-```
+
+```yaml
 study1:
     - path/to/file1.txt
     - path/to/file2.txt
@@ -119,7 +134,8 @@ study2:
 ```
 
 Files in the same "study" should be in the same relative paths. For example, this is *not* allowed:
-```
+
+```yaml
 study1:
     - path/to/file1.txt
     - path/to/file2.txt
@@ -136,68 +152,76 @@ The path to files should be *relative to* the `scan.location`. For example, if `
 
 We can configure the app to run as a cron job by using these parameters:
 
-* `scan.cron`: expects a cron-like expression, extending the usual UN\*X definition to include triggers on the second as well as minute, hour, day of month, month and day of week.  e.g. `0 * * * * MON-FRI` means once per minute on weekdays (at the top of the minute - the 0th second). Other examples: `0 * * * *` (once every minute), `0 0 * * *` (once every hour), `0 0 0 * *` (once every day).
-* `scan.cron.iterations`: number of times to repeat the cron (set to -1 to repeat indefinitely). Default is 1 (once).
-* `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that it will download and pass on to the transformation step. Local file system example: `scan.location=file:///dir/staging_dir/`; S3 example: `scan.location=s3://bucket/staging_dir`.
-* `scan.retry.time`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
-* `scan.extract.folders`: if used, it will only run the staging app for the specific folders (studies) placed inside the `scan.location` place. For example, to only load `study2` and `study3`, contained in `study2_dir` and `study3_dir` folders, set the property like this: `scan.extract.folders=study2_dir,study3_dir`. If the property is commented out, the app will load all folders contained in `scan.location`.
-* `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
+- `scan.cron`: expects a cron-like expression, extending the usual UN\*X definition to include triggers on the second as well as minute, hour, day of month, month and day of week.  e.g. `0 * * * * MON-FRI` means once per minute on weekdays (at the top of the minute - the 0th second). Other examples: `0 * * * *` (once every minute), `0 0 * * *` (once every hour), `0 0 0 * *` (once every day).
+- `scan.cron.iterations`: number of times to repeat the cron (set to -1 to repeat indefinitely). Default is 1 (once).
+- `scan.location`: location to scan (local file system or S3 location). In this path is where the app expects to find the study files that it will download and pass on to the transformation step. Local file system example: `scan.location=file:///dir/staging_dir/`; S3 example: `scan.location=s3://bucket/staging_dir`.
+- `scan.retry.time`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
+- `scan.extract.folders`: if used, it will only run the staging app for the specific folders (studies) placed inside the `scan.location` place. For example, to only load `study2` and `study3`, contained in `study2_dir` and `study3_dir` folders, set the property like this: `scan.extract.folders=study2_dir,study3_dir`. If the property is commented out, the app will load all folders contained in `scan.location`.
+- `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
 
 ### Transformer settings
 
-* `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
-* `skip.transformation`: set this parameter to `true` if you want to skip the transformation step.
+- `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+- `skip.transformation`: set this parameter to `true` if you want to skip the transformation step.
 
 ### Validation and Loader settings
 
-* `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
-* `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
-* `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
-* `cbioportal.docker.cbio.container`: name of the running cBioPortal container (e.g. to be restarted after studies are loaded).
-* `cbioportal.docker.network`: docker network where cBioPortal is placed.
-* `cbioportal.docker.properties`: path to the `portal.properties` of the cBioPortal container.
-* `portal.source`: path to portal source, only required when `cbioportal.mode` is `local`.
+- `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
+- `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
+- `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
+- `cbioportal.docker.cbio.container`: name of the running cBioPortal container (e.g. to be restarted after studies are loaded).
+- `cbioportal.docker.network`: docker network where cBioPortal is placed.
+- `cbioportal.docker.properties`: path to the `portal.properties` of the cBioPortal container.
+- `portal.source`: path to portal source, only required when `cbioportal.mode`* s `local`.
 
 ### Reporting location settings
 
-* `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
-* `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
+- `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
+- `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
 
 ### S3 vs local file system settings
 
 If any of the `*.location` attributes above points to an S3 bucket, you will have to configure the following:
 
-* `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
-* `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
+- `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
+- `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
 
 If **none** of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
 
-* `spring.autoconfigure.exclude`: set this to the list of AWS classes to skip in autoconfigure step when starting up the app. Set it to this: `spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration`
+- `spring.autoconfigure.exclude`: set this to the list of AWS classes to skip in autoconfigure step when starting up the app. Set it to this: `spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration`
 
 ### Mail properties
 
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
 
-* `mail.to`: comma-separated addresses where the app will send the emails to.
-* `mail.from`: email address to be used as sender/"from"
-* `mail.smtp.user`: smtp user name.
-* `mail.smtp.password`: (optional) respective credentials of the app email (corresponding to `mail.smtp.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
-* `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
-* `mail.debug`: boolean, if set to `true` prints debugging logs in the screen. 
-* `mail.transport.protocol`: email transport protocol, usually `smtp`.
-* `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is usually `25`
-* `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
-* `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
-* `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
-* `study.curator.emails`: comma-separated emails of the users which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
+- `mail.to`: comma-separated addresses where the app will send the emails to.
+- `mail.from`: email address to be used as sender/"from"
+- `mail.smtp.user`: smtp user name.
+- `mail.smtp.password`: (optional) respective credentials of the app email (corresponding to `mail.smtp.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
+- `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
+- `mail.debug`: boolean, if set to `true` prints debugging logs in the screen. 
+- `mail.transport.protocol`: email transport protocol, usually `smtp`.
+- `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is usually `25`
+- `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
+- `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
+- `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
+- `study.curator.emails`: comma-separated emails of the users which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
 
 ### Debug settings
 
-* `logging.level.root`: default log level / you can use this to debug and troubleshoot issues (default `INFO`)
-* `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.emails` (and not to the `mail.smtp.user`)
+- `logging.level.root`: default log level / you can use this to debug and troubleshoot issues (default `INFO`)
+- `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.emails` (and not to the `mail.smtp.user`)
+
+### Update cbioportal version used for integration tests
+
+Update to the same Dockerhub image reference (e.g., _cbioportal/cbioportal-3.1.4_):
+
+- `test.cbioportal.docker.image` property in _pom.xml_
+- `cbioportal.docker.image` in _src/test/resources/integration_test.properties_
+- `TEST_CBIOPORTAL_DOCKER_IMAGE` in _.circleci/config.yml_
 
 ### Other
 
-* `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
-* `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
+- `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
+- `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.

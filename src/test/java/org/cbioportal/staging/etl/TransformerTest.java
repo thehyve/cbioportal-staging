@@ -20,17 +20,17 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Map;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import freemarker.core.ParseException;
@@ -43,9 +43,12 @@ import freemarker.template.TemplateNotFoundException;
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
         org.cbioportal.staging.etl.ValidationServiceMockupImpl.class })
+@TestPropertySource(
+    properties= {
+        "central.share.location=${java.io.tmpdir}"
+    }
+)
 @SpringBootTest
-@Import(MyTestConfiguration.class)
-
 public class TransformerTest {
 
     @Autowired
@@ -70,7 +73,7 @@ public class TransformerTest {
         studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         Map<String, File> transformedStudy = transformer.transform(date, studies, transformationCommand, filesPaths);
-		
+
         assertEquals(1, transformedStudy.size());
         assertEquals(studies, transformedStudy);
 	}
@@ -79,11 +82,11 @@ public class TransformerTest {
 	public void studyWithNoTransformation() {
 		File studyPath = new File("src/test/resources/transformer_tests/study2/");
 		boolean skipTransformation = transformer.skipTransformation(studyPath);
-		
+
 		//Build the expected outcome and check that is the same as the function output
 		assertEquals(true, skipTransformation);
     }
-    
+
     //Study 2, which skips transformation, should be successfully returned as (already) transformed:
     @Test
     public void transformStudyWithNoTransformation() throws TemplateNotFoundException, MalformedTemplateNameException,
@@ -94,7 +97,7 @@ public class TransformerTest {
         studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         Map<String, File> transformedStudy = transformer.transform(date, studies, transformationCommand, filesPaths);
-		
+
         assertEquals(1, transformedStudy.size());
         assertEquals(studies, transformedStudy);
 	}
@@ -103,9 +106,9 @@ public class TransformerTest {
 	public void studyWithTransformationFakeMetaStudy() {
 		File studyPath = new File("src/test/resources/transformer_tests/study3/");
 		boolean skipTransformation = transformer.skipTransformation(studyPath);
-		
+
 		//Build the expected outcome and check that is the same as the function output
 		assertEquals(false, skipTransformation);
     }
-	
+
 }

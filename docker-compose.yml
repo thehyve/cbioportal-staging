@@ -1,0 +1,21 @@
+version: '2.4'
+services:
+
+  ftp-server:
+    container_name: ftp-server
+    image: stilliard/pure-ftpd:latest
+    ports:
+      - 21:21
+      - 30000-30009:30000-30009
+    volumes:
+    - "./ftp-dir/:/home/user/ftp"
+    restart: always
+    environment:
+    - PUBLICHOST=localhost
+    - FTP_USER_NAME=user
+    - FTP_USER_PASS=user
+    - TP_USER_HOME=/home/user/ftp
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "cbioDB", "-p${MYSQL_ROOT_PASSWORD:-P@ssword1}"]
+      timeout: 10s
+ 

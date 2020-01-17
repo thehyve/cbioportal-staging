@@ -33,7 +33,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -42,21 +41,20 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.LocalExtractor.class,
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
 @SpringBootTest
-@Import(MyTestConfiguration.class)
 
 public class LocalExtractorTest {
-    
+
     @Autowired
 	private LocalExtractor localExtractor;
-	
+
 	@Autowired
 	private EmailServiceMockupImpl emailService;
-		
+
 	@Before
     public void setUp() throws Exception {
         emailService.reset();
     }
-	
+
 	@Rule
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
@@ -77,7 +75,7 @@ public class LocalExtractorTest {
 		assertEquals(true, emailService.isEmailStudyFileNotFoundSent()); //Email is sent since a file does not exist
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());		
+		assertEquals(false, emailService.isEmailGenericErrorSent());
     }
 
     @Test
@@ -99,7 +97,7 @@ public class LocalExtractorTest {
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
+
         //Build the expected outcome and check that is the same as the function output
 		Map<String, File> expectedResult = new HashMap<String, File>();
 		expectedResult.put("study2", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study2"));
@@ -115,7 +113,7 @@ public class LocalExtractorTest {
         ArrayList<File> directories = new ArrayList<File>();
         directories.add(new File(relativeDirectory.getAbsolutePath()));
 		Map<String, File> result = localExtractor.extractWithoutWorkingDir(directories);
-		
+
         //Build the expected outcome and check that is the same as the function output
 		Map<String, File> expectedResult = new HashMap<String, File>();
 		expectedResult.put("study2", new File(relativeDirectory.getAbsolutePath()));

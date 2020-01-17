@@ -27,6 +27,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+
+/* 
+    Calls a command when study loading is finished.
+ */
 @Component
 public class PublisherServiceImpl implements PublisherService {
 	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);

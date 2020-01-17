@@ -3,6 +3,7 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,11 +11,10 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.cbioportal.staging.services.PublisherServiceImpl;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
@@ -33,9 +33,13 @@ import org.cbioportal.staging.services.PublisherServiceImpl;
 		org.cbioportal.staging.services.PublisherServiceImpl.class,
 		org.cbioportal.staging.etl.ETLProcessRunner.class,
 		org.cbioportal.staging.app.ScheduledScanner.class})
+@TestPropertySource(
+	properties= {
+		"central.share.location=${java.io.tmpdir}",
+		"etl.working.dir=${java.io.tmpdir}"
+	}
+)
 @SpringBootTest
-@Import(MyTestConfiguration.class)
-
 public class IntegrationTest {
 	
 	@Autowired
