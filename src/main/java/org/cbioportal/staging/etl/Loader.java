@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
@@ -49,10 +47,7 @@ public class Loader {
     
     @Autowired
     private ValidationService validationService;
-    
-    @Autowired
-    private LocalExtractor localExtractor;
-	
+    	
 	@Value("${etl.working.dir:${java.io.tmpdir}}")
 	private File etlWorkingDir;
 
@@ -63,7 +58,7 @@ public class Loader {
     private String centralShareLocationPortal;
     
 	
-	boolean load(Integer id, Map<String, File> studyPaths, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
+	boolean load(String date, Map<String, File> studyPaths, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
         Map<String, String> statusStudies = new HashMap<String, String>();
         int studiesNotLoaded = 0;
 		if (centralShareLocationPortal.equals("")) {
@@ -86,20 +81,9 @@ public class Loader {
 				e.printStackTrace();
 			} finally {
                 //Put report and log file in the share location
-                //First, make the "id" dir in the share location if it is local
-				String centralShareLocationPath = centralShareLocation+"/"+id;
-				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+id);
-					if (centralShareLocationPath.startsWith("file:")) {
-						cslPath = new File(centralShareLocationPath.replace("file:", ""));
-					}
-					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-					if (!cslPath.exists()) {
-						cslPath.mkdirs();
-					}
-				}
+				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
                 validationService.copyToResource(logFile, centralShareLocationPath);
-                filesPath.put(study+" loading log", centralShareLocationPortal+"/"+id+"/"+logName);	
+                filesPath.put(study+" loading log", centralShareLocationPortal+"/"+date+"/"+logName);	
 
                 //Add loading result for the email loading report
                 if (loadingStatus == 0) {

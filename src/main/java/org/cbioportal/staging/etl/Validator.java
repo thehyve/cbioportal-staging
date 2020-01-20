@@ -16,8 +16,6 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,10 +37,7 @@ public class Validator {
 	
 	@Autowired
     private ValidationService validationService;
-    
-    @Autowired
-    private LocalExtractor localExtractor;
-	
+    	
 	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 	
@@ -71,7 +66,7 @@ public class Validator {
 		}
 	}
 	
-	Map<String, File> validate(Integer id, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
+	Map<String, File> validate(String date, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
 		Map<String, File> studiesPassed = new HashMap<String, File>();
 		if (centralShareLocationPortal.equals("")) {
 			centralShareLocationPortal = centralShareLocation;
@@ -84,25 +79,13 @@ public class Validator {
 				//Get the paths for the study and validate it
 				String reportName = study+"_validation_report.html";
 				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
-				String logFileName = study+"_validation_log.txt";
-				File logFile = new File(studyPaths.get(study)+"/"+logFileName);
-				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, id);
-				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+id+"/"+logFile.getName());
-                filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+id+"/"+reportName);
+				File logFile = new File(studyPaths.get(study)+"/"+study+"_validation_log.txt");
+				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, date);
+				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+date+"/"+logFile.getName());
+                filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+date+"/"+reportName);
 				
 				//Put report and log file in the share location
-                //First, make the "id" dir in the share location if it is local
-				String centralShareLocationPath = centralShareLocation+"/"+id;
-				if (!centralShareLocationPath.startsWith("s3:")) {
-					File cslPath = new File(centralShareLocation+"/"+id);
-					if (centralShareLocationPath.startsWith("file:")) {
-						cslPath = new File(centralShareLocationPath.replace("file:", ""));
-					}
-					logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-					if (!cslPath.exists()) {
-						cslPath.mkdirs();
-					}
-				}
+				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
 				validationService.copyToResource(new File(reportPath), centralShareLocationPath);
 				validationService.copyToResource(logFile, centralShareLocationPath);
 				

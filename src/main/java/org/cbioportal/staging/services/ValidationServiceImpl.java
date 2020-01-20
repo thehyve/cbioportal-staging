@@ -65,9 +65,9 @@ public class ValidationServiceImpl implements ValidationService {
 	private ResourcePatternResolver resourcePatternResolver;
 	
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile, int id) throws ValidatorException, ConfigurationException, Exception {
+	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException, Exception {
 		try {
-            File portalInfoFolder = new File(etlWorkingDir+"/"+id+"/portalInfo");
+            File portalInfoFolder = new File(etlWorkingDir+"/"+date+"/portalInfo");
             if (etlWorkingDir.equals("false")){
                 portalInfoFolder = new File(studyPath+"/portalInfo");
             }
@@ -164,6 +164,22 @@ public class ValidationServiceImpl implements ValidationService {
             InputStream inputStream = new FileInputStream(filePath)) {
                 IOUtils.copy(inputStream, outputStream);
 		}
+    }
+
+    public String getCentralShareLocationPath(String centralShareLocation, String date) {
+        String centralShareLocationPath = centralShareLocation+"/"+date;
+        if (!centralShareLocationPath.startsWith("s3:")) {
+            File cslPath = new File(centralShareLocation+"/"+date);
+            if (centralShareLocationPath.startsWith("file:")) {
+                cslPath = new File(centralShareLocationPath.replace("file:", ""));
+            }
+            logger.info("Central Share Location path: "+cslPath.getAbsolutePath());
+            //If the Central Share Location path does not exist, create it:
+            if (!cslPath.exists()) {
+                cslPath.mkdirs();
+            }
+        }
+        return centralShareLocationPath;
     }
 
 }

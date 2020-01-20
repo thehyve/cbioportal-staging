@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,13 +90,9 @@ public class ETLProcessRunner {
             } else {
                 studyPaths = extractor.run(indexFile);
             }
-			File cslPath = new File(centralShareLocation);
-            if (centralShareLocation.startsWith("file:")) {
-                cslPath = new File(centralShareLocation.replace("file:", ""));
-            }
-			Integer cslId = localExtractor.getNewId(cslPath);
+			String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 			//Execute Transforming, Validating and Loading steps:
-			runCommon(cslId, studyPaths);
+			runCommon(date, studyPaths);
 		}
 		finally
 		{
@@ -113,21 +111,14 @@ public class ETLProcessRunner {
 		try  {
             startProcess();
             //E (Extract) step:
-            Map<String, File> studyPaths = new HashMap<String, File>();
-            File cslPath = new File(centralShareLocation);
-            Integer cslId = localExtractor.getNewId(cslPath);
-            if (centralShareLocation.startsWith("file:")) {
-                cslPath = new File(centralShareLocation.replace("file:", ""));
-            }
+            String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+            Map<String, File> studyPaths = new HashMap<String, File>(localExtractor.extractInWorkingDir(directories, date));
             if (etlWorkingDir.equals("false")) {
                 studyPaths = localExtractor.extractWithoutWorkingDir(directories);
-            } else {
-                cslId = localExtractor.getNewId(new File(etlWorkingDir));
-                studyPaths = localExtractor.extractInWorkingDir(directories, cslId);
             }
 			
 			//Execute Transforming, Validating and Loading steps:
-			runCommon(cslId, studyPaths);
+			runCommon(date, studyPaths);
 		}
 		finally
 		{
@@ -136,17 +127,17 @@ public class ETLProcessRunner {
 		}
 	}
 	
-	private void runCommon(Integer cslId, Map<String, File> studyPaths) throws Exception {
+	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
         Map<String, String> logPaths = new HashMap<String, String>();
 		boolean loadSuccessful = false;
 		//T (Transform) step:
-		Map<String, File> transformedStudiesPaths = transformer.transform(cslId, studyPaths, "command", logPaths);
+		Map<String, File> transformedStudiesPaths = transformer.transform(date, studyPaths, "command", logPaths);
         //V (Validate) step:
         if (transformedStudiesPaths.keySet().size() > 0) {
-            Map<String, File> validatedStudies = validator.validate(cslId, transformedStudiesPaths, logPaths);
+            Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
             //L (Load) step:
             if (validatedStudies.size() > 0) {
-                loadSuccessful = loader.load(cslId, validatedStudies, logPaths);
+                loadSuccessful = loader.load(date, validatedStudies, logPaths);
                 if (loadSuccessful) {
                     restarter.restart();
                     if (!studyPublishCommandPrefix.equals("null")) {

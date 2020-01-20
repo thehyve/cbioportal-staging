@@ -16,11 +16,12 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,10 +67,10 @@ public class LocalExtractorTest {
 		ReflectionTestUtils.setField(localExtractor, "timeRetry", 0);
 
 		//Run extractor step:
-        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         ArrayList<File> directories = new ArrayList<File>();
         directories.add(new File("/non/existing/path"));
-		localExtractor.extractInWorkingDir(directories, id);
+		localExtractor.extractInWorkingDir(directories, date);
 
 		//check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -86,11 +87,11 @@ public class LocalExtractorTest {
 		ReflectionTestUtils.setField(localExtractor, "timeRetry", 0);
 
 		//Run extractor step:
-        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         File relativeDirectory = new File("src/test/resources/transformer_tests/study2");
         ArrayList<File> directories = new ArrayList<File>();
         directories.add(new File(relativeDirectory.getAbsolutePath()));
-		Map<String, File> result = localExtractor.extractInWorkingDir(directories, id);
+		Map<String, File> result = localExtractor.extractInWorkingDir(directories, date);
 
 		//check that the correct email is sent
 		assertEquals(false, emailService.isEmailStudyErrorSent());
@@ -101,7 +102,7 @@ public class LocalExtractorTest {
 		
         //Build the expected outcome and check that is the same as the function output
 		Map<String, File> expectedResult = new HashMap<String, File>();
-		expectedResult.put("study2", new File(etlWorkingDir.getRoot().toString()+"/"+id+"/study2"));
+		expectedResult.put("study2", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study2"));
 		assertEquals(expectedResult, result);
     }
 

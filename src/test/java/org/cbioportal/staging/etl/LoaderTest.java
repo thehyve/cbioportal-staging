@@ -18,7 +18,9 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -35,8 +37,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.LoaderServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class,
-        org.cbioportal.staging.etl.LocalExtractor.class})
+        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -50,9 +51,6 @@ public class LoaderTest {
 	
 	@Autowired
     private LoaderServiceMockupImpl loaderService;
-
-    @Autowired
-    private LocalExtractor localExtractor;
     	
 	@Before
 	public void setUp() throws Exception {
@@ -64,14 +62,14 @@ public class LoaderTest {
 	public void studyLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
         ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-        ReflectionTestUtils.setField(loader, "localExtractor", localExtractor);
 		ReflectionTestUtils.setField(loaderService, "throwError", false);
 		ReflectionTestUtils.setField(loaderService, "exitStatus", 0);
 
         Map<String, File> studies = new HashMap<String, File>();
         Map<String, String> studyStatus = new HashMap<String, String>();
-		studies.put("lgg_ucsf_2014", new File("test/path"));
-		Boolean result = loader.load(0, studies, studyStatus);
+        studies.put("lgg_ucsf_2014", new File("test/path"));
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		Boolean result = loader.load(date, studies, studyStatus);
 		assertEquals(true, result); //The study has been loaded
 		
 		//Check that the correct email is sent
@@ -86,14 +84,14 @@ public class LoaderTest {
 	public void studyNotLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
         ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-        ReflectionTestUtils.setField(loader, "localExtractor", localExtractor);
 		ReflectionTestUtils.setField(loaderService, "throwError", false);
 		ReflectionTestUtils.setField(loaderService, "exitStatus", 1);
 
         Map<String, File> studies = new HashMap<String, File>();
         Map<String, String> studyStatus = new HashMap<String, String>();
-		studies.put("lgg_ucsf_2014", new File("test/path"));
-		Boolean result = loader.load(0, studies, studyStatus);
+        studies.put("lgg_ucsf_2014", new File("test/path"));
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+		Boolean result = loader.load(date, studies, studyStatus);
 		assertEquals(false, result); //The study has not been loaded
 		
 		//Check that the correct email is sent

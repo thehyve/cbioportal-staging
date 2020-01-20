@@ -16,10 +16,11 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,8 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
-        org.cbioportal.staging.etl.LocalExtractor.class, 
-		org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
+        org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -49,10 +49,7 @@ public class ExtractorTest {
 
 	@Autowired
     private Extractor extractor;
-    
-    @Autowired
-	private LocalExtractor localExtractor;
-	
+    	
 	@Autowired
 	private EmailServiceMockupImpl emailService;
 	
@@ -76,7 +73,7 @@ public class ExtractorTest {
 
 		//Run extractor step:
         Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");
-        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Map<String, File> result = extractor.run(indexFile);
 
 		//check that the correct email is sent
@@ -88,7 +85,7 @@ public class ExtractorTest {
 		
         //Build the expected outcome and check that is the same as the function output
 		Map<String, File> expectedResult = new HashMap<String, File>();
-		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+id+"/study1"));
+		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
 		assertEquals(expectedResult, result);
     }
 
@@ -99,7 +96,7 @@ public class ExtractorTest {
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
         Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
-        Integer id = localExtractor.getNewId(etlWorkingDir.getRoot());
+        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Map<String, File> result = extractor.run(indexFile);
 
 		//check that no emails are sent
@@ -111,7 +108,7 @@ public class ExtractorTest {
 		
         //Build the expected outcome and check that is the same as the function output
         Map<String, File> expectedResult = new HashMap<String, File>();
-        expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+id+"/study1"));
+        expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
 		assertEquals(expectedResult, result);
 	}
 	
