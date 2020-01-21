@@ -15,10 +15,6 @@
 */
 package org.cbioportal.staging.exceptions;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 public class LoaderException extends Exception {
 	/**
 	 * 

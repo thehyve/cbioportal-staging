@@ -1,6 +1,6 @@
-# Default properties file automatically detected by spring. 
-# Override this by using --spring.config.location=file:///otherdir/another-location.properties 
-# at startup command of this app. For overriding specific properties directly without a file, you can 
+# Default properties file automatically detected by spring.
+# Override this by using --spring.config.location=file:///otherdir/another-location.properties
+# at startup command of this app. For overriding specific properties directly without a file, you can
 # use --property="value" in command, e.g. --scan.cron="* * * * * *".
 # For more information about the properties listed below, read: https://github.com/thehyve/cbioportal-staging/blob/master/README.md
 
@@ -9,26 +9,27 @@ scan.cron=0 0 0 * * *
 # (optional) number of times to repeat the cron (default is 1; set to -1 to repeat indefinitely):
 #scan.cron.iterations=1
 # location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
-scan.location=file:///tmp
+scan.location=file:///home/pnp300/staging-scan-folder/
 # (optional) Minutes before trying to find a file specified by the yaml file that has not been found (default is 5 minutes; enable this prop to configure to something else)
 #scan.retry.time=5
 # (optional, only for non-s3 scan locations for now) comma-separated list of folders to
-# extract from scan location (relative paths, each will be seen as 1 study 
+# extract from scan location (relative paths, each will be seen as 1 study
 # to be transformed and loaded):
 #scan.extract.folders=dir1,dir2,etc
+#scan.yaml.fileprefix=list_of_studies
 
 
 # (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
 #etl.working.dir=/custom/working/dir
 
-# (optional) environment settings needed by S3 library. Set this when 
+# (optional) environment settings needed by S3 library. Set this when
 # running the tool outside EC2 environment:
 #cloud.aws.region.static=eu-central-1
 # (optional) aws credentials for access to S3 bucket:
 #cloud.aws.credentials.accessKey=<aws-key>
 #cloud.aws.credentials.secretKey=<aws-secret-key>
 # Turn OFF any S3: leave this property enabled if *NOT* using S3, but disable it (and enable the ones above) otherwise:
-spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
+#spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
 
 # cbioportal mode, either "local" or "docker".
 cbioportal.mode=docker
@@ -84,4 +85,4 @@ study.curator.emails=
 server.alias=DEV
 
 # If debug mode is set true, emails will only be sent to the study.curator.emails (and not to the mail.smtp.user)
-debug.mode=true 
+debug.mode=true

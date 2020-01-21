@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Main ETL process.
- * 
+ *
  * @author pieter
  *
  */
@@ -46,7 +47,7 @@ public class ETLProcessRunner {
 
 	@Autowired
 	private Extractor extractor;
-	
+
 	@Autowired
 	private LocalExtractor localExtractor;
 
@@ -61,24 +62,60 @@ public class ETLProcessRunner {
 
 	@Autowired
 	private Restarter restarter;
-	
+
 	@Autowired
 	private Publisher publisher;
-	
+
 	@Value("${study.publish.command_prefix:null}")
     private String studyPublishCommandPrefix;
-    
+
     @Value("${central.share.location}")
     private String centralShareLocation;
 
     @Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 
+	public void run(Map<String, Resource[]> remoteResources) throws Exception {
+		try  {
+
+			String date = ResourceUtils.getTimeStamp("yyyyMMdd-HHmmss");
+			startProcess();
+
+            //E (Extract) step:
+			Map<String,File> localResources = extractor.run(remoteResources);
+
+			Map<String, String> logPaths = new HashMap<String, String>();
+
+			//T (Transform) step:
+			Map<String, File> transformedStudiesPaths = transformer.transform(date, localResources, "command", logPaths);
+
+			//V (Validate) and L (Load) step:
+			if (transformedStudiesPaths.keySet().size() > 0) {
+				Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
+				//L (Load) step:
+				if (validatedStudies.size() > 0) {
+					boolean loadSuccessful = loader.load(date, validatedStudies, logPaths);
+					if (loadSuccessful) {
+						restarter.restart();
+						if (!studyPublishCommandPrefix.equals("null")) {
+							publisher.publishStudies(validatedStudies.keySet());
+						}
+					}
+				}
+			}
+		}
+		finally
+		{
+			//end process / release lock:
+			endProcess();
+		}
+	}
+
 	/**
 	 * Runs all the steps of the ETL process.
-	 * 
+	 *
 	 * @param indexFile: index YAML file containing the names of the files to be "ETLed".
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public void run(Resource indexFile) throws Exception {
 		try  {
@@ -90,7 +127,7 @@ public class ETLProcessRunner {
             } else {
                 studyPaths = extractor.run(indexFile);
             }
-			String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+			String date = ResourceUtils.getTimeStamp("yyyyMMdd-HHmmss");
 			//Execute Transforming, Validating and Loading steps:
 			runCommon(date, studyPaths);
 		}
@@ -100,12 +137,12 @@ public class ETLProcessRunner {
 			endProcess();
 		}
 	}
-	
+
 	/**
 	 * Runs all the steps of the ETL process.
-	 * 
+	 *
 	 * @param directories: list of strings with the directory names inside the scanLocation folder.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public void run(ArrayList<File> directories) throws Exception {
 		try  {
@@ -116,7 +153,7 @@ public class ETLProcessRunner {
             if (etlWorkingDir.equals("false")) {
                 studyPaths = localExtractor.extractWithoutWorkingDir(directories);
             }
-			
+
 			//Execute Transforming, Validating and Loading steps:
 			runCommon(date, studyPaths);
 		}
@@ -126,22 +163,22 @@ public class ETLProcessRunner {
 			endProcess();
 		}
 	}
-	
+
 	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
-        Map<String, String> logPaths = new HashMap<String, String>();
+		Map<String, String> logPaths = new HashMap<String, String>();
 		boolean loadSuccessful = false;
 		//T (Transform) step:
 		Map<String, File> transformedStudiesPaths = transformer.transform(date, studyPaths, "command", logPaths);
         //V (Validate) step:
         if (transformedStudiesPaths.keySet().size() > 0) {
-            Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
+			Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
             //L (Load) step:
             if (validatedStudies.size() > 0) {
-                loadSuccessful = loader.load(date, validatedStudies, logPaths);
+				loadSuccessful = loader.load(date, validatedStudies, logPaths);
                 if (loadSuccessful) {
-                    restarter.restart();
+					restarter.restart();
                     if (!studyPublishCommandPrefix.equals("null")) {
-                        publisher.publishStudies(validatedStudies.keySet());
+						publisher.publishStudies(validatedStudies.keySet());
                     }
                 }
             }
