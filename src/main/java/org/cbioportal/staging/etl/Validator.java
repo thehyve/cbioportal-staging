@@ -44,8 +44,8 @@ public class Validator {
 	@Value("${central.share.location}")
 	private String centralShareLocation;
 	
-	@Value("${central.share.location.portal:}")
-	private String centralShareLocationPortal;
+	@Value("${central.share.location.web.address:}")
+	private String centralShareLocationWebAddress;
 	
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -67,9 +67,10 @@ public class Validator {
 	}
 	
 	Map<String, File> validate(String date, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
-		Map<String, File> studiesPassed = new HashMap<String, File>();
-		if (centralShareLocationPortal.equals("")) {
-			centralShareLocationPortal = centralShareLocation;
+        Map<String, File> studiesPassed = new HashMap<String, File>();
+        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
+		if (centralShareLocationWebAddress.equals("")) {
+			centralShareLocationWebAddress = centralShareLocation;
 		}
 		try {
 			//Get studies from appropriate staging folder
@@ -81,8 +82,8 @@ public class Validator {
 				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
 				File logFile = new File(studyPaths.get(study)+"/"+study+"_validation_log.txt");
 				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, date);
-				filesPaths.put(study+" validation log", centralShareLocationPortal+"/"+date+"/"+logFile.getName());
-                filesPaths.put(study+" validation report", centralShareLocationPortal+"/"+date+"/"+reportName);
+				filesPaths.put(study+" validation log", centralShareLocationWebAddress+"/"+date+"/"+logFile.getName());
+                filesPaths.put(study+" validation report", centralShareLocationWebAddress+"/"+date+"/"+reportName);
 				
 				//Put report and log file in the share location
 				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);

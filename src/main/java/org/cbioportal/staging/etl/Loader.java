@@ -54,36 +54,40 @@ public class Loader {
 	@Value("${central.share.location}")
 	private String centralShareLocation;
 	
-	@Value("${central.share.location.portal:}")
-    private String centralShareLocationPortal;
+	@Value("${central.share.location.web.address:}")
+    private String centralShareLocationWebAddress;
     
 	
-	boolean load(String date, Map<String, File> studyPaths, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
-        Map<String, String> statusStudies = new HashMap<String, String>();
+	boolean load(final String date, final Map<String, File> studyPaths, final Map<String, String> filesPath)
+            throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
+            TemplateException, RuntimeException, LoaderException {
+        final Map<String, String> statusStudies = new HashMap<String, String>();
         int studiesNotLoaded = 0;
-		if (centralShareLocationPortal.equals("")) {
-			centralShareLocationPortal = centralShareLocation;
-		}
-		for (String study : studyPaths.keySet()) {
-            logger.info("Starting loading of study "+study+". This can take some minutes.");
-            File studyPath = new File(studyPaths.get(study)+"/staging");
-            int loadingStatus = -1;                 
-            //Create loading log file
-            String logName = study+"_loading_log.txt";
-            File logFile = new File(studyPaths.get(study)+"/"+logName);
-			try {
+        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
+        if (centralShareLocationWebAddress.equals("")) {
+            centralShareLocationWebAddress = centralShareLocation;
+        }
+        for (final String study : studyPaths.keySet()) {
+            logger.info("Starting loading of study " + study + ". This can take some minutes.");
+            final File studyPath = new File(studyPaths.get(study) + "/staging");
+            int loadingStatus = -1;
+            // Create loading log file
+            final String logName = study + "_loading_log.txt";
+            final File logFile = new File(studyPaths.get(study) + "/" + logName);
+            try {
                 loadingStatus = loaderService.load(study, studyPath, logFile);
-            } catch (RuntimeException e) {
-				throw new RuntimeException(e);
-			} catch (Exception e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will skip this study.");
-				e.printStackTrace();
-			} finally {
-                //Put report and log file in the share location
-				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
+            } catch (final RuntimeException e) {
+                throw new RuntimeException(e);
+            } catch (final Exception e) {
+                // tell about error, continue with next study
+                logger.error(e.getMessage() + ". The app will skip this study.");
+                e.printStackTrace();
+            } finally {
+                // Put report and log file in the share location
+                final String centralShareLocationPath = validationService
+                        .getCentralShareLocationPath(centralShareLocation, date);
                 validationService.copyToResource(logFile, centralShareLocationPath);
-                filesPath.put(study+" loading log", centralShareLocationPortal+"/"+date+"/"+logName);	
+                filesPath.put(study+" loading log", centralShareLocationWebAddress+"/"+date+"/"+logName);	
 
                 //Add loading result for the email loading report
                 if (loadingStatus == 0) {

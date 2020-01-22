@@ -47,8 +47,8 @@ public class Transformer {
     @Value("${central.share.location}")
     private String centralShareLocation;
 
-	@Value("${central.share.location.portal:}")
-    private String centralShareLocationPortal;
+	@Value("${central.share.location.web.address:}")
+    private String centralShareLocationWebAddress;
 	
 	@Autowired
 	private EmailService emailService;
@@ -76,8 +76,9 @@ public class Transformer {
             if (!finalPath.exists()) {
                 finalPath.mkdir();
             }
-            if (centralShareLocationPortal.equals("")) {
-                centralShareLocationPortal = centralShareLocation;
+            //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
+            if (centralShareLocationWebAddress.equals("")) {
+                centralShareLocationWebAddress = centralShareLocation;
             }
             int transformationStatus = -1;  
             //Create transformation log file
@@ -115,7 +116,7 @@ public class Transformer {
                         }
                     }
                     validationService.copyToResource(logFile, centralShareLocationPath);
-                    filesPaths.put(study+" transformation log", centralShareLocationPortal+"/"+date+"/"+logName);
+                    filesPaths.put(study+" transformation log", centralShareLocationWebAddress+"/"+date+"/"+logName);
                     //Add transformation status for the email loading report
                     statusStudies.put(study, transformationStatus);
                     if (transformationStatus == 0) {
