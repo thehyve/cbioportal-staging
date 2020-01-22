@@ -24,7 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.Loader.class,
         org.cbioportal.staging.etl.Restarter.class,
         org.cbioportal.staging.etl.Validator.class,
-        org.cbioportal.staging.etl.Publisher.class,
+        org.cbioportal.staging.etl.Authorizer.class,
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.services.ValidationServiceImpl.class,
         org.cbioportal.staging.services.LoaderServiceImpl.class,
@@ -32,7 +32,7 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
         org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
-        org.cbioportal.staging.services.PublisherServiceImpl.class,	
+        org.cbioportal.staging.services.AuthorizerServiceImpl.class,	
         org.cbioportal.staging.app.ScheduledScanner.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
@@ -63,7 +63,7 @@ public class FullIntegrationTest {
     private Restarter restarter;
 
     @Autowired
-    private Publisher publisher;
+    private Authorizer authorizer;
     
     @Autowired
     private RestarterServiceMockupImpl restarterService;
@@ -102,8 +102,8 @@ public class FullIntegrationTest {
         ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
         ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
         ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-        ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
-        ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
+        ReflectionTestUtils.setField(etlProcessRunner, "authorizer", authorizer);
+        ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "null");
 
         ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
         ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");

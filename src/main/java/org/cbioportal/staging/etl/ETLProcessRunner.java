@@ -63,10 +63,10 @@ public class ETLProcessRunner {
 	private Restarter restarter;
 	
 	@Autowired
-	private Publisher publisher;
+	private Authorizer authorizer;
 	
-	@Value("${study.publish.command_prefix:null}")
-    private String studyPublishCommandPrefix;
+	@Value("${study.authorize.command_prefix:null}")
+    private String studyAuthorizeCommandPrefix;
     
     @Value("${central.share.location}")
     private String centralShareLocation;
@@ -140,8 +140,8 @@ public class ETLProcessRunner {
                 loadSuccessful = loader.load(date, validatedStudies, logPaths);
                 if (loadSuccessful) {
                     restarter.restart();
-                    if (!studyPublishCommandPrefix.equals("null")) {
-                        publisher.publishStudies(validatedStudies.keySet());
+                    if (!studyAuthorizeCommandPrefix.equals("null")) {
+                        authorizer.authorizeStudies(validatedStudies.keySet());
                     }
                 }
             }

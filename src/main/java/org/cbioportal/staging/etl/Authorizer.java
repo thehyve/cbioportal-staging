@@ -13,12 +13,20 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.etl;
 
 import java.util.Set;
 
-public interface PublisherService {
-	
-	public void publishStudies(Set<String> studies) throws Exception;
+import org.cbioportal.staging.services.AuthorizerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
+public class Authorizer {
+	@Autowired
+	private AuthorizerService authorizerService;
+	
+	void authorizeStudies(Set<String> studies) throws Exception {
+		authorizerService.authorizeStudies(studies);
+	}
 }

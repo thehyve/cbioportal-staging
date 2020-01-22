@@ -28,21 +28,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PublisherServiceImpl implements PublisherService {
+public class AuthorizerServiceImpl implements AuthorizerService {
 	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
 	
-	@Value("${study.publish.command_prefix:null}")
-	private String studyPublishCommandPrefix;
+	@Value("${study.authorize.command_prefix:null}")
+	private String studyAuthorizeCommandPrefix;
 	
 	@Value("${study.curator.emails}")
 	private String studyCuratorEmails;
 	
-	public void publishStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
+	public void authorizeStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
 		
-		if (!studyPublishCommandPrefix.equals("null")) {
+		if (!studyAuthorizeCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-                    String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
+                    String command = studyAuthorizeCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
                     Process cmdProcess = Runtime.getRuntime().exec(command);
                     logger.info("Executing command: "+command);
                     

@@ -69,9 +69,9 @@ mail.smtp.starttls.enable=<boolean>
 # default log level / you can use this to debug and troubleshoot issues
 logging.level.root=INFO
 
-# add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out)
+# add a command for the study authorizer layer, otherwise leave it empty (or comment it out)
 # the staging app will append the study id and the study.curator.emails to this command.
-#study.publish.command_prefix=
+#study.authorize.command_prefix=
 
 # email of the users, comma-separated, which will get automatic access to studies loaded, and also will receive a copy
 # of all emails sent by the staging app.

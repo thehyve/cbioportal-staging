@@ -199,5 +199,5 @@ The app sends emails to keep the user informed about the status of the tasks per
 
 ### Other
 
-* `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
+* `study.authorize.command_prefix`:  add a command for the study authorizer layer, otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
 * `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
