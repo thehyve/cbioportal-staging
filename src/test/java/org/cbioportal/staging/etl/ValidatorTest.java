@@ -35,7 +35,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Validator.class, 
-		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
+        org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
+        org.cbioportal.staging.etl.Publisher.class,
+        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class,
         org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)

@@ -33,7 +33,9 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
         org.cbioportal.staging.etl.ETLProcessRunner.class,
         org.cbioportal.staging.services.AuthorizerServiceImpl.class,	
-        org.cbioportal.staging.app.ScheduledScanner.class})
+        org.cbioportal.staging.app.ScheduledScanner.class, 
+        org.cbioportal.staging.etl.Publisher.class,
+        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 @TestPropertySource(locations="classpath:full_integration_test.properties")

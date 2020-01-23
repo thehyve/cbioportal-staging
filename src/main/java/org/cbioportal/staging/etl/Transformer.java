@@ -29,8 +29,8 @@ import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.PublisherService;
 import org.cbioportal.staging.services.TransformerService;
-import org.cbioportal.staging.services.ValidationService;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
@@ -43,12 +43,6 @@ public class Transformer {
 
 	@Value("${skip.transformation:false}")
     private boolean skipTransformation;
-    
-    @Value("${central.share.location}")
-    private String centralShareLocation;
-
-	@Value("${central.share.location.web.address:}")
-    private String centralShareLocationWebAddress;
 	
 	@Autowired
 	private EmailService emailService;
@@ -57,7 +51,7 @@ public class Transformer {
     private TransformerService transformerService;
     
     @Autowired
-	private ValidationService validationService;
+	private PublisherService publisherService;
 
 	boolean skipTransformation(File originPath) {
 		File metaStudyFile = new File(originPath+"/meta_study.txt");
@@ -76,10 +70,7 @@ public class Transformer {
             if (!finalPath.exists()) {
                 finalPath.mkdir();
             }
-            //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-            if (centralShareLocationWebAddress.equals("")) {
-                centralShareLocationWebAddress = centralShareLocation;
-            }
+
             int transformationStatus = -1;  
             //Create transformation log file
             String logName = study+"_transformation_log.txt";
@@ -102,30 +93,18 @@ public class Transformer {
 					e1.printStackTrace();
 				}
 			} finally {
-                //Only copy the files if the transformation has been performed
-                if (!skipTransformation(studyOriginPath)) {
-                    String centralShareLocationPath = centralShareLocation+"/"+date;
-                    if (!centralShareLocationPath.startsWith("s3:")) {
-                        File cslPath = new File(centralShareLocation+"/"+date);
-                        if (centralShareLocationPath.startsWith("file:")) {
-                            cslPath = new File(centralShareLocationPath.replace("file:", ""));
-                        }
-                        logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-                        if (!cslPath.exists()) {
-                            cslPath.mkdirs();
-                        }
-                    }
-                    validationService.copyToResource(logFile, centralShareLocationPath);
-                    filesPaths.put(study+" transformation log", centralShareLocationWebAddress+"/"+date+"/"+logName);
-                    //Add transformation status for the email loading report
-                    statusStudies.put(study, transformationStatus);
-                    if (transformationStatus == 0) {
-                        logger.info("Transformation of study "+study+" finished successfully.");
-                    } else if (transformationStatus == 3) {
-                        logger.info("Transformation of study "+study+" finished successfully with warnings.");
-                    } else {
-                        logger.error("Transformation process of study "+study+" failed.");
-                    }
+                //Put log file in the share location once transformation is done
+                String transformationLogPath = publisherService.publish(logFile, date);
+                filesPaths.put(study+" transformation log", transformationLogPath);
+                
+                //Add transformation status for the email loading report
+                statusStudies.put(study, transformationStatus);
+                if (transformationStatus == 0) {
+                    logger.info("Transformation of study "+study+" finished successfully.");
+                } else if (transformationStatus == 3) {
+                    logger.info("Transformation of study "+study+" finished successfully with warnings.");
+                } else {
+                    logger.error("Transformation process of study "+study+" failed.");
                 }
             }	
         }

@@ -37,7 +37,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Loader.class, 
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.LoaderServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
+        org.cbioportal.staging.etl.Publisher.class,
+        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 
@@ -48,22 +49,16 @@ public class LoaderTest {
 	
 	@Autowired
 	private EmailServiceMockupImpl emailService;
-	
-	@Autowired
-    private LoaderServiceMockupImpl loaderService;
-    	
+	    	
 	@Before
 	public void setUp() throws Exception {
 		emailService.reset();
-        loaderService.reset();
+        // loaderService.reset();
 	}
      
     @Test
 	public void studyLoaded() throws Exception {
 		ReflectionTestUtils.setField(loader, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "throwError", false);
-		ReflectionTestUtils.setField(loaderService, "exitStatus", 0);
 
         Map<String, File> studies = new HashMap<String, File>();
         Map<String, String> studyStatus = new HashMap<String, String>();
@@ -79,26 +74,4 @@ public class LoaderTest {
 		assertEquals(true, emailService.isEmailStudiesLoadedSent());
         assertEquals(false, emailService.isEmailGenericErrorSent());
     }
-    
-    @Test
-	public void studyNotLoaded() throws Exception {
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "loaderService", loaderService);
-		ReflectionTestUtils.setField(loaderService, "throwError", false);
-		ReflectionTestUtils.setField(loaderService, "exitStatus", 1);
-
-        Map<String, File> studies = new HashMap<String, File>();
-        Map<String, String> studyStatus = new HashMap<String, String>();
-        studies.put("lgg_ucsf_2014", new File("test/path"));
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-		Boolean result = loader.load(date, studies, studyStatus);
-		assertEquals(false, result); //The study has not been loaded
-		
-		//Check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-        assertEquals(false, emailService.isEmailGenericErrorSent());
-    } 
 }

@@ -42,7 +42,8 @@ import freemarker.template.TemplateNotFoundException;
 @ContextConfiguration(classes = { org.cbioportal.staging.etl.Transformer.class,
         org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
-        org.cbioportal.staging.etl.ValidationServiceMockupImpl.class })
+        org.cbioportal.staging.etl.Publisher.class,
+        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class })
 @SpringBootTest
 @Import(MyTestConfiguration.class)
 

@@ -14,15 +14,11 @@
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package org.cbioportal.staging.services;
-import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.io.FileInputStream;
 import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Validator;
@@ -31,12 +27,7 @@ import org.cbioportal.staging.exceptions.ValidatorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.InvalidPropertyException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.WritableResource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -60,12 +51,9 @@ public class ValidationServiceImpl implements ValidationService {
 	
 	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
-	
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
-	
+		
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException, Exception {
+	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException, Exception {
 		try {
             File portalInfoFolder = new File(etlWorkingDir+"/"+date+"/portalInfo");
             if (etlWorkingDir.equals("false")){
@@ -75,19 +63,15 @@ public class ValidationServiceImpl implements ValidationService {
 			ProcessBuilder validationCmd;
 			ProcessBuilder portalInfoCmd;
 			if (cbioportalMode.equals("local")) {
-				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.toString(), "-p", portalInfoFolder.toString(), "-html", reportPath, "-v");
+				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.toString(), "-p", portalInfoFolder.toString(), "-html", report.getAbsolutePath(), "-v");
 				portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoFolder.toString());
 				portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
 				validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
 			} else if (cbioportalMode.equals("docker")) {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-					//make sure report file exists first, otherwise docker will map it as a folder:
-					File f = new File(reportPath);
-					f.getParentFile().mkdirs(); 
-					f.createNewFile();
 					//docker command:
 					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-							"-v", studyPath.toString()+":/study:ro", "-v", reportPath+":/outreport.html",
+							"-v", studyPath.toString()+":/study:ro", "-v", report+":/outreport.html",
                             "-v", portalInfoFolder.toString()+ ":/portalinfo:ro", 
                             "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
@@ -121,7 +105,7 @@ public class ValidationServiceImpl implements ValidationService {
 			logger.info("Dump portalInfo finished. Continuing validation...");
 		
 			//Apply validation command
-			logger.info("Starting validation. Report will be stored in: " + reportPath);
+			logger.info("Starting validation. Report will be stored in: " + report.getAbsolutePath());
 			logger.info("Executing command: "+String.join(" ", validationCmd.command()));
 			validationCmd.redirectErrorStream(true);
 			validationCmd.redirectOutput(Redirect.appendTo(logFile));
@@ -149,37 +133,5 @@ public class ValidationServiceImpl implements ValidationService {
 			throw new Exception("Error during validation execution. ", e);
 		}
 	}
-	
-	public void copyToResource(File filePath, String resourceOut) throws IOException {
-		String resourcePath = resourceOut+"/"+filePath.getName();
-		Resource resource;
-		if (resourcePath.startsWith("file:")) {
-			resource = new FileSystemResource(resourcePath.replace("file:", ""));
-		}
-		else {
-			resource = this.resourcePatternResolver.getResource(resourcePath);
-        }
-		WritableResource writableResource = (WritableResource) resource;
-        try (OutputStream outputStream = writableResource.getOutputStream(); 
-            InputStream inputStream = new FileInputStream(filePath)) {
-                IOUtils.copy(inputStream, outputStream);
-		}
-    }
-
-    public String getCentralShareLocationPath(String centralShareLocation, String date) {
-        String centralShareLocationPath = centralShareLocation+"/"+date;
-        if (!centralShareLocationPath.startsWith("s3:")) {
-            File cslPath = new File(centralShareLocation+"/"+date);
-            if (centralShareLocationPath.startsWith("file:")) {
-                cslPath = new File(centralShareLocationPath.replace("file:", ""));
-            }
-            logger.info("Central Share Location path: "+cslPath.getAbsolutePath());
-            //If the Central Share Location path does not exist, create it:
-            if (!cslPath.exists()) {
-                cslPath.mkdirs();
-            }
-        }
-        return centralShareLocationPath;
-    }
 
 }

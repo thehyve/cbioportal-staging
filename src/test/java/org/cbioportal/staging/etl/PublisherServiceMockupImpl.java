@@ -16,29 +16,30 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
+import java.io.IOException;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.services.PublisherService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ValidationServiceMockupImpl implements ValidationService {
-	
-	private int exitStatus;
-	private boolean throwError = false;
-	
-	@Override
-	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException {
-		if (throwError) {
-			throw new ValidatorException("dummy test error");
-		}
-		return exitStatus;
-	}
+public class PublisherServiceMockupImpl implements PublisherService {
 
-	public void reset() {
-		this.throwError = false;
-		this.exitStatus = 0;
-	}
+    @Value("${central.share.location}")
+	private String centralShareLocation;
+
+    public String publish(File file, String date) throws IOException {
+
+        String centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
+        return centralShareLocationPath+"/"+file.getName();
+
+    }
+	
+	public void copyToResource(File file, String centralShareLocation) throws IOException {
+    }
+    
+    public String getCentralShareLocationPath(String centralShareLocation, String date) {
+        return centralShareLocation+"/"+date;
+    }
 	
 }

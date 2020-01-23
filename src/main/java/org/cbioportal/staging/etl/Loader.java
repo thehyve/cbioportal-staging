@@ -23,7 +23,7 @@ import java.util.Map;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.LoaderService;
-import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.services.PublisherService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,16 +46,7 @@ public class Loader {
     private LoaderService loaderService;
     
     @Autowired
-    private ValidationService validationService;
-    	
-	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private File etlWorkingDir;
-
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
-	@Value("${central.share.location.web.address:}")
-    private String centralShareLocationWebAddress;
+    private PublisherService publisherService;
     
 	
 	boolean load(final String date, final Map<String, File> studyPaths, final Map<String, String> filesPath)
@@ -63,10 +54,7 @@ public class Loader {
             TemplateException, RuntimeException, LoaderException {
         final Map<String, String> statusStudies = new HashMap<String, String>();
         int studiesNotLoaded = 0;
-        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-        if (centralShareLocationWebAddress.equals("")) {
-            centralShareLocationWebAddress = centralShareLocation;
-        }
+
         for (final String study : studyPaths.keySet()) {
             logger.info("Starting loading of study " + study + ". This can take some minutes.");
             final File studyPath = new File(studyPaths.get(study) + "/staging");
@@ -83,11 +71,9 @@ public class Loader {
                 logger.error(e.getMessage() + ". The app will skip this study.");
                 e.printStackTrace();
             } finally {
-                // Put report and log file in the share location
-                final String centralShareLocationPath = validationService
-                        .getCentralShareLocationPath(centralShareLocation, date);
-                validationService.copyToResource(logFile, centralShareLocationPath);
-                filesPath.put(study+" loading log", centralShareLocationWebAddress+"/"+date+"/"+logName);	
+                //Put log file in the share location once loading is done
+                String loadingLogPath = publisherService.publish(logFile, date);
+                filesPath.put(study+" loading log", loadingLogPath);
 
                 //Add loading result for the email loading report
                 if (loadingStatus == 0) {

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 The Hyve B.V.
+* Copyright (c) 2020 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -13,15 +13,21 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.etl;
 
 import java.io.File;
+import java.io.IOException;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.PublisherService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-public interface ValidationService {
+@Component
+public class Publisher {
+	@Autowired
+	private PublisherService publisherService;
 	
-	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException, Exception;
-
+	void publish(File file, String date) throws IOException {
+		publisherService.publish(file, date);
+	}
 }

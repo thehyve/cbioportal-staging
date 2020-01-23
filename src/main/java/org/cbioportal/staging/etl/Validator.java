@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.PublisherService;
 import org.cbioportal.staging.services.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +38,12 @@ public class Validator {
 	
 	@Autowired
     private ValidationService validationService;
+
+    @Autowired
+    private PublisherService publisherService;
     	
 	@Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
-	
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
-	@Value("${central.share.location.web.address:}")
-	private String centralShareLocationWebAddress;
 	
 	@Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -68,27 +66,23 @@ public class Validator {
 	
 	Map<String, File> validate(String date, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
         Map<String, File> studiesPassed = new HashMap<String, File>();
-        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-		if (centralShareLocationWebAddress.equals("")) {
-			centralShareLocationWebAddress = centralShareLocation;
-		}
+        
 		try {
 			//Get studies from appropriate staging folder
 			Map<String,Integer> validatedStudies = new HashMap<String,Integer>();
 			for (String study : studyPaths.keySet()) {
 				logger.info("Starting validation of study "+study);
 				//Get the paths for the study and validate it
-				String reportName = study+"_validation_report.html";
-				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
+				File report = new File(studyPaths.get(study)+"/"+study+"_validation_report.html");
 				File logFile = new File(studyPaths.get(study)+"/"+study+"_validation_log.txt");
-				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, date);
-				filesPaths.put(study+" validation log", centralShareLocationWebAddress+"/"+date+"/"+logFile.getName());
-                filesPaths.put(study+" validation report", centralShareLocationWebAddress+"/"+date+"/"+reportName);
+				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", report, logFile, date);
 				
-				//Put report and log file in the share location
-				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
-				validationService.copyToResource(new File(reportPath), centralShareLocationPath);
-				validationService.copyToResource(logFile, centralShareLocationPath);
+                //Put report and log file in the share location
+                String validationLogPath = publisherService.publish(logFile, date);
+                String reportPath = publisherService.publish(report, date);
+                filesPaths.put(study+" validation log", validationLogPath);
+                filesPaths.put(study+" validation report", reportPath);
+
 				
 				//Check if study has passed the validation threshold
 				if (hasStudyPassed(study, validationLevel, exitStatus)) {

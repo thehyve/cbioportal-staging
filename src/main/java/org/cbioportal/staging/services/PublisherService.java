@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 The Hyve B.V.
+* Copyright (c) 2020 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -16,12 +16,14 @@
 package org.cbioportal.staging.services;
 
 import java.io.File;
+import java.io.IOException;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ValidatorException;
-
-public interface ValidationService {
+public interface PublisherService {
 	
-	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException, Exception;
+    public String publish(File file, String date) throws IOException;
+    
+    public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
+    
+    public String getCentralShareLocationPath(String centralShareLocation, String date);
 
 }
