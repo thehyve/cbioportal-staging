@@ -15,9 +15,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 public class ResourceUtilsTest {
 
-    // @Autowired
-    // private ResourcePatternResolver resourcePatternResolver;
-
     @Autowired
     private ResourceUtils utils;
 
@@ -37,11 +34,6 @@ public class ResourceUtilsTest {
         assert (selectedResources.length == 1);
         assertEquals(selectedResources[0], target);
     }
-
-    // @Test
-    // public void testRS() throws IOException {
-    //     Resource[] r = resourcePatternResolver.getResources("file:/home/pnp300/**");
-    // }
 
     private List<Resource> createResources(String prefix, String extension) {
         List<Resource> resources = new ArrayList<>();

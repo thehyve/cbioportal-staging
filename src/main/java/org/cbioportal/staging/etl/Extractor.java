@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ResourceExtractionException;
+import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -72,17 +72,17 @@ class Extractor {
 	@Value("${scan.location}")
 	private String scanLocation;
 
-	public Map<String,File> run(Map<String, Resource[]> resources) throws ResourceExtractionException {
+	public Map<String,File> run(Map<String, Resource[]> resources) throws ExtractionException {
 
 		Map<String,File> out = new HashMap<String,File>();
 
 		try {
 
 			if (! etlWorkingDir.exists()) {
-				throw new ResourceExtractionException("etl.working.dir does not exist on the local file system: " + etlWorkingDir);
+				throw new ExtractionException("etl.working.dir does not exist on the local file system: " + etlWorkingDir);
 			}
 			if (etlWorkingDir.isFile()) {
-				throw new ResourceExtractionException("etl.working.dir points to a file on the local file system, but should point to a directory.: " + etlWorkingDir);
+				throw new ExtractionException("etl.working.dir points to a file on the local file system, but should point to a directory.: " + etlWorkingDir);
 			}
 
 			// TODO make abstraction of organization of local working dir
@@ -126,11 +126,11 @@ class Extractor {
 			}
 
 		} catch (IOException e) {
-			throw new ResourceExtractionException("Cannot access working ELT directory.", e);
+			throw new ExtractionException("Cannot access working ELT directory.", e);
 		} catch (ConfigurationException e) {
-			throw new ResourceExtractionException(e.getMessage(), e);
+			throw new ExtractionException(e.getMessage(), e);
 		} catch (InterruptedException e) {
-			throw new ResourceExtractionException("Timeout for resource downloads was interrupted.", e);
+			throw new ExtractionException("Timeout for resource downloads was interrupted.", e);
 		}
 
 		logger.info("Extractor step finished");

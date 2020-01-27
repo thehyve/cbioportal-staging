@@ -86,7 +86,7 @@ public class ScheduledScanner {
 		} catch (Exception e) {
 			try {
 				logger.error("An error not expected occurred. Stopping process... Error found: " + e.getMessage());
-				emailService.emailGenericError("An error not expected occurred. Stopping process... Error found: " + e.getMessage(), e);
+				emailService.emailGenericError("An error not expected occurred. Stopping process... \n\nError found: \n" + e.getMessage(), e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
