@@ -21,9 +21,11 @@ import org.springframework.stereotype.Component;
  * ResourceIgnoreSet
  */
 @Component
-public class ResourceIgnoreSet {
+public class ResourceIgnoreSet extends HashSet<String> {
 
-    // defined bufferedreader here so that it can be 
+    private static final long serialVersionUID = -8289845398838148990L;
+
+    // defined bufferedreader here so that it can be
     // mocked in the test.
     @Configuration
     static class MyConfiguration {
@@ -35,9 +37,9 @@ public class ResourceIgnoreSet {
             }
             return null;
         }
-        
+
     }
-    
+
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
 
@@ -66,18 +68,6 @@ public class ResourceIgnoreSet {
                 }
             }
         }
-    }
-
-    public boolean isEmpty() {
-        return ignorePaths.isEmpty();
-    }
-
-    public Set<String> getExcludePaths() {
-        return ignorePaths;
-    }
-
-    public boolean contains(String res) {
-        return ignorePaths.contains(res);
     }
 
 }

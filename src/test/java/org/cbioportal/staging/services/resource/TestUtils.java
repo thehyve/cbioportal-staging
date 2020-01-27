@@ -14,8 +14,9 @@ public class TestUtils {
         Resource r = mock(Resource.class);
         try {
             long modifiedDate = (long) number;
+            URL url = new URL(fileName);
             when(r.getFilename()).thenReturn(fileName);
-            when(r.getURL()).thenReturn(new URL(fileName));
+            when(r.getURL()).thenReturn(url);
             when(r.lastModified()).thenReturn(modifiedDate);
         } catch (IOException e) {
             e.printStackTrace();

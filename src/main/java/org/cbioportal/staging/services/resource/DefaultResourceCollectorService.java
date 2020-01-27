@@ -25,10 +25,13 @@ public class DefaultResourceCollectorService implements IResourceCollectorServic
     private IResourceProvider resourceProvider;
 
     @Autowired
-    private IResourceStrategy resourceStrategy;
+    private IStudyResourceResolver resourceStrategy;
 
     @Autowired
     private IResourceFilter resourceFilter;
+
+    @Autowired
+    private ResourceUtils utils;
 
     @Override
     public Map<String,Resource[]> getResources(String scanLocation) throws ConfigurationException, ResourceCollectionException {
@@ -38,7 +41,7 @@ public class DefaultResourceCollectorService implements IResourceCollectorServic
         }
 
         Map<String,Resource[]> resources;
-        String trimmedScanLocation = ResourceUtils.trimDir(scanLocation);
+        String trimmedScanLocation = utils.trimDir(scanLocation);
 
         try {
             logger.info("Scanning location for files: " + trimmedScanLocation);

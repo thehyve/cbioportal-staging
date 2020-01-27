@@ -8,17 +8,24 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 public class ResourceUtilsTest {
 
+    // @Autowired
+    // private ResourcePatternResolver resourcePatternResolver;
+
+    @Autowired
+    private ResourceUtils utils;
+
     @Test
     public void getMostRecent_success() {
         Resource[] resources = createResources("prefix", "yaml").toArray(new Resource[0]);
-        Resource selectedResource = ResourceUtils.getMostRecent(resources);
-        assertEquals(selectedResource, resources[resources.length-1]);
+        Resource selectedResource = utils.getMostRecent(resources);
+        assertEquals(selectedResource, resources[resources.length - 1]);
     }
 
     @Test
@@ -26,10 +33,15 @@ public class ResourceUtilsTest {
         List<Resource> resources = createResources("prefix", "yaml");
         Resource target = TestUtils.createResource("dummy", "txt", 0);
         resources.add(target);
-        Resource[] selectedResources = ResourceUtils.filterFiles(resources.toArray(new Resource[0]), "dummy", "txt");
-        assert(selectedResources.length == 1);
+        Resource[] selectedResources = utils.filterFiles(resources.toArray(new Resource[0]), "dummy", "txt");
+        assert (selectedResources.length == 1);
         assertEquals(selectedResources[0], target);
     }
+
+    // @Test
+    // public void testRS() throws IOException {
+    //     Resource[] r = resourcePatternResolver.getResources("file:/home/pnp300/**");
+    // }
 
     private List<Resource> createResources(String prefix, String extension) {
         List<Resource> resources = new ArrayList<>();

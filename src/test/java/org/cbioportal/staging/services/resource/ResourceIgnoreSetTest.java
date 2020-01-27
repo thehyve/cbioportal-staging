@@ -51,7 +51,7 @@ public class ResourceIgnoreSetTest {
 
     @Test
     public void testGetExcludePaths()  {
-        assertEquals(2, resourceIgnoreSet.getExcludePaths().size());
+        assertEquals(2, resourceIgnoreSet.size());
     }
 
     @Test

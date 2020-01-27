@@ -77,8 +77,8 @@ public class ScheduledScanner {
 			logger.info("Started ETL process for studies: }", String.join(", ", resourcesPerStudy.keySet()));
 
 			// TODO return list of successfully processed files
-			// Keep paths relative to remote source so these can be added tot the
-			// ignore file
+			// Keep paths relative to remote source so these can
+			// be added tot the ignore file
 			etlProcessRunner.run(resourcesPerStudy);
 
 			// TODO Optional: add 'resourcesPerStudy' files to inore file

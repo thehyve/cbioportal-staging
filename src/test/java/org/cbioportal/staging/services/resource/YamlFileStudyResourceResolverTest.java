@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
 @TestPropertySource(properties = {
     "scan.location=file:/tmp"
 })
-public class YamlResourceStrategyTest {
+public class YamlFileStudyResourceResolverTest {
 
     @TestConfiguration
     static class MyTestConfiguration {
@@ -58,14 +58,14 @@ public class YamlResourceStrategyTest {
         }
 
         @Bean
-        public YamlResourceStrategy yamlResourceStrategy() {
-            return new YamlResourceStrategy();
+        public YamlFileStudyResourceResolver yamlResourceStrategy() {
+            return new YamlFileStudyResourceResolver();
         }
 
     }
 
     @Autowired
-    private YamlResourceStrategy yamlResourceStrategy;
+    private YamlFileStudyResourceResolver yamlResourceStrategy;
 
     @Test
     public void testResolveResources_success() throws ResourceCollectionException {

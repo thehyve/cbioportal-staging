@@ -31,7 +31,7 @@ public class DefaultResourceCollectorServiceTest {
     public IResourceProvider resourceProvider;
 
     @Mock
-    public IResourceStrategy resourceStrategy;
+    public IStudyResourceResolver resourceStrategy;
 
     @Mock
     private IResourceFilter resourceFilter;

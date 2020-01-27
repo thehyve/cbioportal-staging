@@ -27,9 +27,9 @@ import org.yaml.snakeyaml.Yaml;
  * and translates it into a list of Resources.
  */
 @Component
-public class YamlResourceStrategy implements IResourceStrategy {
+public class YamlFileStudyResourceResolver implements IStudyResourceResolver {
 
-    private static final Logger logger = LoggerFactory.getLogger(YamlResourceStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(YamlFileStudyResourceResolver.class);
 
     // defined Yaml parser here so that it can be
     // mocked in the test.
@@ -55,6 +55,9 @@ public class YamlResourceStrategy implements IResourceStrategy {
     @Autowired
     private Yaml yamlParser;
 
+    @Autowired
+    private ResourceUtils utils;
+
     @Override
     public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
 
@@ -63,8 +66,8 @@ public class YamlResourceStrategy implements IResourceStrategy {
 
             logger.info("Looking for newest yaml file...");
 
-            Resource[] yamlFiles = ResourceUtils.filterFiles(resources, yamlPrefix, "[yaml|yml]");
-            Resource yamlFile = ResourceUtils.getMostRecent(yamlFiles);
+            Resource[] yamlFiles = utils.filterFiles(resources, yamlPrefix, "[yaml|yml]");
+            Resource yamlFile = utils.getMostRecent(yamlFiles);
 
             if (yamlFile == null) {
                 throw new ResourceCollectionException("No yaml files could be found at scan.location using prefix '" + yamlPrefix + "'");
@@ -98,7 +101,7 @@ public class YamlResourceStrategy implements IResourceStrategy {
     }
 
     private String filePath(String filePath) {
-        String trimmedScanLocation = ResourceUtils.trimDir(scanLocation);
+        String trimmedScanLocation = utils.trimDir(scanLocation);
         String trimmedFilePath = filePath.replaceFirst("^\\/+", "");
         return trimmedScanLocation + "/" + trimmedFilePath;
     }

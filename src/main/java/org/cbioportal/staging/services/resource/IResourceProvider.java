@@ -8,5 +8,6 @@ import org.springframework.core.io.Resource;
 public interface IResourceProvider {
 
     public Resource[] list(Path dir) throws ResourceCollectionException;
+    public Resource[] list(Path dir, boolean recursive) throws ResourceCollectionException;
 
 }

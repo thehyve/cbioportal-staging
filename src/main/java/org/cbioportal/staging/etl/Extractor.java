@@ -66,6 +66,9 @@ class Extractor {
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
 
+	@Autowired
+    private ResourceUtils utils;
+
 	@Value("${scan.location}")
 	private String scanLocation;
 
@@ -83,7 +86,7 @@ class Extractor {
 			}
 
 			// TODO make abstraction of organization of local working dir
-			String workingDir = etlWorkingDir.getAbsolutePath() + "/" + ResourceUtils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
+			String workingDir = etlWorkingDir.getAbsolutePath() + "/" + utils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
 
 			Map<String, ArrayList<String>> filesNotFound = new HashMap<String, ArrayList<String>>();
 

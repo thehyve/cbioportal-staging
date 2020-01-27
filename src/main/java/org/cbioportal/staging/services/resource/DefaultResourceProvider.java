@@ -17,8 +17,17 @@ public class DefaultResourceProvider implements IResourceProvider {
 
     @Override
     public Resource[] list(Path dir) throws ResourceCollectionException {
+        return list(dir, false);
+    }
+
+    @Override
+    public Resource[] list(Path dir, boolean recursive) throws ResourceCollectionException {
+
         String path = dir.toAbsolutePath().toString();
         String wildCardPath = path + "/*";
+        if (recursive) {
+            wildCardPath += "*";
+        }
         try {
             return resourcePatternResolver.getResources(wildCardPath);
         } catch (IOException e) {

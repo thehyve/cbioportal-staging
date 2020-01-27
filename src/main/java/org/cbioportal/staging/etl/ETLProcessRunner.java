@@ -75,10 +75,14 @@ public class ETLProcessRunner {
     @Value("${etl.working.dir:false}")
 	private String etlWorkingDir;
 
+
+	@Autowired
+    private ResourceUtils utils;
+
 	public void run(Map<String, Resource[]> remoteResources) throws Exception {
 		try  {
 
-			String date = ResourceUtils.getTimeStamp("yyyyMMdd-HHmmss");
+			String date = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			startProcess();
 
             //E (Extract) step:
@@ -127,7 +131,7 @@ public class ETLProcessRunner {
             } else {
                 studyPaths = extractor.run(indexFile);
             }
-			String date = ResourceUtils.getTimeStamp("yyyyMMdd-HHmmss");
+			String date = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			//Execute Transforming, Validating and Loading steps:
 			runCommon(date, studyPaths);
 		}

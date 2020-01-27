@@ -5,7 +5,7 @@ import java.util.Map;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.springframework.core.io.Resource;
 
-public interface IResourceStrategy {
+public interface IStudyResourceResolver {
 
     Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException;
 
