@@ -1,120 +1,64 @@
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
-import org.junit.Before;
+import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.services.EmailServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(locations="classpath:integration_test.properties")
+@TestPropertySource(properties = {
+    "scan.location=file:src/test/resources/e2e_studies/es_0",
+    "etl.working.dir=/tmp/staging-integration-test/etl-working-dir",
+    "cbioportal.mode=docker",
+    "cbioportal.docker.image=cbioportal/cbioportal:3.1.4",
+    "cbioportal.docker.network=cbio-net",
+    "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
+    "central.share.location=file:/tmp/staging-integration-test/share",
+    "skip.transformation=true"
+})
 @SpringBootTest
 public class FullIntegrationTest {
 
-    @Before
-    public void setUp() throws Exception {
-        emailService.reset();
+    @TestConfiguration
+    static class MyTestConfiguration {
+        @Bean
+        public ScheduledScanner scheduledScanner() {
+            return new ScheduledScanner();
+        }
     }
+
+    @MockBean
+    private EmailServiceImpl emailServiceImpl;
+
+    @Autowired
+    private ScheduledScanner scheduledScanner;
 
     @Test
-    /**
-     * This test assumes local cBioPortal + mySql containers are running.
-     *
-     */
-    public void allStudiesLoaded() {
-
-        //mock transformation (for now... TODO - later replace by real one):
-        ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-
-        //mock email service:
-        ReflectionTestUtils.setField(extractor, "emailService", emailService);
-        ReflectionTestUtils.setField(transformer, "emailService", emailService);
-        ReflectionTestUtils.setField(validator, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "emailService", emailService);
-
-
-        ReflectionTestUtils.setField(etlProcessRunner, "extractor", extractor);
-        ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
-        ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
-        ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
-        ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-        ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
-        ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
-
-        ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
-        ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-        ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/integration");
-        ReflectionTestUtils.setField(scheduledScanner, "emailService", emailService);
-
-        scheduledScanner.scan();
-
-        //correct emails are sent
-        //check that the correct email is sent
-        assertEquals(false, emailService.isEmailGenericErrorSent());
-        assertEquals(false, emailService.isEmailStudyErrorSent());
-        assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-        assertEquals(false, emailService.isEmailTransformedStudiesSent()); //Study is already transformed
-        assertEquals(true, emailService.isEmailValidationReportSent());
-        assertEquals(false, emailService.isEmailStudiesLoadedSent());
-
-        //assert that the loader reports the studies that are passed by the validation (changes to mockup)
-        List<String> expected = new ArrayList<String>();
-        expected.add("study1");
-        expected.add("study2");
-        expected.add("study3");
-        //TODO - add this method to real loader service as well assertEquals(expected.size(), loaderService.getLoadedStudies().size());
+    public void loadSuccessful_es0() {
+        boolean exitValue = scheduledScanner.scan();
+        assert(exitValue);
+        verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
+        verify(emailServiceImpl, never()).emailStudyError(anyString(),any(Exception.class));
+        verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).emailValidationReport(any(Map.class),anyString(),any(Map.class)));
+        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class)));
+        verify(emailServiceImpl, never()).emailGenericError(any(),any());
     }
 
-    @Test
-    /**
-     * This test assumes local cBioPortal + mySql containers are running.
-     *
-     */
-    public void allLocalStudiesLoaded() {
-
-        //mock transformation (for now... TODO - later replace by real one):
-        ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-
-        //mock email service:
-        ReflectionTestUtils.setField(localExtractor, "emailService", emailService);
-        ReflectionTestUtils.setField(transformer, "emailService", emailService);
-        ReflectionTestUtils.setField(validator, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "emailService", emailService);
-
-        ReflectionTestUtils.setField(etlProcessRunner, "localExtractor", localExtractor);
-        ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
-        ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
-        ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
-        ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-
-        ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
-        ReflectionTestUtils.setField(scheduledScanner, "scanLocation", "file:src/test/resources/local_integration");
-
-        scheduledScanner.scan();
-
-        //correct emails are sent
-        //check that the correct email is sent
-        assertEquals(false, emailService.isEmailGenericErrorSent());
-        assertEquals(false, emailService.isEmailStudyErrorSent());
-        assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-        assertEquals(false, emailService.isEmailTransformedStudiesSent()); //Study is already transformed
-        assertEquals(true, emailService.isEmailValidationReportSent());
-        assertEquals(false, emailService.isEmailStudiesLoadedSent());
-
-        //assert that the loader reports the studies that are passed by the validation (changes to mockup)
-        List<String> expected = new ArrayList<String>();
-        expected.add("study1");
-        expected.add("study2");
-        expected.add("study3");
-        //TODO - enable assertions after test is fixed - currently test depends on a running database / cbioDB
-        //assertEquals(expected.size(), loaderService.getLoadedStudies().size());
-
-    }
 }
