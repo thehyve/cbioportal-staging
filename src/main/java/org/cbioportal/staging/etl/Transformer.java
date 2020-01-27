@@ -23,103 +23,88 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.apache.commons.io.FileUtils;
-import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.PublisherService;
 import org.cbioportal.staging.services.TransformerService;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Transformer {
 	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
-
-	@Value("${skip.transformation:false}")
-    private boolean skipTransformation;
-	
-	@Autowired
-	private EmailService emailService;
 	
 	@Autowired
     private TransformerService transformerService;
-    
-    @Autowired
-	private PublisherService publisherService;
 
-	boolean skipTransformation(File originPath) {
+    public enum ExitStatus {
+        SUCCESS, WARNINGS, ERRORS, NOTRANSF;
+    }
+
+	boolean metaFileExists(File originPath) {
 		File metaStudyFile = new File(originPath+"/meta_study.txt");
-		if (skipTransformation || metaStudyFile.exists() && metaStudyFile.isFile()) {
+		if (metaStudyFile.exists() && metaStudyFile.isFile()) {
 			return true;
 		}
 		return false;
-	}
+    }
+    
+    File getTransformedFilesPath(File untransformedFilesPath) {
+        File transformedFilesPath = new File(untransformedFilesPath+"/staging");
+        if (!transformedFilesPath.exists()) {
+            transformedFilesPath.mkdir();
+        }
+        return transformedFilesPath;
+    }
 
-	Map<String, File> transform(String date, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
-        Map<String, Integer> statusStudies = new HashMap<String, Integer>();
-        Map<String, File> transformedStudies = new HashMap<String, File>();
-		for (String study : studyPaths.keySet()) {
-            File studyOriginPath = studyPaths.get(study);
-            File finalPath = new File(studyOriginPath+"/staging"); //TODO: Add timestamp if no working dir
-            if (!finalPath.exists()) {
-                finalPath.mkdir();
-            }
-
-            int transformationStatus = -1;  
+	Map<String, ExitStatus> transform(String date, Map<String, File> studyPaths, String transformationCommand, String logSuffix) throws TransformerException {
+        Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
+		for (String studyId : studyPaths.keySet()) {
+            File untransformedFilesPath = studyPaths.get(studyId);
+            File transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
+            
+            ExitStatus transformationStatus = null;  
             //Create transformation log file
-            String logName = study+"_transformation_log.txt";
-            File logFile = new File(studyOriginPath+"/"+logName);
+            String logName = studyId+logSuffix;
+            File logFile = new File(untransformedFilesPath+"/"+logName);
 			try {
-				if (skipTransformation(studyOriginPath)) {
-                    FileUtils.copyDirectory(studyOriginPath, finalPath);
-                    transformedStudies.put(study, studyOriginPath);
+				if (metaFileExists(untransformedFilesPath)) {
+                    try {
+                        FileUtils.copyDirectory(untransformedFilesPath, transformedFilesPath);
+                    } catch(IOException e) {
+                        throw new TransformerException("The untransformed files path "+untransformedFilesPath.getAbsolutePath()+
+                            " or the transformed files path "+transformedFilesPath.getAbsolutePath()+" do not exist.", e);
+                    } finally {
+                        transformationStatus = ExitStatus.NOTRANSF;
+                    }
 				} else {
-					transformationStatus = transformerService.transform(studyOriginPath, finalPath, logFile);
-				}
-			} catch (TransformerException e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will skip this study.");
-				e.printStackTrace();
-				try {
-					emailService.emailStudyError(study, e);
-				} catch (Exception e1) {
-					logger.error("The email could not be sent due to the error specified below.", e1);
-					e1.printStackTrace();
+					transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
 				}
 			} finally {
-                //Put log file in the share location once transformation is done
-                String transformationLogPath = publisherService.publish(logFile, date);
-                filesPaths.put(study+" transformation log", transformationLogPath);
-                
-                //Add transformation status for the email loading report
-                statusStudies.put(study, transformationStatus);
-                if (transformationStatus == 0) {
-                    logger.info("Transformation of study "+study+" finished successfully.");
-                } else if (transformationStatus == 3) {
-                    logger.info("Transformation of study "+study+" finished successfully with warnings.");
+                //Add status of the validation for the study
+                statusStudies.put(studyId, transformationStatus);
+                if (transformationStatus == ExitStatus.SUCCESS) {
+                    logger.info("Transformation of study "+studyId+" finished successfully.");
+                } else if (transformationStatus == ExitStatus.WARNINGS) {
+                    logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
+                } else if (transformationStatus == ExitStatus.NOTRANSF) {
+                    logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
                 } else {
-                    logger.error("Transformation process of study "+study+" failed.");
+                    logger.error("Transformation process of study "+studyId+" failed.");
                 }
             }	
         }
-        //Only send the email if at least one transformation has been done
-        if (filesPaths.size() > 0) {
-            emailService.emailTransformedStudies(statusStudies, filesPaths);
-        }
         logger.info("Transformation step finished.");
-        
-        //Return the list of the successfully transformed studies to pass to the validator
-        for (Map.Entry<String, Integer> entry : statusStudies.entrySet()) {
-            if (entry.getValue().equals(0) || entry.getValue().equals(3)) {
-                transformedStudies.put(entry.getKey(), studyPaths.get(entry.getKey()));
+        return statusStudies;
+    }
+
+    Map<String, File> getTransformedStudiesPaths(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
+        Map<String, File> transformedFilesPaths = new HashMap<String, File>();
+        for (Map.Entry<String, ExitStatus> entry : transformedStudiesStatus.entrySet()) {
+            String studyId = entry.getKey();
+            File untransformedFilesPath = studyPaths.get(entry.getKey());
+            if (entry.getValue().equals(ExitStatus.SUCCESS) || entry.getValue().equals(ExitStatus.WARNINGS)) {
+                transformedFilesPaths.put(studyId, getTransformedFilesPath(untransformedFilesPath));
             }
         }
-        return transformedStudies;
+        return transformedFilesPaths;
     }
 }

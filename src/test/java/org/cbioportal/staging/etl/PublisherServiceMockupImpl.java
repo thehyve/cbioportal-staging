@@ -17,6 +17,7 @@ package org.cbioportal.staging.etl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import org.cbioportal.staging.services.PublisherService;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +27,11 @@ import org.springframework.stereotype.Component;
 public class PublisherServiceMockupImpl implements PublisherService {
 
     @Value("${central.share.location}")
-	private String centralShareLocation;
+    private String centralShareLocation;
+    
+    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
+        
+    }
 
     public String publish(File file, String date) throws IOException {
 

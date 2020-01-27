@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.etl.Restarter;
@@ -44,7 +45,17 @@ public class PublisherServiceImpl implements PublisherService {
 	private String centralShareLocationWebAddress;
 
     @Autowired
-	private ResourcePatternResolver resourcePatternResolver;
+    private ResourcePatternResolver resourcePatternResolver;
+    
+    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
+        for (String study : studyPaths.keySet()) {
+            //Create transformation log file
+            String logName = study+logSuffix;
+            File logFile = new File(studyPaths.get(study)+"/"+logName);
+            String transformationLogPath = publish(logFile, date);
+            logPaths.put(study+" "+logType, transformationLogPath);
+        }
+    }
 	
 	public String publish(File file, String date) throws IOException {
 

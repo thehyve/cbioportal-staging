@@ -33,6 +33,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,53 +177,21 @@ public class EmailServiceImpl implements EmailService {
 		String stackTrace = sw.toString();
 		return stackTrace.replace(System.getProperty("line.separator"), "<br/>\n");
 	}
-	
-	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
-		logger.info("Sending email regarding transformation error" );
-		Properties properties = getProperties();
-		Session session = getSession(properties);
-		
-        Message msg = new MimeMessage(session);
-        try {
-            msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId+". Server: "+serverAlias);
-            if (debugMode) {
-                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-                msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-                }
-            } else {
-                for (String mailToEmail : mailTo.split(",")) {
-                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
-                }
-                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-                }
-            }
-            msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
-            Template t = freemarkerConfig.getTemplate("studyError.ftl");
-            Map<String, String> messageParams = new HashMap<String, String>();
-            messageParams.put("studyId", studyId);
-            messageParams.put("displayError", displayError(e));
-            String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
-            msg.setContent(message, "text/html; charset=utf-8");
-            msg.setSentDate(new Date());
-            Transport.send(msg);
-        } catch(MessagingException me) {
-            logger.error(me.getMessage(), me);
-        }
-    }
     
-    public void emailTransformedStudies(Map<String,Integer> transformedStudies, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+    public void emailTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
 		Map<String, String> studies = new HashMap<String, String>();
 		for (String study : transformedStudies.keySet()) {
-			if (transformedStudies.get(study) == 0) {
+			if (transformedStudies.get(study) == ExitStatus.SUCCESS) {
 				studies.put(study, "VALID"); 
 			}
-			else if (transformedStudies.get(study) == 3) { //Study with warnings and no errors
+			else if (transformedStudies.get(study) == ExitStatus.WARNINGS) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
-			} else { //Study with errors
+			} else if (transformedStudies.get(study) == ExitStatus.NOTRANSF) {
+                //Skip condition (study not transformed)
+            } else { //Study with errors
 				studies.put(study, "ERRORS");
 			}
 		}

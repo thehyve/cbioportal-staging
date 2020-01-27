@@ -33,7 +33,6 @@ import org.cbioportal.staging.services.AuthorizerServiceImpl;
 		org.cbioportal.staging.services.AuthorizerServiceImpl.class,
 		org.cbioportal.staging.etl.ETLProcessRunner.class,
 		org.cbioportal.staging.app.ScheduledScanner.class, 
-        org.cbioportal.staging.etl.Publisher.class,
         org.cbioportal.staging.etl.PublisherServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
@@ -97,7 +96,6 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(extractor, "scanLocation", scanLocation);
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
-		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
 		ReflectionTestUtils.setField(validator, "emailService", emailService);

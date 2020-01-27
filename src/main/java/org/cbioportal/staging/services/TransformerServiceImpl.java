@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.cbioportal.staging.etl.Transformer;
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,16 +38,16 @@ public class TransformerServiceImpl implements TransformerService {
 	private String transformationCommandScript;
 	
 	@Override
-	public int transform(File studyPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException {
-		if (!finalPath.exists()) {
-			finalPath.mkdir();
+	public ExitStatus transform(File untransformedFilesPath, File transformedFilesPath, File logFile) throws TransformerException {
+		if (!transformedFilesPath.exists()) {
+			transformedFilesPath.mkdir();
         }
 		try {
 			ProcessBuilder transformationCommand;
-			logger.info("Starting transformation for study: "+studyPath.getName());
+			logger.info("Starting transformation for study: "+untransformedFilesPath.getName());
 			//Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
 			if (transformationCommandScript.equals("")) {
-				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
+				throw new TransformerException("No transformation command script has been specified in the application.properties.");
             }
 
             //Build transformation command
@@ -55,20 +55,35 @@ public class TransformerServiceImpl implements TransformerService {
             for(String part:transformationCommandScript.split(" ")) { //Remove potential spaces in Transformation Command Script
                 transformationCmd.add(part);
             }
-            Collections.addAll(transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
+            Collections.addAll(transformationCmd, "-i", untransformedFilesPath.toString(), "-o", transformedFilesPath.toString());
 
             //Run transformation command
             transformationCommand = new ProcessBuilder(transformationCmd);
-            //transformationCommand = new ProcessBuilder (transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
             logger.info("Executing command: " + String.join(" ", transformationCommand.command()));
             transformationCommand.redirectErrorStream(true);
             transformationCommand.redirectOutput(Redirect.appendTo(logFile));
             Process transformationProcess = transformationCommand.start();
             
             transformationProcess.waitFor(); //Wait until transformation is finished
-            return transformationProcess.exitValue();
-		} catch (FileNotFoundException e1) {
-			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
-		}
+
+            //Interprete exit status of the process and return it
+            ExitStatus exitStatus = null;
+            if (transformationProcess.exitValue() == 0) {
+                exitStatus = ExitStatus.SUCCESS;
+            } else if (transformationProcess.exitValue() == 3) {
+                exitStatus = ExitStatus.WARNINGS;
+            } else {
+                exitStatus = ExitStatus.ERRORS;
+            }
+            return exitStatus;
+            
+		} catch (FileNotFoundException e) {
+			throw new TransformerException("The following file path was not found: "+untransformedFilesPath.getAbsolutePath(), e);
+		} catch (InterruptedException e) {
+            throw new TransformerException("The transformation process has been interrupted by another process.", e);
+        } catch (IOException e) {
+            throw new TransformerException ("The working directory specified in the command or the transformation script file do not exist, "+
+                "or you do not have permissions to work with the transformation script file.", e);
+        }
 	}
 }

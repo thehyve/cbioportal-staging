@@ -17,6 +17,7 @@ package org.cbioportal.staging.etl;
 
 import java.io.File;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.TransformerService;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,8 @@ import org.springframework.stereotype.Component;
 public class TransformerServiceMockupImpl implements TransformerService {
 	
 	@Override
-	public int transform(File originPath, File finalPath, File logFile) throws TransformerException {
-		return 0;
+	public ExitStatus transform(File originPath, File finalPath, File logFile) throws TransformerException {
+		return ExitStatus.SUCCESS;
 	}
 	
 }

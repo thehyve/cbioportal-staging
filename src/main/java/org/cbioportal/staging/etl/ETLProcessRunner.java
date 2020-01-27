@@ -27,6 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.PublisherService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +67,13 @@ public class ETLProcessRunner {
 	private Restarter restarter;
 	
 	@Autowired
-	private Authorizer authorizer;
+    private Authorizer authorizer;
+    
+    @Autowired
+    private PublisherService publisher;
+    
+    @Autowired
+	private EmailService emailService;
 	
 	@Value("${study.authorize.command_prefix:null}")
     private String studyAuthorizeCommandPrefix;
@@ -72,7 +82,10 @@ public class ETLProcessRunner {
     private String centralShareLocation;
 
     @Value("${etl.working.dir:false}")
-	private String etlWorkingDir;
+    private String etlWorkingDir;
+    
+    @Value("${skip.transformation:false}")
+    private boolean skipTransformation;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -129,15 +142,40 @@ public class ETLProcessRunner {
 	
 	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
         Map<String, String> logPaths = new HashMap<String, String>();
-		boolean loadSuccessful = false;
-		//T (Transform) step:
-		Map<String, File> transformedStudiesPaths = transformer.transform(date, studyPaths, "command", logPaths);
+		
+        //T (Transform) step:
+        Map<String, File> transformedStudiesPaths = new HashMap<String, File>();
+        if (skipTransformation) {
+            transformedStudiesPaths = studyPaths;
+        } else {
+            try {
+                String logSuffix = "_transformation_log.txt";
+                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
+                // Publish transformation logs
+                publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
+                //Only send the email if at least one transformation has been done
+                if (logPaths.size() > 0) {
+                    emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
+                }
+                //Get the list of the successfully transformed studies to pass to the validator
+                transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
+            } catch (TransformerException e) {
+                try {
+                    logger.error("An error occurred during the transformation step. Error found: "+ e);
+                    emailService.emailGenericError("An error occurred during the transformation step. Error found: ", e);
+                } catch (Exception e1) {
+                    logger.error("The email could not be sent due to the error specified below.");
+                    e1.printStackTrace();
+                }
+            }
+        }
+        
         //V (Validate) step:
         if (transformedStudiesPaths.keySet().size() > 0) {
             Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
             //L (Load) step:
             if (validatedStudies.size() > 0) {
-                loadSuccessful = loader.load(date, validatedStudies, logPaths);
+                boolean loadSuccessful = loader.load(date, validatedStudies, logPaths);
                 if (loadSuccessful) {
                     restarter.restart();
                     if (!studyAuthorizeCommandPrefix.equals("null")) {
@@ -146,7 +184,7 @@ public class ETLProcessRunner {
                 }
             }
         }
-	}
+    }
 
 	/**
 	 * Socket configuration and respective synchronized start method that ensures only one

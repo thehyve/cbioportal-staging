@@ -34,7 +34,6 @@ import org.springframework.test.util.ReflectionTestUtils;
         org.cbioportal.staging.etl.ETLProcessRunner.class,
         org.cbioportal.staging.services.AuthorizerServiceImpl.class,	
         org.cbioportal.staging.app.ScheduledScanner.class, 
-        org.cbioportal.staging.etl.Publisher.class,
         org.cbioportal.staging.etl.PublisherServiceMockupImpl.class})
 @SpringBootTest
 @Import(MyTestConfiguration.class)
@@ -94,7 +93,6 @@ public class FullIntegrationTest {
         
         //mock email service:
         ReflectionTestUtils.setField(extractor, "emailService", emailService);
-        ReflectionTestUtils.setField(transformer, "emailService", emailService);
         ReflectionTestUtils.setField(validator, "emailService", emailService);
         ReflectionTestUtils.setField(loader, "emailService", emailService);
 
@@ -143,7 +141,6 @@ public class FullIntegrationTest {
         
         //mock email service:
         ReflectionTestUtils.setField(localExtractor, "emailService", emailService);
-        ReflectionTestUtils.setField(transformer, "emailService", emailService);
         ReflectionTestUtils.setField(validator, "emailService", emailService);
         ReflectionTestUtils.setField(loader, "emailService", emailService);
 

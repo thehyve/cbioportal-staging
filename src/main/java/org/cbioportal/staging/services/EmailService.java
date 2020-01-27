@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
@@ -29,9 +31,7 @@ public interface EmailService {
 
 	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 	
-    public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException;
-
-    public void emailTransformedStudies(Map<String,Integer> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+    public void emailTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 	
 	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 	
