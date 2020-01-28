@@ -79,7 +79,7 @@ public class ScheduledScanner {
 				return false;
 			}
 
-			logger.info("Started ETL process for studies: }", String.join(", ", resourcesPerStudy.keySet()));
+			logger.info("Started ETL process for studies: ", String.join(", ", resourcesPerStudy.keySet()));
 
 			// TODO return list of successfully processed files
 			// Keep paths relative to remote source so these can

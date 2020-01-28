@@ -27,28 +27,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
-/* 
+/*
     Calls a command when study loading is finished.
  */
 @Component
 public class PublisherServiceImpl implements PublisherService {
 	private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
-	
+
 	@Value("${study.publish.command_prefix:null}")
 	private String studyPublishCommandPrefix;
-	
+
 	@Value("${study.curator.emails}")
 	private String studyCuratorEmails;
-	
+
 	public void publishStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
-		
+
 		if (!studyPublishCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
                     String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
                     Process cmdProcess = Runtime.getRuntime().exec(command);
                     logger.info("Executing command: "+command);
-                    
+
                     BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
                     String line = null;
                     while ((line = reader.readLine()) != null)
@@ -61,9 +61,9 @@ public class PublisherServiceImpl implements PublisherService {
                     {
                         logger.warn(line2);
                     }
-                    
+
                     cmdProcess.waitFor();
-                    
+
                     if (cmdProcess.exitValue() != 0) {
                         throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
                     }

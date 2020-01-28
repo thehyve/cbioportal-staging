@@ -43,19 +43,19 @@ public class Transformer {
 
 	@Value("${skip.transformation:false}")
     private boolean skipTransformation;
-    
+
     @Value("${central.share.location}")
     private String centralShareLocation;
 
 	@Value("${central.share.location.portal:}")
     private String centralShareLocationPortal;
-	
+
 	@Autowired
 	private EmailService emailService;
-	
+
 	@Autowired
     private TransformerService transformerService;
-    
+
     @Autowired
 	private ValidationService validationService;
 
@@ -88,7 +88,7 @@ public class Transformer {
             //Create transformation log file
             String logName = study+"_transformation_log.txt";
             File logFile = new File(studyOriginPath+"/"+logName);
-            
+
             int transformationStatus = -1;
 			try {
 				if (skipTransformation(studyOriginPath)) {
@@ -133,14 +133,19 @@ public class Transformer {
                         logger.error("Transformation process of study "+study+" failed.");
                     }
                 }
-            }	
+            }
         }
         //Only send the email if at least one transformation has been done
         if (filesPaths.size() > 0) {
             emailService.emailTransformedStudies(statusStudies, filesPaths);
         }
-        logger.info("Transformation step finished.");
-        
+
+        if (skipTransformation) {
+            logger.info("Transformation step finished.");
+        } else {
+            logger.info("Transformation step finished.");
+        }
+
         //Return the list of the successfully transformed studies to pass to the validator
         for (Map.Entry<String, Integer> entry : statusStudies.entrySet()) {
             if (entry.getValue().equals(0) || entry.getValue().equals(3)) {

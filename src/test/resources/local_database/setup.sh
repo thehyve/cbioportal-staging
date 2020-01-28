@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e 
+set -e
 set -u # unset variables throw error
 set -o pipefail # pipes fail when partial command fails
 
@@ -37,7 +37,7 @@ build_and_run_database() {
 
     while ! docker run --rm --net=cbio-net mysql:5.7 mysqladmin ping -u $DB_USER -p$DB_PASSWORD -h$DB_HOST --silent >/dev/null; do
         echo Waiting for cbioportal database to initialize...
-        sleep 10
+        sleep 1
     done
 }
 

@@ -24,6 +24,10 @@ public class ResourceUtils {
         return dir.replaceFirst("\\/*\\**$", "");
     }
 
+    public String stripResourceTypePrefix(String dir) {
+        return dir.replaceFirst("^.*:", "");
+    }
+
     public String getTimeStamp(String pattern) {
         return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
     }

@@ -31,14 +31,10 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = { "scan.location=file:src/test/resources/e2e_studies/es_0",
-        "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir", "cbioportal.mode=docker",
-        "cbioportal.docker.image=cbioportal/cbioportal:3.1.4", "cbioportal.docker.network=cbio-net",
-        "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
-        "cbioportal.docker.cbio.container=cbio", "central.share.location=file:/tmp/staging-integration-test/share",
-        "skip.transformation=true", "cloud.aws.region.static=eu-central-1" })
 @SpringBootTest(classes = App.class)
-public class FullIntegrationTest {
+@TestPropertySource(locations = "file:/home/pnp300/git/cbioportal-staging/src/test/resources/e2e_studies/e2e_integration_test.properties",
+                    properties = "scan.location=file:src/test/resources/e2e_studies/es_1")
+public class FullIntegrationTestWarning {
 
     @MockBean
     private EmailServiceImpl emailServiceImpl;
@@ -62,8 +58,8 @@ public class FullIntegrationTest {
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailStudyError(anyString(),any(Exception.class));
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(emailServiceImpl, never()).emailStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).emailGenericError(any(),any());
     }
 
