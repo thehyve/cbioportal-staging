@@ -34,15 +34,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
-        org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
-@SpringBootTest
-
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Extractor.class, org.cbioportal.staging.services.resource.ResourceUtils.class, EmailServiceMockupImpl.class})
 public class ExtractorTest {
 
 	@Autowired
@@ -50,15 +46,15 @@ public class ExtractorTest {
 
 	@Autowired
 	private EmailServiceMockupImpl emailService;
-	
+
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
-	
+
 	@Before
     public void setUp() throws Exception {
         emailService.reset();
     }
-	
+
 	@Rule
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
@@ -80,7 +76,7 @@ public class ExtractorTest {
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
+
         //Build the expected outcome and check that is the same as the function output
 		Map<String, File> expectedResult = new HashMap<String, File>();
 		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
@@ -92,7 +88,7 @@ public class ExtractorTest {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
+
         Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Map<String, File> result = extractor.run(indexFile);
@@ -103,19 +99,19 @@ public class ExtractorTest {
 		assertEquals(false, emailService.isEmailValidationReportSent());
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
+
         //Build the expected outcome and check that is the same as the function output
         Map<String, File> expectedResult = new HashMap<String, File>();
         expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
 		assertEquals(expectedResult, result);
 	}
-	
+
 	@Test
 	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
+
 		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_3.yaml");
 		extractor.run(indexFile);
 
@@ -126,13 +122,13 @@ public class ExtractorTest {
 		assertEquals(false, emailService.isEmailStudiesLoadedSent());
 		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
 	}
-	
+
 	@Test
 	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
 		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
+
 		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_4.yaml");
 		extractor.run(indexFile);
 
