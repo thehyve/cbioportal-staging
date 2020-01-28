@@ -15,6 +15,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * DefaultResouceCollector
+ * 
+ * Complies a list of resources per study on the file system
+ * indicated by 'scan.location' property.
+ * 
  */
 @Component
 public class DefaultResourceCollectorService implements IResourceCollectorService {
@@ -44,7 +48,7 @@ public class DefaultResourceCollectorService implements IResourceCollectorServic
         String trimmedScanLocation = utils.trimDir(scanLocation);
 
         try {
-            logger.info("Scanning location for files: " + trimmedScanLocation);
+            logger.info("Scanning for files at: " + trimmedScanLocation);
             Resource[] scannedResources = resourceProvider.list(Paths.get(trimmedScanLocation));
             logger.info("Found " + scannedResources.length + " files");
 

@@ -49,7 +49,7 @@ public class DefaultResourceFilter implements IResourceFilter {
                     boolean inIgnoreFile = ! resourceIgnoreSet.isEmpty()
                                             && (resourceIgnoreSet.contains(path)
                                                 || resourceIgnoreSet.contains(pathTypeRemoved));
-                    boolean inIncludeDir = includeDirs.equals("") || Stream.of(includeDirs).anyMatch(dir -> path.startsWith(dir) || pathTypeRemoved.startsWith(dir) );
+                    boolean inIncludeDir = Stream.of(includeDirs).anyMatch(dir -> path.startsWith(dir) || pathTypeRemoved.startsWith(dir) );
 
                     return inIncludeDir && ! inIgnoreFile;
                 } catch (IOException e) {

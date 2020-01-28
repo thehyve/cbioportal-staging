@@ -21,7 +21,6 @@ import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import org.cbioportal.staging.etl.Loader;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
@@ -31,7 +30,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
-	private static final Logger logger = LoggerFactory.getLogger(Loader.class);
+	private static final Logger logger = LoggerFactory.getLogger(LoaderServiceImpl.class);
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;

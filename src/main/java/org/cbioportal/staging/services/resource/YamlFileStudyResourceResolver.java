@@ -23,16 +23,14 @@ import org.yaml.snakeyaml.Yaml;
 /**
  * YamlResourceStrategy
  *
- * Receives a list of resources, extracts the most recent yaml file, parses it
- * and translates it into a list of Resources.
+ * Selects the newest Yaml file and extracts a
+ * list of resources per study.
  */
 @Component
 public class YamlFileStudyResourceResolver implements IStudyResourceResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(YamlFileStudyResourceResolver.class);
 
-    // defined Yaml parser here so that it can be
-    // mocked in the test.
     @Configuration
     static class MyConfiguration {
 

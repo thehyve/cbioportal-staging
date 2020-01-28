@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Set;
 
-import org.cbioportal.staging.etl.Restarter;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class PublisherServiceImpl implements PublisherService {
-	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
+	private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
 	
 	@Value("${study.publish.command_prefix:null}")
 	private String studyPublishCommandPrefix;

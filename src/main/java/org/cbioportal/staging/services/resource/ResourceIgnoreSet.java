@@ -10,6 +10,8 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,14 +21,21 @@ import org.springframework.stereotype.Component;
 
 /**
  * ResourceIgnoreSet
+ * 
+ * Represents a list of resources that are ignored (not collected
+ * by the resource collector). Ignored resources are read from a
+ * file which name is set by the 'scna.ignore.file' property.
+ * 
  */
 @Component
 public class ResourceIgnoreSet extends HashSet<String> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ResourceIgnoreSet.class);
+
     private static final long serialVersionUID = -8289845398838148990L;
 
-    // defined bufferedreader here so that it can be
-    // mocked in the test.
+    // defined bufferedreader here so that 
+    // it can be mocked in the test.
     @Configuration
     static class MyConfiguration {
 
@@ -66,6 +75,7 @@ public class ResourceIgnoreSet extends HashSet<String> {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                logger.debug("Read " + String.valueOf(ignorePaths.size()) + " files from the ignore file: " + String.join(",", ignorePaths));
             }
         }
     }

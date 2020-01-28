@@ -20,8 +20,10 @@ import org.springframework.stereotype.Component;
 /**
  * StudyFoldersResourceStrategy
  *
- * Recieves a list of directories and recursively extracts study files.
- * The files/resources are returned keyed by study id which is the name
+ * Recieves a list of directories and recursively extracts a list of
+ * resources for each study. The files/resources are returned keyed
+ * by study id. When available the study indentifier is extracted from
+ * the meta_study.txt file. If not, study identifier is set to the name
  * of the study folder.
  *
  */
@@ -50,7 +52,6 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
 
             logger.info("Found study directories: " + Stream.of(studyDirs).map(e -> e.getFilename()).collect(Collectors.joining(", ")) );
 
-            // for each directory recursively discover study files
             for (Resource studyDir : studyDirs) {
 
                 studyPath = utils.trimDir(studyDir.getURL().toString());

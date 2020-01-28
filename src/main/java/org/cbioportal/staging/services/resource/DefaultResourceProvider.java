@@ -9,6 +9,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
+/**
+ * DefaultResourceProvider
+ * 
+ * Lists resources via expansion of paths. This class works
+ * for a local file system and for S3 buckets when using 
+ * the spring-cloud-aws plugin.
+ * 
+ */
 @Component
 public class DefaultResourceProvider implements IResourceProvider {
 
