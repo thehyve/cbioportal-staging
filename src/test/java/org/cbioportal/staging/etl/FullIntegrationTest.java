@@ -3,6 +3,7 @@ package org.cbioportal.staging.etl;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,7 +13,10 @@ import java.util.Map;
 
 import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailServiceImpl;
+import org.cbioportal.staging.services.RestarterService;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,25 +31,28 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = {
-    "scan.location=file:src/test/resources/e2e_studies/es_0",
-    "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir",
-    "cbioportal.mode=docker",
-    "cbioportal.docker.image=cbioportal/cbioportal:3.1.4",
-    "cbioportal.docker.network=cbio-net",
-    "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
-    "central.share.location=file:/tmp/staging-integration-test/share",
-    "skip.transformation=true",
-    "cloud.aws.region.static=eu-central-1"
-})
+@TestPropertySource(properties = { "scan.location=file:src/test/resources/e2e_studies/es_0",
+        "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir", "cbioportal.mode=docker",
+        "cbioportal.docker.image=cbioportal/cbioportal:3.1.4", "cbioportal.docker.network=cbio-net",
+        "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
+        "cbioportal.docker.cbio.container=cbio", "central.share.location=file:/tmp/staging-integration-test/share",
+        "skip.transformation=true", "cloud.aws.region.static=eu-central-1" })
 @SpringBootTest(classes = App.class)
 public class FullIntegrationTest {
 
     @MockBean
     private EmailServiceImpl emailServiceImpl;
 
+    @MockBean
+    private RestarterService restarterService;
+
     @Autowired
     private ScheduledScanner scheduledScanner;
+
+    @Before
+    public void init() throws InterruptedException, IOException, ConfigurationException {
+        doNothing().when(restarterService).restart();
+    }
 
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
