@@ -93,8 +93,6 @@ public class FullIntegrationTest {
         
         //mock email service:
         ReflectionTestUtils.setField(extractor, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "emailService", emailService);
-
 
         ReflectionTestUtils.setField(etlProcessRunner, "extractor", extractor);
         ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
@@ -140,7 +138,6 @@ public class FullIntegrationTest {
         
         //mock email service:
         ReflectionTestUtils.setField(localExtractor, "emailService", emailService);
-        ReflectionTestUtils.setField(loader, "emailService", emailService);
 
         ReflectionTestUtils.setField(etlProcessRunner, "localExtractor", localExtractor);
         ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);

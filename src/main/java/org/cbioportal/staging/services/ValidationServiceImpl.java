@@ -127,7 +127,7 @@ public class ValidationServiceImpl implements ValidationService {
 				throw new ValidatorException("Check if portal source is correctly set in application.properties. Configured portal source is: "+portalSource, e);
 			}
 		} catch (InterruptedException e) {
-            throw new ValidatorException("The transformation process has been interrupted by another process.", e);
+            throw new ValidatorException("The validation process has been interrupted by another process.", e);
         }
 	}
 

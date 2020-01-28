@@ -17,6 +17,7 @@ package org.cbioportal.staging.etl;
 
 import java.io.File;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
 import org.springframework.stereotype.Component;
@@ -24,11 +25,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoaderServiceMockupImpl implements LoaderService {
 	
-	private int exitStatus;
+	private ExitStatus exitStatus = ExitStatus.SUCCESS;
 	private boolean throwError = false;
 	
 	@Override
-	public int load(String study, File studyPath, File logFile) throws LoaderException {
+	public ExitStatus load(File studyPath, File logFile) throws LoaderException {
         if (throwError) {
 			throw new LoaderException("dummy test error");
 		}
@@ -37,7 +38,7 @@ public class LoaderServiceMockupImpl implements LoaderService {
 
 	public void reset() {
 		this.throwError = false;
-		this.exitStatus = 0;
+		this.exitStatus = ExitStatus.SUCCESS;
 	}
 	
 }

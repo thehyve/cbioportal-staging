@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 public class TransformerServiceImpl implements TransformerService {
 	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-	@Value("${transformation.command.script}")
+	@Value("${transformation.command.script:}")
 	private String transformationCommandScript;
 	
 	@Override

@@ -50,7 +50,7 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailValidationReportSent = true;
 	}
 	
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudiesLoadedSent = true;
 	}
 	

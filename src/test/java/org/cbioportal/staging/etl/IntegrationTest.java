@@ -103,7 +103,6 @@ public class IntegrationTest {
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", validationServiceMockExitStatus);
 		
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
 		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.txt");
 		

@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.cbioportal.staging.etl.Loader;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
@@ -47,46 +48,50 @@ public class LoaderServiceImpl implements LoaderService {
 	
 	@Value("${portal.source:.}")
 	private String portalSource;
-	
-	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private String etlWorkingDir;
 		
 	@Override
-	public int load(String study, File studyPath, File logFile) throws ConfigurationException, IOException, LoaderException {
-		ProcessBuilder loaderCmd;
-		if (cbioportalMode.equals("local")) {
-			loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
-			loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
-		} else if (cbioportalMode.equals("docker")) {
-			if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-				loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
-                        "-v", studyPath.toString()+":/study:ro",
-                        "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", 
-                        cbioportalDockerImage,
-						"cbioportalImporter.py", "-s", "/study");
-			} else {
-				throw new ConfigurationException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
-			}
-		} else {
-			throw new ConfigurationException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-					". Please change the mode in the application.properties.");
-		}
+	public ExitStatus load(File studyPath, File logFile) throws LoaderException {
+        try {
+            ProcessBuilder loaderCmd;
+            if (cbioportalMode.equals("local")) {
+                loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
+                loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
+            } else if (cbioportalMode.equals("docker")) {
+                if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
+                    loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
+                            "-v", studyPath.toString()+":/study:ro",
+                            "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", 
+                            cbioportalDockerImage,
+                            "cbioportalImporter.py", "-s", "/study");
+                } else {
+                    throw new LoaderException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
+                }
+            } else {
+                throw new LoaderException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
+                        ". Please change the mode in the application.properties.");
+            }
 
-		//Apply loader command
-		logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
-		loaderCmd.redirectErrorStream(true);
-		loaderCmd.redirectOutput(Redirect.appendTo(logFile));
-		try {
-			Process loadProcess = loaderCmd.start();
-			loadProcess.waitFor(); //Wait until loading is finished
-            int exitValue = loadProcess.exitValue();
-			return exitValue;
-		} catch (IOException e) {
-			throw new IOException(e);
-		} catch (Exception e) {
-			byte[] encoded = Files.readAllBytes(Paths.get(logFile.getAbsolutePath()));
-			String message = new String(encoded, "UTF-8");
-			throw new LoaderException("There was an error when executing the loader command. The output of the log file is: "+message, e);
-		}
+            //Apply loader command
+            logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
+            loaderCmd.redirectErrorStream(true);
+            loaderCmd.redirectOutput(Redirect.appendTo(logFile));
+            Process loadProcess = loaderCmd.start();
+            loadProcess.waitFor(); //Wait until loading is finished
+
+            //Interprete exit status of the process and return it
+            ExitStatus exitStatus = null;
+            if (loadProcess.exitValue() == 0) {
+                exitStatus = ExitStatus.SUCCESS;
+            } else {
+                exitStatus = ExitStatus.ERRORS;
+            }
+            return exitStatus;
+        } catch (InterruptedException e) {
+            throw new LoaderException("The loading process has been interrupted by another process.", e);
+        } catch (IOException e) {
+            throw new LoaderException("The working directory specified in the command or the transformation script file do not exist, "+
+                "or you do not have permissions to work with the transformation script file.", e);
+        }
+
 	}
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
@@ -153,34 +154,33 @@ public class ETLProcessRunner {
             if (skipTransformation) {
                 transformedStudiesPaths = studyPaths;
             } else {
-            String logSuffix = "_transformation_log.txt";
-            Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
-            // Publish transformation logs
-            publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
-            //Only send the email if at least one transformation has been done
-            if (logPaths.size() > 0) {
-                emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
+                String logSuffix = "_transformation_log.txt";
+                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
+                publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
+                if (logPaths.size() > 0) {
+                    emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
+                }
+                transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
             }
-            //Get the list of the successfully transformed studies to pass to the validator
-            transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
-            }
+
             //V (VALIDATE) STEP:
             if (transformedStudiesPaths.keySet().size() > 0) {            
                 String reportSuffix = "_validation_report.html";
                 String logSuffix = "_validation_log.txt";
                 Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths, reportSuffix, logSuffix);
-                //Publish report and validation logs
-                //Put report and log file in the share location
-                publisher.publish(date, transformedStudiesPaths, logPaths, " validation log", logSuffix);
-                publisher.publish(date, transformedStudiesPaths, logPaths, " validation report", reportSuffix);
-                //Send email with validation results
+                publisher.publish(date, transformedStudiesPaths, logPaths, "validation log", logSuffix);
+                publisher.publish(date, transformedStudiesPaths, logPaths, "validation report", reportSuffix);
                 emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
-                //Get studies that have passed validation to pass to the loader
                 Map <String, File> studiesThatPassedValidation = validator.getStudiesThatPassedValidation(validatedStudies, studyPaths);
+
                 //L (LOAD) STEP:
                 if (studiesThatPassedValidation.size() > 0) {
-                    boolean loadSuccessful = loader.load(date, studiesThatPassedValidation, logPaths);
-                    if (loadSuccessful) {
+                    String loadingLogSuffix = "_loading_log.txt";
+                    Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation, loadingLogSuffix);
+                    publisher.publish(date, studiesThatPassedValidation, logPaths, "loading log", loadingLogSuffix);
+                    emailService.emailStudiesLoaded(loadResults, logPaths);
+
+                    if (loader.areStudiesLoaded()) {
                         restarter.restart();
                         if (!studyAuthorizeCommandPrefix.equals("null")) {
                             authorizer.authorizeStudies(validatedStudies.keySet());
@@ -200,6 +200,14 @@ public class ETLProcessRunner {
 			try {
 				logger.error("An error occurred during the validation step. Error found: "+ e);
                 emailService.emailGenericError("An error occurred during the validation step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		} catch (LoaderException e) {
+			try {
+				logger.error("An error occurred during the loading step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the loading step. Error found: ", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
