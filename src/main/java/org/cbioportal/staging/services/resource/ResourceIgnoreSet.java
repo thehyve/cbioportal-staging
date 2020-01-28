@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -21,11 +20,11 @@ import org.springframework.stereotype.Component;
 
 /**
  * ResourceIgnoreSet
- * 
+ *
  * Represents a list of resources that are ignored (not collected
  * by the resource collector). Ignored resources are read from a
  * file which name is set by the 'scna.ignore.file' property.
- * 
+ *
  */
 @Component
 public class ResourceIgnoreSet extends HashSet<String> {
@@ -34,10 +33,10 @@ public class ResourceIgnoreSet extends HashSet<String> {
 
     private static final long serialVersionUID = -8289845398838148990L;
 
-    // defined bufferedreader here so that 
+    // defined bufferedreader here so that
     // it can be mocked in the test.
     @Configuration
-    static class MyConfiguration {
+    public static class MyConfiguration {
 
         @Bean
         public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") File ignoreFile) throws FileNotFoundException {
@@ -55,15 +54,13 @@ public class ResourceIgnoreSet extends HashSet<String> {
     @Autowired
     private BufferedReader bufferedReader;
 
-    private Set<String> ignorePaths = new HashSet<>();
-
     @PostConstruct
     private void postConstruct() {
         if (bufferedReader != null) {
             try {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    ignorePaths.add(resourcePatternResolver.getResource(line).getURL().toString());
+                    this.add(resourcePatternResolver.getResource(line).getURL().toString());
                     line = bufferedReader.readLine();
                 }
             } catch (IOException e) {
@@ -75,7 +72,7 @@ public class ResourceIgnoreSet extends HashSet<String> {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                logger.debug("Read " + String.valueOf(ignorePaths.size()) + " files from the ignore file: " + String.join(",", ignorePaths));
+                logger.debug("Read " + String.valueOf(this.size()) + " files from the ignore file: " + String.join(",", this));
             }
         }
     }

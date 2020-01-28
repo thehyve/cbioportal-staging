@@ -22,12 +22,13 @@ import java.util.Map;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.ScheduledScannerService;
-import org.cbioportal.staging.services.resource.IResourceCollectorService;
+import org.cbioportal.staging.services.resource.IResourceCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +50,7 @@ public class ScheduledScanner {
 	private int nrIterations = 0;
 
 	@Autowired
-	private IResourceCollectorService resourceCollector;
+	private IResourceCollector resourceCollector;
 
 	@Autowired
 	private ScheduledScannerService scheduledScannerService;
@@ -60,6 +61,9 @@ public class ScheduledScanner {
 	@Autowired
 	private ETLProcessRunner etlProcessRunner;
 
+	@Autowired
+	private ResourcePatternResolver resourcePatternResolver;
+
 	@Scheduled(cron = "${scan.cron}")
 	public boolean scan() {
 		try {
@@ -67,7 +71,8 @@ public class ScheduledScanner {
 			nrIterations++;
 
 			logger.info("Started fetching of resources.");
-			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanLocation + "*");
+			Resource scanDir = resourcePatternResolver.getResource(scanLocation);
+			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanDir);
 
 			if (resourcesPerStudy.keySet().size() == 0) {
 				checkIfShouldExit(nrIterations, scanIterations);

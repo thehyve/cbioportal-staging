@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 
-import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,18 +16,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {DefaultResourceFilter.class, ResourceIgnoreSet.MyConfiguration.class, DefaultResourceFilterTest.MyTestConfiguration.class})
 public class DefaultResourceFilterTest {
 
     @TestConfiguration
-    static class MyTestConfiguration {
+    public static class MyTestConfiguration {
 
         @Bean
+        @Primary
         public ResourceIgnoreSet resourceIgnoreSet() {
             ResourceIgnoreSet ignoreSet = mock(ResourceIgnoreSet.class);
             Mockito.doAnswer(invocation -> {
@@ -39,16 +42,6 @@ public class DefaultResourceFilterTest {
                 return false;
             }).when(ignoreSet).contains(anyString());
             return ignoreSet;
-        }
-
-        @Bean
-        public DefaultResourceFilter resourceFilterImpl() {
-            return new DefaultResourceFilter();
-        }
-
-        @Bean
-        public BufferedReader bufferedReader() {
-            return mock(BufferedReader.class);
         }
 
     }

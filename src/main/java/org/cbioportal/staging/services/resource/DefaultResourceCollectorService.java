@@ -1,6 +1,5 @@
 package org.cbioportal.staging.services.resource;
 
-import java.nio.file.Paths;
 import java.util.Map;
 
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -15,17 +14,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * DefaultResouceCollector
- * 
- * Complies a list of resources per study on the file system
- * indicated by 'scan.location' property.
- * 
+ *
+ * Complies a list of resources per study on the file system indicated by
+ * 'scan.location' property.
+ *
  */
 @Component
-public class DefaultResourceCollectorService implements IResourceCollectorService {
+public class DefaultResourceCollectorService implements IResourceCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultResourceCollectorService.class);
 
-	@Autowired
+    @Autowired
     private IResourceProvider resourceProvider;
 
     @Autowired
@@ -34,34 +33,32 @@ public class DefaultResourceCollectorService implements IResourceCollectorServic
     @Autowired
     private IResourceFilter resourceFilter;
 
-    @Autowired
-    private ResourceUtils utils;
-
     @Override
-    public Map<String,Resource[]> getResources(String scanLocation) throws ConfigurationException, ResourceCollectionException {
+    public Map<String, Resource[]> getResources(Resource scanLocation)
+            throws ConfigurationException, ResourceCollectionException {
 
         if (scanLocation == null) {
             throw new ConfigurationException("scan location is null.");
         }
 
         Map<String,Resource[]> resources;
-        String trimmedScanLocation = utils.trimDir(scanLocation);
 
         try {
-            logger.info("Scanning for files at: " + trimmedScanLocation);
-            Resource[] scannedResources = resourceProvider.list(Paths.get(trimmedScanLocation));
+
+            logger.info("Scanning for files at: " + scanLocation.getFilename());
+            Resource[] scannedResources = resourceProvider.list(scanLocation);
             logger.info("Found " + scannedResources.length + " files");
 
             Map<String,Resource[]> resolvedResources = resourceStrategy.resolveResources(scannedResources);
 
             resources = resourceFilter.filterResources(resolvedResources);
 
-		} catch (ResourceCollectionException e) {
-			throw e;
+        } catch (ResourceCollectionException e) {
+            throw e;
         } catch (AmazonS3Exception e) {
-			throw new ResourceCollectionException("Cannot reach Amazon S3 resource at scan.location: " + trimmedScanLocation);
-		} catch (Exception e) {
-			throw new ResourceCollectionException("Error while retrieving resources from scan.location: " + trimmedScanLocation);
+            throw new ResourceCollectionException("Cannot reach Amazon S3 resource at scan.location: " + scanLocation.getFilename());
+        } catch (Exception e) {
+            throw new ResourceCollectionException("Error while retrieving resources from scan.location: " + scanLocation.getFilename());
         }
 
         return resources;

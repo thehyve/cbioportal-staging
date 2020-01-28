@@ -21,27 +21,19 @@ import org.cbioportal.staging.services.ScheduledScannerService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = { "scan.cron.iterations=5" })
+@SpringBootTest(classes = ScheduledScanner.class)
 public class ScheduledScannerTest {
 
-    @TestConfiguration
-    static class MyTestConfiguration {
-        @Bean
-        public ScheduledScanner scheduledScanner() {
-            return new ScheduledScanner();
-        }
-    }
-
     @MockBean
-    private IResourceCollectorService resourceCollector;
+    private IResourceCollector resourceCollector;
 
     @MockBean
     private ETLProcessRunner etlProcessRunner;
@@ -60,7 +52,7 @@ public class ScheduledScannerTest {
 
         Map<String, Resource[]> res = new HashMap<>();
         res.put("dummy", new Resource[0]);
-        when(resourceCollector.getResources(anyString())).thenReturn(res);
+        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
 
         doNothing().when(etlProcessRunner).run(any(Map.class));
 
@@ -73,7 +65,7 @@ public class ScheduledScannerTest {
     @Test
     public void testScan_resourceCollectionFails() throws Exception {
 
-        doThrow(ResourceCollectionException.class).when(resourceCollector).getResources(anyString());
+        doThrow(ResourceCollectionException.class).when(resourceCollector).getResources(any(Resource.class));
 
         scheduledScanner.scan();
 
@@ -86,7 +78,7 @@ public class ScheduledScannerTest {
 
         Map<String, Resource[]> res = new HashMap<>();
         res.put("dummy", new Resource[0]);
-        when(resourceCollector.getResources(anyString())).thenReturn(res);
+        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
 
         doThrow(ResourceCollectionException.class).when(etlProcessRunner).run(any(Map.class));
 
@@ -100,7 +92,7 @@ public class ScheduledScannerTest {
     public void testScan_gracefulExitAfterIneffectiveScans() throws Exception {
 
         Map<String, Resource[]> emptyRes = new HashMap<>();
-        when(resourceCollector.getResources(anyString())).thenReturn(emptyRes);
+        when(resourceCollector.getResources(any(Resource.class))).thenReturn(emptyRes);
 
         boolean exitStatus = scheduledScanner.scan();
 

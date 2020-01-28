@@ -19,6 +19,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -31,10 +32,11 @@ import org.yaml.snakeyaml.Yaml;
 @TestPropertySource(properties = {
     "scan.location=file:/tmp"
 })
+@SpringBootTest(classes = {YamlFileStudyResourceResolver.class, ResourceUtils.class, YamlFileStudyResourceResolverTest.MyTestConfiguration.class})
 public class YamlFileStudyResourceResolverTest {
 
     @TestConfiguration
-    static class MyTestConfiguration {
+    public static class MyTestConfiguration {
 
         @Bean
         @Primary
@@ -55,11 +57,6 @@ public class YamlFileStudyResourceResolverTest {
 
             when(yaml.load(any(InputStream.class))).thenReturn(map);
             return yaml;
-        }
-
-        @Bean
-        public YamlFileStudyResourceResolver yamlResourceStrategy() {
-            return new YamlFileStudyResourceResolver();
         }
 
     }

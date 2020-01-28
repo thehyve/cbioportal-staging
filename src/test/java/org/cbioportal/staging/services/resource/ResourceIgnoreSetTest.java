@@ -1,4 +1,5 @@
 package org.cbioportal.staging.services.resource;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
@@ -17,11 +18,13 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+// @SpringBootConfiguration
+@SpringBootTest(classes = {ResourceIgnoreSet.class, org.cbioportal.staging.services.resource.ResourceIgnoreSetTest.MyTestConfiguration.class})
+// @ContextConfiguration(classes = {ResourceIgnoreSet.class, MyTestConfiguration.class} )
 public class ResourceIgnoreSetTest {
 
     @TestConfiguration
-    static class MyTestConfiguration {
+    public static class MyTestConfiguration {
 
         @Bean
         @Primary

@@ -2,7 +2,6 @@ package org.cbioportal.staging.services.resource;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,10 +53,9 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
 
             for (Resource studyDir : studyDirs) {
 
-                studyPath = utils.trimDir(studyDir.getURL().toString());
-                Resource[] studyResources = resourceProvider.list(Paths.get(studyPath), true);
+                Resource[] studyResources = resourceProvider.list(studyDir, true);
 
-                String studyId = getStudyId(studyResources, studyPath);
+                String studyId = getStudyId(studyResources, studyDir.getFilename());
 
                 out.put(studyId, studyResources);
             }
@@ -76,7 +74,8 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
             return utils.readMetaFile(studyMetaFile.get()).get("cancer_study_identifier");
         }
         // if not meta file found use the study folder name as studyId
-        return studyPath.substring(utils.trimDir(studyPath).lastIndexOf("/") + 1);
+        studyPath = utils.trimDir(studyPath);
+        return studyPath.substring(studyPath.lastIndexOf("/") + 1);
     }
 
 }

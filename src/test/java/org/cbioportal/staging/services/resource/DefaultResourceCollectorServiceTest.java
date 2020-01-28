@@ -28,13 +28,13 @@ public class DefaultResourceCollectorServiceTest {
     private DefaultResourceCollectorService defaultResourceCollectorService;
 
     @Mock
-    public IResourceProvider resourceProvider;
+    public DefaultResourceProvider resourceProvider;
 
     @Mock
-    public IStudyResourceResolver resourceStrategy;
+    public YamlFileStudyResourceResolver studyResourceResolver;
 
     @Mock
-    private IResourceFilter resourceFilter;
+    private DefaultResourceFilter resourceFilter;
 
     @Before
     public void initMocks() throws ResourceCollectionException {
@@ -48,6 +48,8 @@ public class DefaultResourceCollectorServiceTest {
         Mockito.when(resourceFilter.filterResources(any())).thenAnswer(i -> i.getArguments()[0]);
     }
 
+    Resource fakeScanLocation = TestUtils.createResource("file:/tmp", 0);
+
     @Test
     public void testGetResources_success() throws ResourceCollectionException, ConfigurationException {
 
@@ -56,9 +58,9 @@ public class DefaultResourceCollectorServiceTest {
         strategyResources.add(TestUtils.createResource("dummy", "txt", 2));
         Map<String, Resource[]> studyFiles = new HashMap<>();
         studyFiles.put("study1", strategyResources.toArray(new Resource[0]));
-        Mockito.when(resourceStrategy.resolveResources(any())).thenReturn(studyFiles);
+        Mockito.when(studyResourceResolver.resolveResources(any())).thenReturn(studyFiles);
 
-        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources("scanlocation");
+        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources(fakeScanLocation);
         assertEquals(resources.entrySet().size(), 1);
         assertNotNull(resources.entrySet().iterator().next().getKey());
         assertEquals(resources.entrySet().iterator().next().getKey(), "study1");
@@ -75,7 +77,7 @@ public class DefaultResourceCollectorServiceTest {
 
         Mockito.when(resourceProvider.list(any())).thenReturn(new Resource[0]);
 
-        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources("scanlocation");
+        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources(fakeScanLocation);
         assertEquals(0, resources.keySet().size());
     }
 

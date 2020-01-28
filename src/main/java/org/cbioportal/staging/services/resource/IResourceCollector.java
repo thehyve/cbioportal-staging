@@ -9,8 +9,8 @@ import org.springframework.core.io.Resource;
 /**
  * ResourceCollector
  */
-public interface IResourceCollectorService {
+public interface IResourceCollector {
 
-    Map<String,Resource[]> getResources(String scanLocation) throws ResourceCollectionException, ConfigurationException;
+    Map<String,Resource[]> getResources(Resource scanLocation) throws ResourceCollectionException, ConfigurationException;
 
 }
