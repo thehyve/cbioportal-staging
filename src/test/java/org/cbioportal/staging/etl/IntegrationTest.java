@@ -3,6 +3,7 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,14 +92,13 @@ public class IntegrationTest {
 	@Rule
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
-	private void initBasicMockups(String scanLocation, int validationServiceMockExitStatus) {
+	private void initBasicMockups(String scanLocation, ExitStatus validationServiceMockExitStatus) {
 		//set mockups and input parameters for all services
 		ReflectionTestUtils.setField(extractor, "scanLocation", scanLocation);
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 		
-		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", validationServiceMockExitStatus);
@@ -123,7 +123,7 @@ public class IntegrationTest {
 	
 	// @Test
 	// public void allStudiesLoaded() {
-	// 	initBasicMockups("file:src/test/resources/integration", 3);
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
 	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "null");
 		
@@ -140,7 +140,7 @@ public class IntegrationTest {
 	
 	// @Test
 	// public void subsetOfStudiesLoaded() {
-	// 	initBasicMockups("file:src/test/resources/local_integration", 3);
+	// 	initBasicMockups("file:src/test/resources/local_integration", ExitStatus.WARNINGS);
 	// 	ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
 	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "null");
 		
@@ -159,7 +159,7 @@ public class IntegrationTest {
 	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/test/resources/integration", 1);
+		initBasicMockups("file:src/test/resources/integration", ExitStatus.ERRORS);
 		
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		
@@ -176,7 +176,7 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/test/resources/integration", 1);
+		initBasicMockups("file:src/test/resources/integration", ExitStatus.ERRORS);
 
 		ReflectionTestUtils.setField(validationService, "throwError", true);
 		
@@ -195,7 +195,7 @@ public class IntegrationTest {
 	@Test
 	public void noScanLocation() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/notfound", 3);
+		initBasicMockups("file:src/notfound", ExitStatus.WARNINGS);
 
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		
@@ -211,7 +211,7 @@ public class IntegrationTest {
 	
 	// @Test
 	// public void studiesAreAuthorized() {
-	// 	initBasicMockups("file:src/test/resources/integration", 3);
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
 	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "echo");
 	// 	ReflectionTestUtils.setField(authorizerService, "studyAuthorizeCommandPrefix", "echo");
@@ -229,7 +229,7 @@ public class IntegrationTest {
 	
 	// @Test
 	// public void studiesAreNotAuthorized() {
-	// 	initBasicMockups("file:src/test/resources/integration", 3);
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
 	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "ls");
 	// 	ReflectionTestUtils.setField(authorizerService, "studyAuthorizeCommandPrefix", "ls");

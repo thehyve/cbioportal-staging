@@ -17,11 +17,11 @@ package org.cbioportal.staging.services;
 
 import java.io.File;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 
 public interface ValidationService {
 	
-	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException, Exception;
+	public ExitStatus validate(File studyPath, File report, File logFile) throws ValidatorException;
 
 }

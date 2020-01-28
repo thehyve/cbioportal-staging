@@ -29,6 +29,7 @@ import java.util.Map;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.PublisherService;
 import org.slf4j.Logger;
@@ -87,6 +88,9 @@ public class ETLProcessRunner {
     @Value("${skip.transformation:false}")
     private boolean skipTransformation;
 
+    @Value("${validation.level:ERROR}")
+	private String validationLevel;
+
 	/**
 	 * Runs all the steps of the ETL process.
 	 * 
@@ -143,47 +147,65 @@ public class ETLProcessRunner {
 	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
         Map<String, String> logPaths = new HashMap<String, String>();
 		
-        //T (Transform) step:
-        Map<String, File> transformedStudiesPaths = new HashMap<String, File>();
-        if (skipTransformation) {
-            transformedStudiesPaths = studyPaths;
-        } else {
-            try {
-                String logSuffix = "_transformation_log.txt";
-                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
-                // Publish transformation logs
-                publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
-                //Only send the email if at least one transformation has been done
-                if (logPaths.size() > 0) {
-                    emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
-                }
-                //Get the list of the successfully transformed studies to pass to the validator
-                transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
-            } catch (TransformerException e) {
-                try {
-                    logger.error("An error occurred during the transformation step. Error found: "+ e);
-                    emailService.emailGenericError("An error occurred during the transformation step. Error found: ", e);
-                } catch (Exception e1) {
-                    logger.error("The email could not be sent due to the error specified below.");
-                    e1.printStackTrace();
-                }
+        try {
+            //T (TRANSFORM) STEP:
+            Map<String, File> transformedStudiesPaths = new HashMap<String, File>(); 
+            if (skipTransformation) {
+                transformedStudiesPaths = studyPaths;
+            } else {
+            String logSuffix = "_transformation_log.txt";
+            Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
+            // Publish transformation logs
+            publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
+            //Only send the email if at least one transformation has been done
+            if (logPaths.size() > 0) {
+                emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
             }
-        }
-        
-        //V (Validate) step:
-        if (transformedStudiesPaths.keySet().size() > 0) {
-            Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
-            //L (Load) step:
-            if (validatedStudies.size() > 0) {
-                boolean loadSuccessful = loader.load(date, validatedStudies, logPaths);
-                if (loadSuccessful) {
-                    restarter.restart();
-                    if (!studyAuthorizeCommandPrefix.equals("null")) {
-                        authorizer.authorizeStudies(validatedStudies.keySet());
+            //Get the list of the successfully transformed studies to pass to the validator
+            transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
+            }
+            //V (VALIDATE) STEP:
+            if (transformedStudiesPaths.keySet().size() > 0) {            
+                String reportSuffix = "_validation_report.html";
+                String logSuffix = "_validation_log.txt";
+                Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths, reportSuffix, logSuffix);
+                //Publish report and validation logs
+                //Put report and log file in the share location
+                publisher.publish(date, transformedStudiesPaths, logPaths, " validation log", logSuffix);
+                publisher.publish(date, transformedStudiesPaths, logPaths, " validation report", reportSuffix);
+                //Send email with validation results
+                emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
+                //Get studies that have passed validation to pass to the loader
+                Map <String, File> studiesThatPassedValidation = validator.getStudiesThatPassedValidation(validatedStudies, studyPaths);
+                //L (LOAD) STEP:
+                if (studiesThatPassedValidation.size() > 0) {
+                    boolean loadSuccessful = loader.load(date, studiesThatPassedValidation, logPaths);
+                    if (loadSuccessful) {
+                        restarter.restart();
+                        if (!studyAuthorizeCommandPrefix.equals("null")) {
+                            authorizer.authorizeStudies(validatedStudies.keySet());
+                        }
                     }
                 }
             }
-        }
+        } catch (TransformerException e) {
+            try {
+                logger.error("An error occurred during the transformation step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the transformation step. Error found: ", e);
+            } catch (Exception e1) {
+                logger.error("The email could not be sent due to the error specified below.");
+                e1.printStackTrace();
+            }
+        } catch (ValidatorException e) {
+			try {
+				logger.error("An error occurred during the validation step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the validation step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		}
+
     }
 
 	/**

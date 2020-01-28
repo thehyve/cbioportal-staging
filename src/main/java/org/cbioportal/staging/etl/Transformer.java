@@ -64,7 +64,7 @@ public class Transformer {
             ExitStatus transformationStatus = null;  
             //Create transformation log file
             String logName = studyId+logSuffix;
-            File logFile = new File(untransformedFilesPath+"/"+logName);
+            File logFile = new File(transformedFilesPath+"/"+logName);
 			try {
 				if (metaFileExists(untransformedFilesPath)) {
                     try {

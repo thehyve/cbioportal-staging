@@ -225,16 +225,16 @@ public class EmailServiceImpl implements EmailService {
 		}
 	}
 	
-	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 		
 		Map<String, String> studies = new HashMap<String, String>();
 		for (String study : validatedStudies.keySet()) {
-			if (validatedStudies.get(study) == 0) {
+			if (validatedStudies.get(study) == ExitStatus.SUCCESS) {
 				studies.put(study, "VALID"); 
 			}
-			else if (validatedStudies.get(study) == 3) { //Study with warnings and no errors
+			else if (validatedStudies.get(study) == ExitStatus.WARNINGS) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
 			} else { //Study with errors
 				studies.put(study, "ERRORS");

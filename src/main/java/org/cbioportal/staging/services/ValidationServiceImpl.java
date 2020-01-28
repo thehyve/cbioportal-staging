@@ -22,7 +22,7 @@ import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Validator;
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,22 +48,16 @@ public class ValidationServiceImpl implements ValidationService {
 	
 	@Value("${portal.source:.}")
 	private String portalSource;
-	
-	@Value("${etl.working.dir:false}")
-	private String etlWorkingDir;
 		
 	@Override
-	public int validate(String study, String studyPath, File report, File logFile, String date) throws ValidatorException, ConfigurationException, Exception {
+	public ExitStatus validate(File studyPath, File report, File logFile) throws ValidatorException {
 		try {
-            File portalInfoFolder = new File(etlWorkingDir+"/"+date+"/portalInfo");
-            if (etlWorkingDir.equals("false")){
-                portalInfoFolder = new File(studyPath+"/portalInfo");
-            }
+            File portalInfoFolder = new File(studyPath+"/portalInfo");
 			
 			ProcessBuilder validationCmd;
 			ProcessBuilder portalInfoCmd;
 			if (cbioportalMode.equals("local")) {
-				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.toString(), "-p", portalInfoFolder.toString(), "-html", report.getAbsolutePath(), "-v");
+				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.getAbsolutePath(), "-p", portalInfoFolder.toString(), "-html", report.getAbsolutePath(), "-v");
 				portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoFolder.toString());
 				portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
 				validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
@@ -71,7 +65,7 @@ public class ValidationServiceImpl implements ValidationService {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
 					//docker command:
 					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-							"-v", studyPath.toString()+":/study:ro", "-v", report+":/outreport.html",
+							"-v", studyPath.getAbsolutePath()+":/study:ro", "-v", report+":/outreport.html",
                             "-v", portalInfoFolder.toString()+ ":/portalinfo:ro", 
                             "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
@@ -81,10 +75,10 @@ public class ValidationServiceImpl implements ValidationService {
                             "-w", "/cbioportal/core/src/main/scripts",
 							cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
 				} else {
-					throw new ConfigurationException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
+					throw new ValidatorException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
 				}
 			} else {
-				throw new ConfigurationException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
+				throw new ValidatorException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
 						". Please change the mode in the application.properties.");
 			}
 			
@@ -99,7 +93,7 @@ public class ValidationServiceImpl implements ValidationService {
 			}
 			pInfo.waitFor();
 			if (pInfo.exitValue() != 0) {
-				throw new RuntimeException("Dump portalInfo step failed");
+				throw new ValidatorException("Dump portalInfo step failed");
 			}
 
 			logger.info("Dump portalInfo finished. Continuing validation...");
@@ -111,27 +105,30 @@ public class ValidationServiceImpl implements ValidationService {
 			validationCmd.redirectOutput(Redirect.appendTo(logFile));
 			Process validateProcess = validationCmd.start();
 			validateProcess.waitFor(); //Wait until validation is finished
-			int exitValue = validateProcess.exitValue();
+            
+            //Interprete exit status of the process and return it
+            ExitStatus exitStatus = null;
+            if (validateProcess.exitValue() == 0) {
+                exitStatus = ExitStatus.SUCCESS;
+            } else if (validateProcess.exitValue() == 3) {
+                exitStatus = ExitStatus.WARNINGS;
+            } else {
+                exitStatus = ExitStatus.ERRORS;
+            }
+            return exitStatus;
 			
-			return exitValue;
-		}
-		catch (InvalidPropertyException e) {
+		} catch (InvalidPropertyException e) {
 			throw new ValidatorException("Error during validation execution: property not valid, check the validation command. ", e);
-		}
-		catch (ConfigurationException e) {
-			throw new ConfigurationException(e.toString(), e);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			if (cbioportalMode.equals("docker")) {
-				throw new ConfigurationException("Error during validation execution: check if Docker is installed, check whether the current"
+				throw new ValidatorException("Error during validation execution: check if Docker is installed, check whether the current"
 						+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.", e);
 			} else {
-				throw new ConfigurationException("Check if portal source is correctly set in application.properties. Configured portal source is: "+portalSource, e);
+				throw new ValidatorException("Check if portal source is correctly set in application.properties. Configured portal source is: "+portalSource, e);
 			}
-		}
-		catch (Exception e) {
-			throw new Exception("Error during validation execution. ", e);
-		}
+		} catch (InterruptedException e) {
+            throw new ValidatorException("The transformation process has been interrupted by another process.", e);
+        }
 	}
 
 }
