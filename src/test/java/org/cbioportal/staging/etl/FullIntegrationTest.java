@@ -27,11 +27,17 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = { "scan.location=file:src/test/resources/e2e_studies/es_0",
-        "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir", "cbioportal.mode=docker",
-        "cbioportal.docker.image=cbioportal/cbioportal:3.1.4", "cbioportal.docker.network=cbio-net",
-        "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
-        "central.share.location=file:/tmp/staging-integration-test/share", "skip.transformation=true" })
+@TestPropertySource(properties = {
+    "scan.location=file:src/test/resources/e2e_studies/es_0",
+    "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir",
+    "cbioportal.mode=docker",
+    "cbioportal.docker.image=cbioportal/cbioportal:3.1.4",
+    "cbioportal.docker.network=cbio-net",
+    "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
+    "central.share.location=file:/tmp/staging-integration-test/share",
+    "skip.transformation=true",
+    "cloud.aws.region.static=eu-central-1"
+})
 @SpringBootTest(classes = App.class)
 public class FullIntegrationTest {
 
