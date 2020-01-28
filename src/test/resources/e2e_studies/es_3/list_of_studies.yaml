@@ -1,4 +1,4 @@
-test_study:
-  - test_study/data_samples.txt
-  - test_study/meta_samples.txt
-  - test_study/meta_study.txt
+test_study_es_3:
+  - test_study_es_3/data_samples.txt
+  - test_study_es_3/meta_samples.txt
+  - test_study_es_3/meta_study.txt
