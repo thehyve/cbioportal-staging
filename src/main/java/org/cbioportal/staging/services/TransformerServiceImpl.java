@@ -34,9 +34,9 @@ import org.springframework.stereotype.Component;
 public class TransformerServiceImpl implements TransformerService {
 	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-	@Value("${transformation.command.script}")
+	@Value("${transformation.command.script:}")
 	private String transformationCommandScript;
-	
+
 	@Override
 	public int transform(File studyPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException {
 		if (!finalPath.exists()) {
@@ -64,7 +64,7 @@ public class TransformerServiceImpl implements TransformerService {
             transformationCommand.redirectErrorStream(true);
             transformationCommand.redirectOutput(Redirect.appendTo(logFile));
             Process transformationProcess = transformationCommand.start();
-            
+
             transformationProcess.waitFor(); //Wait until transformation is finished
             return transformationProcess.exitValue();
 		} catch (FileNotFoundException e1) {
