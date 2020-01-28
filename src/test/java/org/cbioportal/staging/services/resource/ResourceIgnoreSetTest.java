@@ -1,21 +1,23 @@
 package org.cbioportal.staging.services.resource;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
+@SpringBootTest
 public class ResourceIgnoreSetTest {
 
     @TestConfiguration
@@ -25,23 +27,8 @@ public class ResourceIgnoreSetTest {
         @Primary
         public BufferedReader bufferedReader() throws Exception {
             BufferedReader reader = mock(BufferedReader.class);
-            int[] cnt = {0}; // needed for update of value in lambda
-            Mockito.doAnswer(invocation -> {
-                cnt[0]++;
-                if (cnt[0] == 1) {
-                    return "file:/dummy1.txt";
-                }
-                if (cnt[0] == 2) {
-                    return "file:/dummy2.txt";
-                }
-                return null;
-            }).when(reader).readLine();
+            Mockito.when(reader.readLine()).thenReturn("file:/dummy1.txt", "file:/dummy2.txt", null);
             return reader;
-        }
-
-        @Bean
-        public ResourceIgnoreSet resourceIgnoreSet() {
-            return new ResourceIgnoreSet();
         }
 
     }
@@ -50,7 +37,7 @@ public class ResourceIgnoreSetTest {
     private ResourceIgnoreSet resourceIgnoreSet;
 
     @Test
-    public void testGetExcludePaths()  {
+    public void testGetExcludePaths() throws IOException {
         assertEquals(2, resourceIgnoreSet.size());
     }
 
