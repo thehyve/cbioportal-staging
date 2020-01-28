@@ -36,10 +36,10 @@ public class RestarterServiceImpl implements RestarterService {
 
 	@Value("${cbioportal.docker.cbio.container}")
 	private String cbioContainer;
-	
+
 	@Value("${portal.source:.}")
 	private String portalSource;
-	
+
 	@Override
 	public void restart() throws InterruptedException, IOException, ConfigurationException {
 		if (cbioportalMode.equals("local")) {

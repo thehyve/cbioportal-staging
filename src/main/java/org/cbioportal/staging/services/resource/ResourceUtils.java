@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -75,6 +76,16 @@ public class ResourceUtils {
             bufferedReader.close();
         }
         return entries;
+    }
+
+    public void ensureDirs(File path) {
+		if (!path.exists()) {
+			path.mkdirs();
+		}
+    }
+
+    public void ensureDirs(String path) throws IOException {
+		ensureDirs(new File(path));
     }
 
 }

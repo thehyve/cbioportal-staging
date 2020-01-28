@@ -10,15 +10,14 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.util.Map;
 
+import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -29,20 +28,12 @@ import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = { "scan.location=file:src/test/resources/e2e_studies/es_0",
-        "etl.working.dir=/tmp/staging-integration-test/etl-working-dir", "cbioportal.mode=docker",
+        "etl.working.dir=file:/tmp/staging-integration-test/etl-working-dir", "cbioportal.mode=docker",
         "cbioportal.docker.image=cbioportal/cbioportal:3.1.4", "cbioportal.docker.network=cbio-net",
         "cbioportal.docker.properties=/tmp/staging-integration-test/portal.properties",
         "central.share.location=file:/tmp/staging-integration-test/share", "skip.transformation=true" })
-@SpringBootTest
+@SpringBootTest(classes = App.class)
 public class FullIntegrationTest {
-
-    @TestConfiguration
-    static class MyTestConfiguration {
-        @Bean
-        public ScheduledScanner scheduledScanner() {
-            return new ScheduledScanner();
-        }
-    }
 
     @MockBean
     private EmailServiceImpl emailServiceImpl;

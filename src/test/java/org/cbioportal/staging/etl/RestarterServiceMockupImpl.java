@@ -19,15 +19,15 @@ import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.RestarterService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class RestarterServiceMockupImpl implements RestarterService {
-	
-	
+
+
 	@Override
 	public void restart() throws InterruptedException, IOException, ConfigurationException {
-		
+
 	}
-	
+
 }

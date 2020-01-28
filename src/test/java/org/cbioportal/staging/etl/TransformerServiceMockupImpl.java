@@ -19,14 +19,14 @@ import java.io.File;
 
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.TransformerService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class TransformerServiceMockupImpl implements TransformerService {
-	
+
 	@Override
 	public int transform(File originPath, File finalPath, File logFile) throws TransformerException {
 		return 0;
 	}
-	
+
 }

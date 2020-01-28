@@ -363,8 +363,6 @@ class Extractor {
 		return result;
 	}
 
-
-
 	private String getBasePathResources(Resource[] resources) throws ConfigurationException {
 		List<String> paths = Stream.of(resources)
 			.map(ThrowingFunction.unchecked(e -> e.getURL().toString()))

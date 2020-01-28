@@ -73,8 +73,7 @@ public class ETLProcessRunner {
     private String centralShareLocation;
 
     @Value("${etl.working.dir:false}")
-	private String etlWorkingDir;
-
+	private File etlWorkingDir;
 
 	@Autowired
     private ResourceUtils utils;
@@ -84,6 +83,8 @@ public class ETLProcessRunner {
 
 			String date = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			startProcess();
+
+			utils.ensureDirs(etlWorkingDir);
 
             //E (Extract) step:
 			Map<String,File> localResources = extractor.run(remoteResources);

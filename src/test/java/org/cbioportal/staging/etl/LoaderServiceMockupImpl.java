@@ -19,14 +19,14 @@ import java.io.File;
 
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class LoaderServiceMockupImpl implements LoaderService {
-	
+
 	private int exitStatus;
 	private boolean throwError = false;
-	
+
 	@Override
 	public int load(String study, File studyPath, File logFile) throws LoaderException {
         if (throwError) {
@@ -39,5 +39,5 @@ public class LoaderServiceMockupImpl implements LoaderService {
 		this.throwError = false;
 		this.exitStatus = 0;
 	}
-	
+
 }

@@ -16,15 +16,15 @@
 package org.cbioportal.staging.etl;
 
 import org.cbioportal.staging.services.ScheduledScannerService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class ScheduledScannerServiceMockupImpl implements ScheduledScannerService {
-	
+
 	@Override
 	public void stopApp() {
     }
-    
+
     @Override
 	public void stopAppWithSuccess() {
 	}

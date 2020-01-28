@@ -20,16 +20,16 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.cbioportal.staging.services.EmailService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-@Component
+@TestComponent
 public class EmailServiceMockupImpl implements EmailService {
-	
+
 	private boolean isEmailStudyErrorSent = false;
     private boolean isEmailStudyFileNotFoundSent = false;
     private boolean isEmailTransformedStudiesSent = false;
@@ -40,23 +40,23 @@ public class EmailServiceMockupImpl implements EmailService {
 	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudyFileNotFoundSent  = true;
 	}
-	
+
 	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
 		this.isEmailStudyErrorSent  = true;
     }
-    
+
     public void emailTransformedStudies(Map<String,Integer> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
         this.isEmailTransformedStudiesSent  = true;
     }
-	
+
 	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
 	}
-	
+
 	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudiesLoadedSent = true;
 	}
-	
+
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailGenericErrorSent = true;
 	}
@@ -64,27 +64,27 @@ public class EmailServiceMockupImpl implements EmailService {
 	public boolean isEmailStudyErrorSent() {
 		return this.isEmailStudyErrorSent;
 	}
-	
+
 	public boolean isEmailStudyFileNotFoundSent() {
 		return this.isEmailStudyFileNotFoundSent;
     }
-    
+
     public boolean isEmailTransformedStudiesSent() {
 		return this.isEmailTransformedStudiesSent;
 	}
-	
+
 	public boolean isEmailValidationReportSent() {
 		return this.isEmailValidationReportSent;
 	}
-	
+
 	public boolean isEmailStudiesLoadedSent() {
 		return this.isEmailStudiesLoadedSent;
 	}
-	
+
 	public boolean isEmailGenericErrorSent() {
 		return this.isEmailGenericErrorSent;
 	}
-	
+
 	public void reset() {
 		this.isEmailStudyErrorSent = false;
         this.isEmailStudyFileNotFoundSent = false;
@@ -93,5 +93,5 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailStudiesLoadedSent = false;
 		this.isEmailGenericErrorSent = false;
 	}
-	
+
 }

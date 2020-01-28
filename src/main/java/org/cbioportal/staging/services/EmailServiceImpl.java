@@ -49,55 +49,55 @@ import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class EmailServiceImpl implements EmailService {
-	
+
 	@Autowired
     private Configuration freemarkerConfig;
-	
+
 	@Value("${mail.to}")
 	private String mailTo;
-	
+
 	@Value("${mail.from}")
 	private String mailFrom;
-	
+
 	@Value("${mail.smtp.user}")
 	private String mailSmtpUser;
-	
+
 	@Value("${mail.smtp.password}")
 	private String mailSmtpPassword;
-	
+
 	@Value("${mail.smtp.host}")
 	private String mailSmtpHost;
-	
+
 	@Value("${mail.debug:false}")
 	private String mailDebug;
-	
+
 	@Value("${mail.transport.protocol}")
 	private String mailTransportProtocol;
-	
+
 	@Value("${mail.smtp.port}")
 	private String mailSmtpPort;
-	
+
 	@Value("${mail.smtp.auth:false}")
 	private String mailSmtpAuth;
-	
+
 	@Value("${mail.smtp.ssl.enable:true}")
 	private String mailSmtpSslEnable;
-	
+
 	@Value("${mail.smtp.starttls.enable:true}")
 	private String mailSmtpStarttlsEnable;
-	
+
 	@Value("${scan.location}")
 	private String scanLocation;
-	
+
 	@Value("${study.curator.emails}")
 	private String studyCuratorEmails;
-	
+
 	@Value("${server.alias}")
 	private String serverAlias;
-	
+
 	@Value("${debug.mode:false}")
 	private Boolean debugMode;
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
 	private Properties getProperties() {
@@ -112,10 +112,10 @@ public class EmailServiceImpl implements EmailService {
 		properties.setProperty("mail.smtp.auth", mailSmtpAuth);
 		properties.setProperty("mail.smtp.ssl.enable", mailSmtpSslEnable);
 		properties.setProperty("mail.smtp.starttls.enable", mailSmtpStarttlsEnable);
-		
+
 		return properties;
 	}
-	
+
 	private Session getSession(Properties properties) {
 		return Session.getInstance(properties,
 				new javax.mail.Authenticator() {
@@ -124,7 +124,7 @@ public class EmailServiceImpl implements EmailService {
 					}
 				});
 	}
-	
+
 	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
 		for (String failedStudy : failedStudies.keySet()) {
@@ -138,7 +138,7 @@ public class EmailServiceImpl implements EmailService {
 
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-		
+
         Message msg = new MimeMessage(session);
         try {
             msg.setSubject("ERROR - cBioPortal staging app: transformation step failed. Server: "+serverAlias+". Failed studies: "+finalFailedStudies);
@@ -166,9 +166,9 @@ public class EmailServiceImpl implements EmailService {
         } catch(MessagingException me) {
             logger.error(me.getMessage(), me);
         }
-			
+
 	}
-	
+
 	private String displayError(Throwable t) {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
@@ -176,12 +176,12 @@ public class EmailServiceImpl implements EmailService {
 		String stackTrace = sw.toString();
 		return stackTrace.replace(System.getProperty("line.separator"), "<br/>\n");
 	}
-	
+
 	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
 		logger.info("Sending email regarding transformation error" );
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-		
+
         Message msg = new MimeMessage(session);
         try {
             msg.setSubject("ERROR - cBioPortal staging app: transformation step failed for study "+studyId+". Server: "+serverAlias);
@@ -210,15 +210,15 @@ public class EmailServiceImpl implements EmailService {
             logger.error(me.getMessage(), me);
         }
     }
-    
+
     public void emailTransformedStudies(Map<String,Integer> transformedStudies, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-		
+
 		Map<String, String> studies = new HashMap<String, String>();
 		for (String study : transformedStudies.keySet()) {
 			if (transformedStudies.get(study) == 0) {
-				studies.put(study, "VALID"); 
+				studies.put(study, "VALID");
 			}
 			else if (transformedStudies.get(study) == 3) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
@@ -226,7 +226,7 @@ public class EmailServiceImpl implements EmailService {
 				studies.put(study, "ERRORS");
 			}
 		}
-		
+
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for transformed studies. Server: "+serverAlias+". Studies: "+studies.keySet());
@@ -255,15 +255,15 @@ public class EmailServiceImpl implements EmailService {
 		    logger.error(me.getMessage(), me);
 		}
 	}
-	
+
 	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-		
+
 		Map<String, String> studies = new HashMap<String, String>();
 		for (String study : validatedStudies.keySet()) {
 			if (validatedStudies.get(study) == 0) {
-				studies.put(study, "VALID"); 
+				studies.put(study, "VALID");
 			}
 			else if (validatedStudies.get(study) == 3) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
@@ -271,7 +271,7 @@ public class EmailServiceImpl implements EmailService {
 				studies.put(study, "ERRORS");
 			}
 		}
-		
+
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject("INFO - cBioPortal staging app: validation results for new studies. Server: "+serverAlias+". Studies: "+studies.keySet());
@@ -302,7 +302,7 @@ public class EmailServiceImpl implements EmailService {
 		    logger.error(me.getMessage(), me);
 		}
 	}
-	
+
 	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
@@ -313,7 +313,7 @@ public class EmailServiceImpl implements EmailService {
 				status = "ERROR";
 			}
 		}
-		
+
 		Message msg = new MimeMessage(session);
 		try {
 		    msg.setSubject(status+" - cBioPortal study loading report. Server: "+serverAlias+". Studies: "+studies);
@@ -342,11 +342,11 @@ public class EmailServiceImpl implements EmailService {
 		    logger.error(me.getMessage(), me);
 		}
 	}
-	
+
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-        
+
         // Send generic error email to the curator
         if (!debugMode) { //Only if we are not in debug mode
             Message msg = new MimeMessage(session);
@@ -368,7 +368,7 @@ public class EmailServiceImpl implements EmailService {
                 logger.error(me.getMessage(), me);
             }
         }
-        
+
         // Send email with details of the error to the staging app admins
         // In debug mode, send this email to the curator
         Message msg2 = new MimeMessage(session);
@@ -397,11 +397,11 @@ public class EmailServiceImpl implements EmailService {
 		    logger.error(me.getMessage(), me);
 		}
     }
-    
+
     public void emailGenericError(String errorMessage, Set<String> studies, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		Properties properties = getProperties();
 		Session session = getSession(properties);
-        
+
         // Send generic error email to the curator
         if (!debugMode) { //Only if we are not in debug mode
             Message msg = new MimeMessage(session);
@@ -423,7 +423,7 @@ public class EmailServiceImpl implements EmailService {
                 logger.error(me.getMessage(), me);
             }
         }
-        
+
         // Send email with details of the error to the staging app admins
         // In debug mode, send this email to the curator
         Message msg2 = new MimeMessage(session);

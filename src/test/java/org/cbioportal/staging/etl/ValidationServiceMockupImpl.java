@@ -21,14 +21,14 @@ import java.io.IOException;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidationService;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class ValidationServiceMockupImpl implements ValidationService {
-	
+
 	private int exitStatus;
 	private boolean throwError = false;
-	
+
 	@Override
 	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException {
 		if (throwError) {
@@ -41,10 +41,10 @@ public class ValidationServiceMockupImpl implements ValidationService {
 		this.throwError = false;
 		this.exitStatus = 0;
 	}
-	
+
 	public void copyToResource(File reportFile, String centralShareLocation) throws IOException {
     }
-    
+
     public String getCentralShareLocationPath(String centralShareLocation, String date) {
         return centralShareLocation+"/"+date;
     }
