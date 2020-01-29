@@ -21,6 +21,26 @@ public class ResourceUtilsTest {
     private ResourceUtils utils;
 
     @Test
+    public void trimDir_success() {
+        // TODO implement test
+    }
+
+    @Test
+    public void stripResourceTypePrefix_success() {
+        // TODO implement test
+    }
+
+    @Test
+    public void extractDirs_success() {
+        // TODO implement test
+    }
+
+    @Test
+    public void readMetaFile_success() {
+        // TODO implement test
+    }
+
+    @Test
     public void getMostRecent_success() {
         Resource[] resources = createResources("prefix", "yaml").toArray(new Resource[0]);
         Resource selectedResource = utils.getMostRecent(resources);

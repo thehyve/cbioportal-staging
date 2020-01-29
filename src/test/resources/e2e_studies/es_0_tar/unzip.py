@@ -8,8 +8,7 @@ import argparse
 import sys
 
 def transform_study(study_dir, output_dir):
-    bash_command = "tar -C " + output_dir + " -pxvzf " + study_dir + "/test_study_es_0.tar.gz"
-    os.system(bash_command)
+    os.system("tar -C " + output_dir + " -pxvzf " + study_dir + "/test_study_es_0.tar.gz")
     sys.exit(0)
 
 

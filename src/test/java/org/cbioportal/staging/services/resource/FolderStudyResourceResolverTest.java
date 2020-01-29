@@ -14,31 +14,34 @@ import java.util.List;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 public class FolderStudyResourceResolverTest {
 
-    @InjectMocks
-    private FolderStudyResourceResolver studyResourceResolver;
+    @TestConfiguration
+    public static class MyTestConfiguration {
+        @Bean
+        public FolderStudyResourceResolver folderStudyResourceResolver() {
+            return new FolderStudyResourceResolver();
+        }
+    }
 
-    @Mock
+    @Autowired
+    private FolderStudyResourceResolver folderStudyResourceResolver;
+
+    @MockBean
     private DefaultResourceProvider resourceProvider;
 
-    @Mock
+    @MockBean
     private ResourceUtils utils;
-
-    @Before
-    public void initMocks() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     public void testDetectStudyIdFromPath() throws ResourceCollectionException, FileNotFoundException, IOException {
@@ -53,7 +56,7 @@ public class FolderStudyResourceResolverTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String,Resource[]> resources = studyResourceResolver.resolveResources(studyDirs);
+        Map<String,Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
 
         assertEquals(1, resources.size());
         assert(resources.containsKey("study_folder"));
@@ -73,7 +76,7 @@ public class FolderStudyResourceResolverTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String,Resource[]> resources = studyResourceResolver.resolveResources(studyDirs);
+        Map<String,Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
 
         assertEquals(1, resources.size());
         assert(resources.containsKey("dummy_study_id_1"));

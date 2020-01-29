@@ -32,7 +32,7 @@ import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "file:/home/pnp300/git/cbioportal-staging/src/test/resources/e2e_studies/e2e_integration_test.properties")
+@TestPropertySource(locations = "file:src/test/resources/e2e_studies/e2e_integration_test.properties")
 public class FullIntegrationTestSuccess {
 
     @MockBean
@@ -55,7 +55,6 @@ public class FullIntegrationTestSuccess {
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).emailStudyError(anyString(),any(Exception.class));
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
         verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));

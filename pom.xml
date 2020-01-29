@@ -108,8 +108,8 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Attention: Be sure nothing pulls in an old dependency with groupId 
-			"freemarker" (without the "org."), because then you will end up with two 
+		<!-- Attention: Be sure nothing pulls in an old dependency with groupId
+			"freemarker" (without the "org."), because then you will end up with two
 			freemarker.jar-s and unpredictable behavior! -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
@@ -199,6 +199,7 @@
 										<WORKING_DIR>${test.working.dir}</WORKING_DIR>
 										<TEST_HOME>${test.home}</TEST_HOME>
 										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>
+										<MYSQL_DUMP>/tmp/mysql.dump</MYSQL_DUMP>
 									</environmentVariables>
 								</configuration>
 							</execution>
@@ -213,6 +214,7 @@
 									<environmentVariables>
 										<DB_HOST>${test.db.host}</DB_HOST>
 										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>
+										<MYSQL_DUMP>/tmp/mysql.dump</MYSQL_DUMP>
 									</environmentVariables>
 								</configuration>
 							</execution>

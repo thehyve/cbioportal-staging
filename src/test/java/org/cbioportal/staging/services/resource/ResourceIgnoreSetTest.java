@@ -18,9 +18,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-// @SpringBootConfiguration
 @SpringBootTest(classes = {ResourceIgnoreSet.class, org.cbioportal.staging.services.resource.ResourceIgnoreSetTest.MyTestConfiguration.class})
-// @ContextConfiguration(classes = {ResourceIgnoreSet.class, MyTestConfiguration.class} )
 public class ResourceIgnoreSetTest {
 
     @TestConfiguration

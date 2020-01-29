@@ -17,7 +17,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 /**
- * StudyFoldersResourceStrategy
  *
  * Recieves a list of directories and recursively extracts a list of
  * resources for each study. The files/resources are returned keyed

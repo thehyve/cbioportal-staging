@@ -59,6 +59,10 @@ MYSQL_DATA_DIR="/tmp/mysql_data_integration_test"
 build_and_run_database
 migrate_db
 
+# Make a dump of the database. It will be used to restore
+# the database ot the initial state when tests have completed.
+docker exec "$DB_HOST" mysqldump -u root -p$DB_USER cbioportal > $MYSQL_DUMP
+
 # make test portal.properties available for Java integration test
 cp "$TEST_HOME/portal.properties" "$WORKING_DIR"
 

@@ -3,7 +3,7 @@ package org.cbioportal.staging.services.resource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doAnswer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,42 +12,35 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {DefaultResourceFilter.class, ResourceIgnoreSet.MyConfiguration.class, DefaultResourceFilterTest.MyTestConfiguration.class})
+@SpringBootTest(classes = {DefaultResourceFilter.class})
 public class DefaultResourceFilterTest {
 
-    @TestConfiguration
-    public static class MyTestConfiguration {
-
-        @Bean
-        @Primary
-        public ResourceIgnoreSet resourceIgnoreSet() {
-            ResourceIgnoreSet ignoreSet = mock(ResourceIgnoreSet.class);
-            Mockito.doAnswer(invocation -> {
-                String fileName = invocation.getArgumentAt(0, String.class);
-                if (fileName.contains("dummy1")) {
-                    return true;
-                }
-                return false;
-            }).when(ignoreSet).contains(anyString());
-            return ignoreSet;
-        }
-
-    }
+    @MockBean
+    private ResourceIgnoreSet resourceIgnoreSet;
 
     @Autowired
     private DefaultResourceFilter defaultResourceFilter;
+
+    @Before
+    public void init() {
+        doAnswer(invocation -> {
+            String fileName = invocation.getArgumentAt(0, String.class);
+            if (fileName.contains("dummy1")) {
+                return true;
+            }
+            return false;
+        }).when(resourceIgnoreSet).contains(anyString());
+    }
 
     @Test
     public void testFilterResources_removesFileIngnoreFile() throws ResourceCollectionException {

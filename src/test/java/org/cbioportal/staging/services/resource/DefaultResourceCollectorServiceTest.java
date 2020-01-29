@@ -14,32 +14,31 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
+@SpringBootTest(classes = {DefaultResourceCollectorService.class})
 public class DefaultResourceCollectorServiceTest {
 
-    @InjectMocks
+    @Autowired
     private DefaultResourceCollectorService defaultResourceCollectorService;
 
-    @Mock
+    @MockBean
     public DefaultResourceProvider resourceProvider;
 
-    @Mock
+    @MockBean
     public YamlFileStudyResourceResolver studyResourceResolver;
 
-    @Mock
+    @MockBean
     private DefaultResourceFilter resourceFilter;
 
     @Before
     public void initMocks() throws ResourceCollectionException {
-
-        MockitoAnnotations.initMocks(this);
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createResource("dummy", "txt", 1));
