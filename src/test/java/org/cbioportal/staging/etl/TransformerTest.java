@@ -58,7 +58,7 @@ public class TransformerTest {
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(date, studies, transformationCommand, "");
+        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
 
         Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
         expectedResult.put("study1", ExitStatus.SUCCESS);
@@ -83,7 +83,7 @@ public class TransformerTest {
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(date, studies, transformationCommand, "");
+        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
 
         Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
         expectedResult.put("study2", ExitStatus.NOTRANSF);

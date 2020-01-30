@@ -36,7 +36,9 @@ public class Loader {
 
     private boolean areStudiesLoaded = false;
 
-	Map<String, ExitStatus> load(final Map<String, File> studyPaths, String logSuffix) throws LoaderException {
+    private String logSuffix = "_loading_log.txt";
+
+	Map<String, ExitStatus> load(final Map<String, File> studyPaths) throws LoaderException {
 
         final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
 
@@ -57,6 +59,15 @@ public class Loader {
             }
         }
         return loadResults;
+    }
+
+    Map<String, File> getLogFiles(Map<String, File> studyPaths) {
+        Map<String, File> logFiles = new HashMap<String, File>();
+        for (String studyId : studyPaths.keySet()) {
+            File logFile = new File(studyPaths.get(studyId)+"/"+studyId+logSuffix);
+            logFiles.put(studyId, logFile);
+        }
+        return logFiles;
     }
 
     boolean areStudiesLoaded() {

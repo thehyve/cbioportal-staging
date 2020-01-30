@@ -51,13 +51,11 @@ public class PublisherServiceImpl implements PublisherService {
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
 
-    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
-        for (String study : studyPaths.keySet()) {
-            //Create transformation log file
-            String logName = study+logSuffix;
-            File logFile = new File(studyPaths.get(study)+"/"+logName);
-            String transformationLogPath = publish(logFile, date);
-            logPaths.put(study+" "+logType, transformationLogPath);
+    public void publish(String date, Map<String, File> initialLogFiles, Map<String, String> finalLogFiles, String logType) throws IOException {
+        for (String studyId : initialLogFiles.keySet()) {
+            File initialLogFile = initialLogFiles.get(studyId);
+            String finalLogFile = publish(initialLogFile, date);
+            finalLogFiles.put(studyId+" "+logType, finalLogFile);
         }
     }
 

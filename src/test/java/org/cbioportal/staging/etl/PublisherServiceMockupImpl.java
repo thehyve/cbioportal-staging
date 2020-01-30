@@ -29,7 +29,7 @@ public class PublisherServiceMockupImpl implements PublisherService {
     @Value("${central.share.location}")
     private String centralShareLocation;
 
-    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
+    public void publish(String date, Map<String, File> initialLogFiles, Map<String, String> finalLogFiles, String logType) throws IOException {
 
     }
 

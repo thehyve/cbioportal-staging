@@ -39,6 +39,8 @@ public class Transformer {
         SUCCESS, WARNINGS, ERRORS, NOTRANSF;
     }
 
+    private String logSuffix = "_transformation_log.txt";
+
     boolean metaFileExists(File originPath) {
         File metaStudyFile = new File(originPath + "/meta_study.txt");
         if (metaStudyFile.exists() && metaStudyFile.isFile()) {
@@ -55,8 +57,7 @@ public class Transformer {
         return transformedFilesPath;
     }
 
-    Map<String, ExitStatus> transform(String date, Map<String, File> studyPaths, String transformationCommand,
-            String logSuffix) throws TransformerException {
+    Map<String, ExitStatus> transform(Map<String, File> studyPaths, String transformationCommand) throws TransformerException {
 
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 
@@ -104,12 +105,21 @@ public class Transformer {
         return statusStudies;
     }
 
-    Map<String, File> getTransformedStudiesPaths(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
+    Map<String, File> getLogFiles(Map<String, File> studyPaths) {
+        Map<String, File> logFiles = new HashMap<String, File>();
+        for (String studyId : studyPaths.keySet()) {
+            File transformedFilesPath = getTransformedFilesPath(studyPaths.get(studyId));
+            File logFile = new File(transformedFilesPath+"/"+studyId+logSuffix);
+            logFiles.put(studyId, logFile);
+        }
+        return logFiles;
+    }
+
+    Map<String, File> getValidStudies(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
         Map<String, File> transformedFilesPaths = new HashMap<String, File>();
-        for (Map.Entry<String, ExitStatus> entry : transformedStudiesStatus.entrySet()) {
-            String studyId = entry.getKey();
-            File untransformedFilesPath = studyPaths.get(entry.getKey());
-            if (entry.getValue().equals(ExitStatus.SUCCESS) || entry.getValue().equals(ExitStatus.WARNINGS)) {
+        for (String studyId : transformedStudiesStatus.keySet()) {
+            if (transformedStudiesStatus.get(studyId).equals(ExitStatus.SUCCESS) || transformedStudiesStatus.get(studyId).equals(ExitStatus.WARNINGS)) {
+                File untransformedFilesPath = studyPaths.get(studyId);
                 transformedFilesPaths.put(studyId, getTransformedFilesPath(untransformedFilesPath));
             }
         }

@@ -23,7 +23,6 @@ import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +46,6 @@ public class ValidatorTest {
 
 	@Autowired
 	private Validator validator;
-
 
 	@Autowired
     private ValidationServiceMockupImpl validationService;
@@ -92,10 +90,8 @@ public class ValidatorTest {
 		assertEquals(false, result);
 	}
 
-	@Test(expected=IllegalArgumentException.class)
-	@Ignore
+	@Test(expected=ValidatorException.class)
 	public void studyHasPassedWrongLevel() throws ValidatorException {
-
 		boolean result = validator.hasStudyPassed("study", "WRONG_LEVEL", ExitStatus.ERRORS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -112,7 +108,7 @@ public class ValidatorTest {
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("/path"));
-        Map<String, ExitStatus> validatedStudies = validator.validate(studies, "", "");
+        Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNINGS);
 		assertEquals(expectedValidatedStudies, validatedStudies); //The study has passed validation,
@@ -128,7 +124,7 @@ public class ValidatorTest {
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("/path"));
-        Map<String, ExitStatus> validatedStudies = validator.validate(studies, "", "");
+        Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERRORS);
 		assertEquals(expectedValidatedStudies, validatedStudies); //The study added has failed validation

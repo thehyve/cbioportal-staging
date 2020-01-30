@@ -38,6 +38,9 @@ public class Validator {
 	@Value("${validation.level:ERROR}")
     private String validationLevel;
 
+    private String reportSuffix = "_validation_report.html";
+	private String logSuffix = "_validation_log.txt";
+
 	boolean hasStudyPassed(String study, String validationLevel, ExitStatus exitStatus) throws ValidatorException {
 		if (validationLevel.equals("WARNING")) { //Load studies with no warnings and no errors
 			if (exitStatus == ExitStatus.SUCCESS) {
@@ -54,7 +57,7 @@ public class Validator {
 		}
 	}
 
-	Map<String, ExitStatus> validate(Map<String, File> studyPaths, String reportSuffix, String logSuffix) throws ValidatorException {
+	Map<String, ExitStatus> validate(Map<String, File> studyPaths) throws ValidatorException {
         Map<String,ExitStatus> validatedStudies = new HashMap<String,ExitStatus>();
         //Get studies from appropriate staging folder
         for (String studyId : studyPaths.keySet()) {
@@ -74,13 +77,30 @@ public class Validator {
 		return validatedStudies;
     }
 
-    Map<String,File> getStudiesThatPassedValidation(Map<String, ExitStatus> validatedStudies, Map<String, File> studyPaths) throws ValidatorException {
-        Map<String, File> studiesThatPassedValidation = new HashMap<String, File>();
+    Map<String, File> getLogFiles(Map<String, File> studyPaths, String logType) throws ValidatorException {
+        String suffix;
+        if (logType.toLowerCase().equals("log")) {
+            suffix = logSuffix;
+        } else if (logType.toLowerCase().equals("report")) {
+            suffix = reportSuffix;
+        } else {
+            throw new ValidatorException("Log Type can only be 'log' or 'report', your type is: "+logType);
+        }
+        Map<String, File> logFiles = new HashMap<String, File>();
+        for (String studyId : studyPaths.keySet()) {
+            File logFile = new File(studyPaths.get(studyId)+"/"+studyId+suffix);
+            logFiles.put(studyId, logFile);
+        }
+        return logFiles;
+    }
+
+    Map<String,File> getValidStudies(Map<String, ExitStatus> validatedStudies, Map<String, File> studyPaths) throws ValidatorException {
+        Map<String, File> validStudies = new HashMap<String, File>();
         for (String studyId : validatedStudies.keySet()) {
             if (hasStudyPassed(studyId, validationLevel, validatedStudies.get(studyId))) {
-                studiesThatPassedValidation.put(studyId, studyPaths.get(studyId));
+                validStudies.put(studyId, studyPaths.get(studyId));
             }
         }
-        return studiesThatPassedValidation;
+        return validStudies;
     }
 }

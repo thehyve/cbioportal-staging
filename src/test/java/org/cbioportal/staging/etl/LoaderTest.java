@@ -50,7 +50,7 @@ public class LoaderTest {
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies, "");
+        Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
 		assertEquals(expectedLoadedStudies, loadedStudies); //The study has been loaded
@@ -64,7 +64,7 @@ public class LoaderTest {
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));
         studies.put("study_with_errors", new File("test/path2"));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies, "");
+        Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         expectedLoadedStudies.put("study_with_errors", ExitStatus.ERRORS);
