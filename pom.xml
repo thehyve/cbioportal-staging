@@ -166,7 +166,7 @@
 					<useSystemClassLoader>false</useSystemClassLoader>
 					<excludes>
 						<exclude>${cbioportal-staging.test.excludes}</exclude>
-						<exclude>**/FullIntegrationTest*.java</exclude>
+						<exclude>**/IntegrationTest*.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -231,7 +231,7 @@
 						<configuration>
 							<classesDirectory>${project.build.outputDirectory}</classesDirectory>
 							<includes>
-								<include>**/FullIntegrationTest*.java</include>
+								<include>**/IntegrationTest*.java</include>
 							</includes>
 						</configuration>
 						<executions>
