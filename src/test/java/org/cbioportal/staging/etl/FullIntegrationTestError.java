@@ -18,19 +18,16 @@ import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.RestarterService;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties",
                     properties = "scan.location=classpath:e2e_studies/es_3")
@@ -51,7 +48,7 @@ public class FullIntegrationTestError {
     }
 
     @Test
-    public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
+    public void throwValidationError_es3() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException {
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);

@@ -12,6 +12,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
  */
 @Profile("studydir")
 @Component
+@Primary
 public class FolderStudyResourceResolver implements IStudyResourceResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderStudyResourceResolver.class);

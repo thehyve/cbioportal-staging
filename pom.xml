@@ -213,6 +213,7 @@
 									<executable>src/test/resources/local_database/cleanup.sh</executable>
 									<environmentVariables>
 										<DB_HOST>${test.db.host}</DB_HOST>
+										<DB_USER>${test.db.user}</DB_USER>
 										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>
 										<MYSQL_DUMP>/tmp/mysql.dump</MYSQL_DUMP>
 									</environmentVariables>

@@ -1,4 +1,4 @@
-test_study_es_0:
+test_study_es_0_yaml:
   - test_study_es_0/data_clinical_samples.txt
   - test_study_es_0/meta_clinical_samples.txt
   - test_study_es_0/meta_study.txt

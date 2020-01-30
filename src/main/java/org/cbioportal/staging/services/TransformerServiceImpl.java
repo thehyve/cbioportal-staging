@@ -58,7 +58,7 @@ public class TransformerServiceImpl implements TransformerService {
         List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
 
         Resource script = resourceResolver.getResource(command.get(0));
-        script.getFile().setExecutable(true); // x-permissions are stripped in maven target resource dir
+        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
         String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
         command.set(0, scriptPath);
 
