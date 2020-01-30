@@ -61,12 +61,12 @@ public class ExtractorTest {
 	@Test
 	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
+		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 		ReflectionTestUtils.setField(extractor, "timeRetry", 0);
 
 		//Run extractor step:
-        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");
+        Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_1.yaml");
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Map<String, File> result = extractor.run(indexFile);
 
@@ -86,10 +86,10 @@ public class ExtractorTest {
 	@Test
 	public void allFilesFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
+		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 
-        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
+        Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_2.yaml");
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		Map<String, File> result = extractor.run(indexFile);
 
@@ -109,10 +109,10 @@ public class ExtractorTest {
 	@Test
 	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
+		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_3.yaml");
+		Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_3.yaml");
 		extractor.run(indexFile);
 
 		//check that the correct email is sent
@@ -126,10 +126,10 @@ public class ExtractorTest {
 	@Test
 	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
 		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
+		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_4.yaml");
+		Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_4.yaml");
 		extractor.run(indexFile);
 
 		//check that the correct email is sent

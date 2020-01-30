@@ -12,7 +12,7 @@ public class NewIntegrationTest {
 
     @Test
 	public void allStudiesLoaded() {
-		// initBasicMockups("file:src/test/resources/integration", 3);
+		// initBasicMockups("classpath:integration", 3);
 		// ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		// ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 

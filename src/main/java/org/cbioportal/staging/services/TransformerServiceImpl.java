@@ -19,15 +19,20 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,15 +40,30 @@ public class TransformerServiceImpl implements TransformerService {
 	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
 	@Value("${transformation.command.script:}")
-	private String transformationCommandScript;
+    private String transformationCommandScript;
+
+    @Autowired
+    private ResourcePatternResolver resourceResolver;
+
+    @Autowired
+    private ResourceUtils utils;
 
 	@Override
 	public int transform(File studyPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException {
-		if (!finalPath.exists()) {
-			finalPath.mkdir();
+
+        if (!finalPath.exists()) {
+            finalPath.mkdir();
         }
+
+        List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
+
+        Resource script = resourceResolver.getResource(command.get(0));
+        script.getFile().setExecutable(true); // x-permissions are stripped in maven target resource dir
+        String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
+        command.set(0, scriptPath);
+
 		try {
-			ProcessBuilder transformationCommand;
+			ProcessBuilder transformation;
 			logger.info("Starting transformation for study: "+studyPath.getName());
 			//Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
 			if (transformationCommandScript.equals("")) {
@@ -51,19 +71,15 @@ public class TransformerServiceImpl implements TransformerService {
             }
 
             //Build transformation command
-            ArrayList<String> transformationCmd = new ArrayList<String>();
-            for(String part:transformationCommandScript.split(" ")) { //Remove potential spaces in Transformation Command Script
-                transformationCmd.add(part);
-            }
-            Collections.addAll(transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
+            Stream.of("-i", studyPath.toString(), "-o", finalPath.toString()).forEach(e -> command.add(e));
 
             //Run transformation command
-            transformationCommand = new ProcessBuilder(transformationCmd);
+            transformation = new ProcessBuilder(command);
             //transformationCommand = new ProcessBuilder (transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
-            logger.info("Executing command: " + String.join(" ", transformationCommand.command()));
-            transformationCommand.redirectErrorStream(true);
-            transformationCommand.redirectOutput(Redirect.appendTo(logFile));
-            Process transformationProcess = transformationCommand.start();
+            logger.info("Executing command: " + String.join(" ", transformation.command()));
+            transformation.redirectErrorStream(true);
+            transformation.redirectOutput(Redirect.appendTo(logFile));
+            Process transformationProcess = transformation.start();
 
             transformationProcess.waitFor(); //Wait until transformation is finished
             return transformationProcess.exitValue();

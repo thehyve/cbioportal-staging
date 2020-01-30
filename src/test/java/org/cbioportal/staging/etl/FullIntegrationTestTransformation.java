@@ -35,11 +35,11 @@ import freemarker.template.TemplateNotFoundException;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
 @TestPropertySource(
-    locations = "file:src/test/resources/e2e_studies/e2e_integration_test.properties",
+    locations = "classpath:e2e_studies/e2e_integration_test.properties",
     properties = {
-        "scan.location=file:src/test/resources/e2e_studies/es_0_tar",
+        "scan.location=classpath:e2e_studies/es_0_tar",
         "skip.transformation=false",
-        "transformation.command.script=file:src/test/resources/e2e_studies/es_0_tar/unzip.py"
+        "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py"
     }
 )
 public class FullIntegrationTestTransformation {
@@ -79,7 +79,7 @@ public class FullIntegrationTestTransformation {
 
         // wire in a failing transformation script
         ReflectionTestUtils.setField(transformerService,
-            "transformationCommandScript", "file:src/test/resources/e2e_studies/es_0_tar/exit1.py");
+            "transformationCommandScript", "classpath:e2e_studies/es_0_tar/exit1.py");
 
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);

@@ -135,7 +135,7 @@ public class IntegrationTest {
 
 	@Test
 	public void allStudiesLoaded() {
-		initBasicMockups("file:src/test/resources/integration", 3);
+		initBasicMockups("classpath:integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 
@@ -152,7 +152,7 @@ public class IntegrationTest {
 
 	@Test
 	public void subsetOfStudiesLoaded() {
-		initBasicMockups("file:src/test/resources/local_integration", 3);
+		initBasicMockups("classpath:local_integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
 		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
 
@@ -171,7 +171,7 @@ public class IntegrationTest {
 	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/test/resources/integration", 1);
+		initBasicMockups("classpath:integration", 1);
 
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 
@@ -188,7 +188,7 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/test/resources/integration", 1);
+		initBasicMockups("classpath:integration", 1);
 
 		ReflectionTestUtils.setField(validationService, "throwError", true);
 
@@ -223,7 +223,7 @@ public class IntegrationTest {
 
 	@Test
 	public void studiesArePublished() {
-		initBasicMockups("file:src/test/resources/integration", 3);
+		initBasicMockups("classpath:integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "echo");
 		ReflectionTestUtils.setField(publisherService, "studyPublishCommandPrefix", "echo");
@@ -241,7 +241,7 @@ public class IntegrationTest {
 
 	@Test
 	public void studiesAreNotPublished() {
-		initBasicMockups("file:src/test/resources/integration", 3);
+		initBasicMockups("classpath:integration", 3);
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "ls");
 		ReflectionTestUtils.setField(publisherService, "studyPublishCommandPrefix", "ls");

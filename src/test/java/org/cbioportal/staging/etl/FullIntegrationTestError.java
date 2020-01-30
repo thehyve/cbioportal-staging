@@ -32,8 +32,8 @@ import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "file:src/test/resources/e2e_studies/e2e_integration_test.properties",
-                    properties = "scan.location=file:src/test/resources/e2e_studies/es_3")
+@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties",
+                    properties = "scan.location=classpath:e2e_studies/es_3")
 public class FullIntegrationTestError {
 
     @MockBean

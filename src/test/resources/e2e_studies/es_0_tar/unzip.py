@@ -7,15 +7,6 @@ import os
 import argparse
 import sys
 
-def transform_study(study_dir, output_dir):
-    os.system("tar -C " + output_dir + " -pxvzf " + study_dir + "/test_study_es_0.tar.gz")
-    sys.exit(0)
-
-
-def main(study_dir, output_dir):
-    transform_study(study_dir, output_dir)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage="-i <dir_for_input_files> -o <dir_for_output_files>",
                                      description="Transforms all files for all studies in input folder to cBioPortal "
@@ -32,4 +23,5 @@ if __name__ == '__main__':
                            help="Directory for output files.")
 
     args = parser.parse_args()
-    main(args.input_dir, args.output_dir)
+    os.system("tar -C " + args.output_dir + " -xzvf " + args.input_dir + "/test_study_es_0.tar.gz")
+    sys.exit(0)
