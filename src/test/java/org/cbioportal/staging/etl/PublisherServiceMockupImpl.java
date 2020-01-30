@@ -21,16 +21,16 @@ import java.util.Map;
 
 import org.cbioportal.staging.services.PublisherService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.test.context.TestComponent;
 
-@Component
+@TestComponent
 public class PublisherServiceMockupImpl implements PublisherService {
 
     @Value("${central.share.location}")
     private String centralShareLocation;
-    
+
     public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
-        
+
     }
 
     public String publish(File file, String date) throws IOException {
@@ -39,12 +39,12 @@ public class PublisherServiceMockupImpl implements PublisherService {
         return centralShareLocationPath+"/"+file.getName();
 
     }
-	
+
 	public void copyToResource(File file, String centralShareLocation) throws IOException {
     }
-    
+
     public String getCentralShareLocationPath(String centralShareLocation, String date) {
         return centralShareLocation+"/"+date;
     }
-	
+
 }
