@@ -33,7 +33,7 @@ import freemarker.template.TemplateNotFoundException;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
-public class FullIntegrationTestSuccess {
+public class IntegrationTestSuccess {
 
     @MockBean
     private EmailServiceImpl emailServiceImpl;

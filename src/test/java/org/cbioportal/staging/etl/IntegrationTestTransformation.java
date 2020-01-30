@@ -16,6 +16,7 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.RestarterService;
+import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,9 +34,15 @@ import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties",
-                    properties = "scan.location=classpath:e2e_studies/es_1")
-public class FullIntegrationTestWarning {
+@TestPropertySource(
+    locations = "classpath:e2e_studies/e2e_integration_test.properties",
+    properties = {
+        "scan.location=classpath:e2e_studies/es_0_tar",
+        "skip.transformation=false",
+        "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py"
+    }
+)
+public class IntegrationTestTransformation {
 
     @MockBean
     private EmailServiceImpl emailServiceImpl;
@@ -47,7 +54,7 @@ public class FullIntegrationTestWarning {
     private ScheduledScanner scheduledScanner;
 
     @Autowired
-    private Validator validator;
+    private TransformerServiceImpl transformerService;
 
     @Before
     public void init() throws InterruptedException, IOException, ConfigurationException {
@@ -55,30 +62,31 @@ public class FullIntegrationTestWarning {
     }
 
     @Test
-    public void throwValidationWarningsButLoad_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
+    public void transformSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException {
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
         verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).emailGenericError(any(),any());
     }
 
     @Test
-    public void throwValidationWarningsAndFail_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
+    public void transformFailure_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException {
 
-        // set the validation level to not load studies when there is a validation warning
-        ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
+        // wire in a failing transformation script
+        ReflectionTestUtils.setField(transformerService,
+            "transformationCommandScript", "classpath:e2e_studies/es_0_tar/exit1.py");
 
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).emailStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).emailGenericError(any(),any());
     }
 
