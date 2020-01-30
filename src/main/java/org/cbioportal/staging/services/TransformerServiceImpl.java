@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -49,42 +49,62 @@ public class TransformerServiceImpl implements TransformerService {
     private ResourceUtils utils;
 
 	@Override
-	public int transform(File studyPath, File finalPath, File logFile) throws TransformerException, InterruptedException, ConfigurationException, IOException {
+	public ExitStatus transform(File untransformedFilesPath, File transformedFilesPath, File logFile) throws TransformerException {
 
-        if (!finalPath.exists()) {
-            finalPath.mkdir();
+        if (transformationCommandScript.equals("")) {
+            throw new TransformerException("No transformation command script has been specified in the application.properties.");
         }
 
         List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
 
         Resource script = resourceResolver.getResource(command.get(0));
-        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
-        String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
-        command.set(0, scriptPath);
+
+        // TODO add checking of correct file for script
+        // Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
 
 		try {
-			ProcessBuilder transformation;
-			logger.info("Starting transformation for study: "+studyPath.getName());
-			//Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
-			if (transformationCommandScript.equals("")) {
-				throw new ConfigurationException("No transformation command script has been specified in the application.properties.");
+            script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
+            String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
+            command.set(0, scriptPath);
+
+            logger.info("Starting transformation for study: "+untransformedFilesPath.getName());
+
+            if (!transformedFilesPath.exists()) {
+                transformedFilesPath.mkdir();
             }
 
             //Build transformation command
-            Stream.of("-i", studyPath.toString(), "-o", finalPath.toString()).forEach(e -> command.add(e));
+            Stream.of(  "-i", untransformedFilesPath.getAbsolutePath(),
+                        "-o", transformedFilesPath.getAbsolutePath())
+                        .forEach(e -> command.add(e));
 
             //Run transformation command
-            transformation = new ProcessBuilder(command);
-            //transformationCommand = new ProcessBuilder (transformationCmd, "-i", studyPath.toString(), "-o", finalPath.toString());
+            ProcessBuilder transformation = new ProcessBuilder(command);
             logger.info("Executing command: " + String.join(" ", transformation.command()));
             transformation.redirectErrorStream(true);
             transformation.redirectOutput(Redirect.appendTo(logFile));
             Process transformationProcess = transformation.start();
 
-            transformationProcess.waitFor(); //Wait until transformation is finished
-            return transformationProcess.exitValue();
-		} catch (FileNotFoundException e1) {
-			throw new TransformerException("The following file path was not found: "+studyPath.getAbsolutePath(), e1);
-		}
+            transformationProcess.waitFor();
+
+            //Interprete exit status of the process and return it
+            ExitStatus exitStatus = null;
+            if (transformationProcess.exitValue() == 0) {
+                exitStatus = ExitStatus.SUCCESS;
+            } else if (transformationProcess.exitValue() == 3) {
+                exitStatus = ExitStatus.WARNINGS;
+            } else {
+                exitStatus = ExitStatus.ERRORS;
+            }
+            return exitStatus;
+
+		} catch (FileNotFoundException e) {
+			throw new TransformerException("The following file path was not found: "+untransformedFilesPath.getAbsolutePath(), e);
+		} catch (InterruptedException e) {
+            throw new TransformerException("The transformation process has been interrupted by another process.", e);
+        } catch (IOException e) {
+            throw new TransformerException ("The working directory specified in the command or the transformation script file do not exist, "+
+                "or you do not have permissions to work with the transformation script file.", e);
+        }
 	}
 }

@@ -17,16 +17,16 @@ package org.cbioportal.staging.etl;
 
 import java.util.Set;
 
-import org.cbioportal.staging.services.PublisherService;
+import org.cbioportal.staging.services.AuthorizerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Publisher {
+public class Authorizer {
 	@Autowired
-	private PublisherService publisherService;
+	private AuthorizerService authorizerService;
 	
-	void publishStudies(Set<String> studies) throws Exception {
-		publisherService.publishStudies(studies);
+	void authorizeStudies(Set<String> studies) throws Exception {
+		authorizerService.authorizeStudies(studies);
 	}
 }

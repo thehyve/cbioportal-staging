@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 The Hyve B.V.
+* Copyright (c) 2020 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -15,15 +15,23 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Set;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.apache.commons.io.IOUtils;
+import org.cbioportal.staging.etl.Restarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 
@@ -32,43 +40,71 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class PublisherServiceImpl implements PublisherService {
-	private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
 
-	@Value("${study.publish.command_prefix:null}")
-	private String studyPublishCommandPrefix;
+	@Value("${central.share.location}")
+	private String centralShareLocation;
 
-	@Value("${study.curator.emails}")
-	private String studyCuratorEmails;
+	@Value("${central.share.location.web.address:}")
+	private String centralShareLocationWebAddress;
 
-	public void publishStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
+    @Autowired
+    private ResourcePatternResolver resourcePatternResolver;
 
-		if (!studyPublishCommandPrefix.equals("null")) {
-			for (String studyId : studyIds) {
-                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-                    String command = studyPublishCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
-                    Process cmdProcess = Runtime.getRuntime().exec(command);
-                    logger.info("Executing command: "+command);
+    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
+        for (String study : studyPaths.keySet()) {
+            //Create transformation log file
+            String logName = study+logSuffix;
+            File logFile = new File(studyPaths.get(study)+"/"+logName);
+            String transformationLogPath = publish(logFile, date);
+            logPaths.put(study+" "+logType, transformationLogPath);
+        }
+    }
 
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
-                    String line = null;
-                    while ((line = reader.readLine()) != null)
-                    {
-                        logger.info(line);
-                    }
-                    BufferedReader reader2 = new BufferedReader(new InputStreamReader(cmdProcess.getErrorStream()));
-                    String line2 = null;
-                    while ((line2 = reader2.readLine()) != null)
-                    {
-                        logger.warn(line2);
-                    }
+	public String publish(File file, String date) throws IOException {
 
-                    cmdProcess.waitFor();
+        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
+		if (centralShareLocationWebAddress.equals("")) {
+			centralShareLocationWebAddress = centralShareLocation;
+        }
 
-                    if (cmdProcess.exitValue() != 0) {
-                        throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
-                    }
-                }
-            }
+        //Get Central Share Location Path and copy the file to the path
+        String centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
+        copyToResource(file, centralShareLocationPath);
+
+        //Return the path where the file has been copied
+		return centralShareLocationWebAddress+"/"+date+"/"+file.getName();
+    }
+
+    public void copyToResource(File filePath, String resourceOut) throws IOException {
+		String resourcePath = resourceOut+"/"+filePath.getName();
+		Resource resource;
+		if (resourcePath.startsWith("file:")) {
+			resource = new FileSystemResource(resourcePath.replace("file:", ""));
 		}
-	}
+		else {
+			resource = this.resourcePatternResolver.getResource(resourcePath);
+        }
+		WritableResource writableResource = (WritableResource) resource;
+        try (OutputStream outputStream = writableResource.getOutputStream();
+            InputStream inputStream = new FileInputStream(filePath)) {
+                IOUtils.copy(inputStream, outputStream);
+		}
+    }
+
+    public String getCentralShareLocationPath(String centralShareLocation, String date) {
+        String centralShareLocationPath = centralShareLocation+"/"+date;
+        if (!centralShareLocationPath.startsWith("s3:")) {
+            File cslPath = new File(centralShareLocation+"/"+date);
+            if (centralShareLocationPath.startsWith("file:")) {
+                cslPath = new File(centralShareLocationPath.replace("file:", ""));
+            }
+            logger.info("Central Share Location path: "+cslPath.getAbsolutePath());
+            //If the Central Share Location path does not exist, create it:
+            if (!cslPath.exists()) {
+                cslPath.mkdirs();
+            }
+        }
+        return centralShareLocationPath;
+    }
 }

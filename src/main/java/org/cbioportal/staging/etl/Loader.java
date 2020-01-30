@@ -16,92 +16,50 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.LoaderService;
-import org.cbioportal.staging.services.ValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Loader {
 	private static final Logger logger = LoggerFactory.getLogger(Loader.class);
-	
-	@Autowired
-	private EmailService emailService;
-	
+
 	@Autowired
     private LoaderService loaderService;
-    
-    @Autowired
-	private ValidationService validationService;
 
-	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private File etlWorkingDir;
+    private boolean areStudiesLoaded = false;
 
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
-	@Value("${central.share.location.portal:}")
-    private String centralShareLocationPortal;
-    
-	
-	boolean load(String date, Map<String, File> studyPaths, Map<String, String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, RuntimeException, LoaderException {
-        Map<String, String> statusStudies = new HashMap<String, String>();
-        int studiesNotLoaded = 0;
-		if (centralShareLocationPortal.equals("")) {
-			centralShareLocationPortal = centralShareLocation;
-		}
-		for (String study : studyPaths.keySet()) {
-            logger.info("Starting loading of study "+study+". This can take some minutes.");
-            File studyPath = new File(studyPaths.get(study)+"/staging");
-            int loadingStatus = -1;                 
-            //Create loading log file
-            String logName = study+"_loading_log.txt";
-            File logFile = new File(studyPaths.get(study)+"/"+logName);
-			try {
-                loadingStatus = loaderService.load(study, studyPath, logFile);
-            } catch (RuntimeException e) {
-				throw new RuntimeException(e);
-			} catch (Exception e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will skip this study.");
-				e.printStackTrace();
-			} finally {
-                //Put report and log file in the share location
-				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
-                validationService.copyToResource(logFile, centralShareLocationPath);
-                filesPath.put(study+" loading log", centralShareLocationPortal+"/"+date+"/"+logName);	
+	Map<String, ExitStatus> load(final Map<String, File> studyPaths, String logSuffix) throws LoaderException {
 
-                //Add loading result for the email loading report
-                if (loadingStatus == 0) {
-                    statusStudies.put(study, "SUCCESSFULLY LOADED");
-                    logger.info("Loading of study "+study+" finished successfully.");
-                } else {
-                    statusStudies.put(study, "ERRORS");
-                    studiesNotLoaded += 1;
-                    logger.error("Loading process of study "+study+" failed.");
-                }
-			}
+        final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
+
+        for (final String studyId : studyPaths.keySet()) {
+            logger.info("Starting loading of study " + studyId + ". This can take some minutes.");
+            final File studyPath = studyPaths.get(studyId);
+            // Create loading log file
+            final File logFile = new File(studyPath + "/" + studyId + logSuffix);
+            ExitStatus loadingStatus = loaderService.load(studyPath, logFile);
+            //Add loading result for the email loading report
+            if (loadingStatus == ExitStatus.SUCCESS) {
+                loadResults.put(studyId, ExitStatus.SUCCESS);
+                areStudiesLoaded = true;
+                logger.info("Loading of study "+studyId+" finished successfully.");
+            } else {
+                loadResults.put(studyId, ExitStatus.ERRORS);
+                logger.error("Loading process of study "+studyId+" failed.");
+            }
         }
-        
-        emailService.emailStudiesLoaded(statusStudies, filesPath);
-        //Return false if no studies have been loaded
-        if (studyPaths.keySet().size() == studiesNotLoaded) {
-            return false;
-        } 
-		return true;
+        return loadResults;
+    }
+
+    boolean areStudiesLoaded() {
+        return areStudiesLoaded;
 	}
 }

@@ -177,7 +177,7 @@ We can configure the app to run as a cron job by using these parameters:
 ### Reporting location settings
 
 - `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
-- `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to 
+- `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
 
 ### S3 vs local file system settings
@@ -200,7 +200,7 @@ The app sends emails to keep the user informed about the status of the tasks per
 - `mail.smtp.user`: smtp user name.
 - `mail.smtp.password`: (optional) respective credentials of the app email (corresponding to `mail.smtp.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
 - `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
-- `mail.debug`: boolean, if set to `true` prints debugging logs in the screen. 
+- `mail.debug`: boolean, if set to `true` prints debugging logs in the screen.
 - `mail.transport.protocol`: email transport protocol, usually `smtp`.
 - `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is usually `25`
 - `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
@@ -223,5 +223,5 @@ Update to the same Dockerhub image reference (e.g., _cbioportal/cbioportal-3.1.4
 
 ### Other
 
-- `study.publish.command_prefix`:  add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
-- `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
+* `study.authorize.command_prefix`:  add a command for the study authorizer layer, otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
+* `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.

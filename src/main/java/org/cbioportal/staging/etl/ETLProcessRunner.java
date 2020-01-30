@@ -27,6 +27,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.PublisherService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,57 +70,31 @@ public class ETLProcessRunner {
 	private Restarter restarter;
 
 	@Autowired
-	private Publisher publisher;
+    private Authorizer authorizer;
 
-	@Value("${study.publish.command_prefix:null}")
-    private String studyPublishCommandPrefix;
+    @Autowired
+    private PublisherService publisher;
+
+    @Autowired
+	private EmailService emailService;
+
+	@Autowired
+	private ResourceUtils utils;
+
+	@Value("${study.authorize.command_prefix:null}")
+    private String studyAuthorizeCommandPrefix;
 
     @Value("${central.share.location}")
     private String centralShareLocation;
 
-    @Value("${etl.working.dir:false}")
-	private File etlWorkingDir;
+    @Value("${etl.working.dir:}")
+    private File etlWorkingDir;
 
-	@Autowired
-    private ResourceUtils utils;
+    @Value("${skip.transformation:false}")
+    private boolean skipTransformation;
 
-	public void run(Map<String, Resource[]> remoteResources) throws Exception {
-		try  {
-
-			String date = utils.getTimeStamp("yyyyMMdd-HHmmss");
-			startProcess();
-
-			utils.ensureDirs(etlWorkingDir);
-
-            //E (Extract) step:
-			Map<String,File> localResources = extractor.run(remoteResources);
-
-			Map<String, String> logPaths = new HashMap<String, String>();
-
-			//T (Transform) step:
-			Map<String, File> transformedStudiesPaths = transformer.transform(date, localResources, "command", logPaths);
-
-			//V (Validate) and L (Load) step:
-			if (transformedStudiesPaths.keySet().size() > 0) {
-				Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
-				//L (Load) step:
-				if (validatedStudies.size() > 0) {
-					boolean loadSuccessful = loader.load(date, validatedStudies, logPaths);
-					if (loadSuccessful) {
-						restarter.restart();
-						if (!studyPublishCommandPrefix.equals("null")) {
-							publisher.publishStudies(validatedStudies.keySet());
-						}
-					}
-				}
-			}
-		}
-		finally
-		{
-			//end process / release lock:
-			endProcess();
-		}
-	}
+    @Value("${validation.level:ERROR}")
+	private String validationLevel;
 
 	/**
 	 * Runs all the steps of the ETL process.
@@ -127,7 +107,7 @@ public class ETLProcessRunner {
 			startProcess();
             //E (Extract) step:
             Map<String, File> studyPaths = new HashMap<String, File>();
-            if (etlWorkingDir.equals("false")) {
+            if (! etlWorkingDir.exists()) {
                 throw new Exception("When providing a yaml file instead of a directory, you need to define a working directory.");
             } else {
                 studyPaths = extractor.run(indexFile);
@@ -155,7 +135,7 @@ public class ETLProcessRunner {
             //E (Extract) step:
             String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
             Map<String, File> studyPaths = new HashMap<String, File>(localExtractor.extractInWorkingDir(directories, date));
-            if (etlWorkingDir.equals("false")) {
+            if (! etlWorkingDir.exists()) {
                 studyPaths = localExtractor.extractWithoutWorkingDir(directories);
             }
 
@@ -170,25 +150,75 @@ public class ETLProcessRunner {
 	}
 
 	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
-		Map<String, String> logPaths = new HashMap<String, String>();
-		boolean loadSuccessful = false;
-		//T (Transform) step:
-		Map<String, File> transformedStudiesPaths = transformer.transform(date, studyPaths, "command", logPaths);
-        //V (Validate) step:
-        if (transformedStudiesPaths.keySet().size() > 0) {
-			Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
-            //L (Load) step:
-            if (validatedStudies.size() > 0) {
-				loadSuccessful = loader.load(date, validatedStudies, logPaths);
-                if (loadSuccessful) {
-					restarter.restart();
-                    if (!studyPublishCommandPrefix.equals("null")) {
-						publisher.publishStudies(validatedStudies.keySet());
+        Map<String, String> logPaths = new HashMap<String, String>();
+
+        try {
+            //T (TRANSFORM) STEP:
+            Map<String, File> transformedStudiesPaths = new HashMap<String, File>();
+            if (skipTransformation) {
+                transformedStudiesPaths = studyPaths;
+            } else {
+                String logSuffix = "_transformation_log.txt";
+                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, studyPaths, "command", logSuffix);
+                publisher.publish(date, studyPaths, logPaths, "transformation log", logSuffix);
+                if (logPaths.size() > 0) {
+                    emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
+                }
+                transformedStudiesPaths = transformer.getTransformedStudiesPaths(studyPaths, transformedStudiesStatus);
+            }
+
+            //V (VALIDATE) STEP:
+            if (transformedStudiesPaths.keySet().size() > 0) {
+                String reportSuffix = "_validation_report.html";
+                String logSuffix = "_validation_log.txt";
+                Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths, reportSuffix, logSuffix);
+                publisher.publish(date, transformedStudiesPaths, logPaths, "validation log", logSuffix);
+                publisher.publish(date, transformedStudiesPaths, logPaths, "validation report", reportSuffix);
+                emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
+                Map <String, File> studiesThatPassedValidation = validator.getStudiesThatPassedValidation(validatedStudies, studyPaths);
+
+                //L (LOAD) STEP:
+                if (studiesThatPassedValidation.size() > 0) {
+                    String loadingLogSuffix = "_loading_log.txt";
+                    Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation, loadingLogSuffix);
+                    publisher.publish(date, studiesThatPassedValidation, logPaths, "loading log", loadingLogSuffix);
+                    emailService.emailStudiesLoaded(loadResults, logPaths);
+
+                    if (loader.areStudiesLoaded()) {
+                        restarter.restart();
+                        if (!studyAuthorizeCommandPrefix.equals("null")) {
+                            authorizer.authorizeStudies(validatedStudies.keySet());
+                        }
                     }
                 }
             }
-        }
-	}
+        } catch (TransformerException e) {
+            try {
+                logger.error("An error occurred during the transformation step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the transformation step. Error found: ", e);
+            } catch (Exception e1) {
+                logger.error("The email could not be sent due to the error specified below.");
+                e1.printStackTrace();
+            }
+        } catch (ValidatorException e) {
+			try {
+				logger.error("An error occurred during the validation step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the validation step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		} catch (LoaderException e) {
+			try {
+				logger.error("An error occurred during the loading step. Error found: "+ e);
+                emailService.emailGenericError("An error occurred during the loading step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		}
+
+    }
 
 	/**
 	 * Socket configuration and respective synchronized start method that ensures only one

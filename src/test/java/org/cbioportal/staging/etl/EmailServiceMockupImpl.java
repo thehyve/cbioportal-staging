@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.services.EmailService;
 import org.springframework.boot.test.context.TestComponent;
 
@@ -41,19 +42,15 @@ public class EmailServiceMockupImpl implements EmailService {
 		this.isEmailStudyFileNotFoundSent  = true;
 	}
 
-	public void emailStudyError(String studyId, Exception e) throws IOException, TemplateException {
-		this.isEmailStudyErrorSent  = true;
-    }
-
-    public void emailTransformedStudies(Map<String,Integer> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+    public void emailTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,String> logPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
         this.isEmailTransformedStudiesSent  = true;
     }
 
-	public void emailValidationReport(Map<String,Integer> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailValidationReportSent = true;
 	}
 
-	public void emailStudiesLoaded(Map<String,String> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		this.isEmailStudiesLoadedSent = true;
 	}
 

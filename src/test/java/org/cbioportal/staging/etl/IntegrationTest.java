@@ -3,7 +3,8 @@ package org.cbioportal.staging.etl;
 import static org.junit.Assert.assertEquals;
 
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.services.PublisherServiceImpl;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.services.AuthorizerServiceImpl;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -13,7 +14,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -23,7 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 		org.cbioportal.staging.etl.Transformer.class,
 		org.cbioportal.staging.etl.Loader.class,
 		org.cbioportal.staging.etl.Restarter.class,
-		org.cbioportal.staging.etl.Publisher.class,
+		org.cbioportal.staging.etl.Authorizer.class,
 		org.cbioportal.staging.etl.Validator.class,
 		org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
 		org.cbioportal.staging.etl.ValidationServiceMockupImpl.class,
@@ -31,20 +31,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 		org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
 		org.cbioportal.staging.etl.RestarterServiceMockupImpl.class,
 		org.cbioportal.staging.etl.ScheduledScannerServiceMockupImpl.class,
-		org.cbioportal.staging.services.PublisherServiceImpl.class,
+		org.cbioportal.staging.services.AuthorizerServiceImpl.class,
 		org.cbioportal.staging.etl.ETLProcessRunner.class,
-		org.cbioportal.staging.services.resource.DefaultResourceCollectorService.class,
-		org.cbioportal.staging.services.resource.DefaultResourceFilter.class,
-		org.cbioportal.staging.services.resource.DefaultResourceProvider.class,
-		org.cbioportal.staging.services.resource.YamlFileStudyResourceResolver.class,
-		org.cbioportal.staging.services.resource.ResourceIgnoreSet.class,
-		org.cbioportal.staging.app.ScheduledScanner.class})
-@TestPropertySource(
-	properties= {
-		"central.share.location=${java.io.tmpdir}",
-		"etl.working.dir=${java.io.tmpdir}"
-	}
-)
+		org.cbioportal.staging.app.ScheduledScanner.class,
+        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class})
 @SpringBootTest
 // TODO replace this rest with better
 @Ignore
@@ -66,7 +56,7 @@ public class IntegrationTest {
 	private Restarter restarter;
 
 	@Autowired
-	private Publisher publisher;
+	private Authorizer authorizer;
 
 	@Autowired
 	private EmailServiceMockupImpl emailService;
@@ -84,7 +74,7 @@ public class IntegrationTest {
 	private RestarterServiceMockupImpl restarterService;
 
 	@Autowired
-	private PublisherServiceImpl publisherService;
+	private AuthorizerServiceImpl authorizerService;
 
 	@Autowired
 	private ETLProcessRunner etlProcessRunner;
@@ -102,76 +92,73 @@ public class IntegrationTest {
 	@Rule
     public TemporaryFolder etlWorkingDir = new TemporaryFolder();
 
-	private void initBasicMockups(String scanLocation, int validationServiceMockExitStatus) {
+	private void initBasicMockups(String scanLocation, ExitStatus validationServiceMockExitStatus) {
 		//set mockups and input parameters for all services
 		ReflectionTestUtils.setField(extractor, "scanLocation", scanLocation);
 		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
 
-		ReflectionTestUtils.setField(transformer, "emailService", emailService);
 		ReflectionTestUtils.setField(transformer, "transformerService", transformerService);
 
-		ReflectionTestUtils.setField(validator, "emailService", emailService);
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 		ReflectionTestUtils.setField(validationService, "exitStatus", validationServiceMockExitStatus);
 
-		ReflectionTestUtils.setField(loader, "emailService", emailService);
 		ReflectionTestUtils.setField(loader, "loaderService", loaderService);
 		//ReflectionTestUtils.setField(loaderService, "testFile", "src/test/resources/loader_tests/example.txt");
 
 		ReflectionTestUtils.setField(restarter, "restarterService", restarterService);
-		ReflectionTestUtils.setField(publisher, "publisherService", publisherService);
+		ReflectionTestUtils.setField(authorizer, "authorizerService", authorizerService);
 
 		ReflectionTestUtils.setField(etlProcessRunner, "transformer", transformer);
 		ReflectionTestUtils.setField(etlProcessRunner, "validator", validator);
 		ReflectionTestUtils.setField(etlProcessRunner, "loader", loader);
 		ReflectionTestUtils.setField(etlProcessRunner, "restarter", restarter);
-        ReflectionTestUtils.setField(etlProcessRunner, "publisher", publisher);
+        ReflectionTestUtils.setField(etlProcessRunner, "authorizer", authorizer);
         ReflectionTestUtils.setField(etlProcessRunner, "etlWorkingDir", etlWorkingDir.getRoot().toString());
 
 		ReflectionTestUtils.setField(scheduledScanner, "scanLocation", scanLocation);
         ReflectionTestUtils.setField(scheduledScanner, "etlProcessRunner", etlProcessRunner);
 	}
 
-	@Test
-	public void allStudiesLoaded() {
-		initBasicMockups("classpath:integration", 3);
-		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
+	// @Test
+	// public void allStudiesLoaded() {
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
+	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
+	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "null");
 
-		scheduledScanner.scan();
+	// 	scheduledScanner.scan();
 
-		//correct emails are sent
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(true, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-	}
+	// 	//correct emails are sent
+	// 	//check that the correct email is sent
+	// 	assertEquals(false, emailService.isEmailStudyErrorSent());
+	// 	assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+	// 	assertEquals(true, emailService.isEmailValidationReportSent());
+	// 	assertEquals(true, emailService.isEmailStudiesLoadedSent());
+	// 	assertEquals(false, emailService.isEmailGenericErrorSent());
+	// }
 
-	@Test
-	public void subsetOfStudiesLoaded() {
-		initBasicMockups("classpath:local_integration", 3);
-		ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "null");
+	// @Test
+	// public void subsetOfStudiesLoaded() {
+	// 	initBasicMockups("file:src/test/resources/local_integration", ExitStatus.WARNINGS);
+	// 	ReflectionTestUtils.setField(scheduledScanner, "scanExtractFolders", "study1,study2");
+	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "null");
 
-		scheduledScanner.scan();
+	// 	scheduledScanner.scan();
 
-		//correct emails are sent
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(true, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-	}
+	// 	//correct emails are sent
+	// 	//check that the correct email is sent
+	// 	assertEquals(false, emailService.isEmailStudyErrorSent());
+	// 	assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+	// 	assertEquals(true, emailService.isEmailValidationReportSent());
+	// 	assertEquals(true, emailService.isEmailStudiesLoadedSent());
+	// 	assertEquals(false, emailService.isEmailGenericErrorSent());
+	// }
 
 
 	@Test
 	public void noStudiesLoaded() {
 		//set mockups and input parameters for all services
-		initBasicMockups("classpath:integration", 1);
+		initBasicMockups("file:src/test/resources/integration", ExitStatus.ERRORS);
 
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 
@@ -188,7 +175,7 @@ public class IntegrationTest {
 	@Test
 	public void validationError() {
 		//set mockups and input parameters for all services
-		initBasicMockups("classpath:integration", 1);
+		initBasicMockups("file:src/test/resources/integration", ExitStatus.ERRORS);
 
 		ReflectionTestUtils.setField(validationService, "throwError", true);
 
@@ -207,7 +194,7 @@ public class IntegrationTest {
 	@Test
 	public void noScanLocation() {
 		//set mockups and input parameters for all services
-		initBasicMockups("file:src/notfound", 3);
+		initBasicMockups("file:src/notfound", ExitStatus.WARNINGS);
 
 		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
 
@@ -221,39 +208,39 @@ public class IntegrationTest {
 		assertEquals(false, emailService.isEmailGenericErrorSent());
 	}
 
-	@Test
-	public void studiesArePublished() {
-		initBasicMockups("classpath:integration", 3);
-		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "echo");
-		ReflectionTestUtils.setField(publisherService, "studyPublishCommandPrefix", "echo");
+	// @Test
+	// public void studiesAreAuthorized() {
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
+	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
+	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "echo");
+	// 	ReflectionTestUtils.setField(authorizerService, "studyAuthorizeCommandPrefix", "echo");
 
-		scheduledScanner.scan();
+	// 	scheduledScanner.scan();
 
-		//correct emails are sent
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(true, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-	}
+	// 	//correct emails are sent
+	// 	//check that the correct email is sent
+	// 	assertEquals(false, emailService.isEmailStudyErrorSent());
+	// 	assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+	// 	assertEquals(true, emailService.isEmailValidationReportSent());
+	// 	assertEquals(true, emailService.isEmailStudiesLoadedSent());
+	// 	assertEquals(false, emailService.isEmailGenericErrorSent());
+	// }
 
-	@Test
-	public void studiesAreNotPublished() {
-		initBasicMockups("classpath:integration", 3);
-		ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
-		ReflectionTestUtils.setField(etlProcessRunner, "studyPublishCommandPrefix", "ls");
-		ReflectionTestUtils.setField(publisherService, "studyPublishCommandPrefix", "ls");
+	// @Test
+	// public void studiesAreNotAuthorized() {
+	// 	initBasicMockups("file:src/test/resources/integration", ExitStatus.WARNINGS);
+	// 	ReflectionTestUtils.setField(scheduledScanner, "S3PREFIX", "file:");
+	// 	ReflectionTestUtils.setField(etlProcessRunner, "studyAuthorizeCommandPrefix", "ls");
+	// 	ReflectionTestUtils.setField(authorizerService, "studyAuthorizeCommandPrefix", "ls");
 
-		scheduledScanner.scan();
+	// 	scheduledScanner.scan();
 
-		//correct emails are sent
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(true, emailService.isEmailValidationReportSent());
-		assertEquals(true, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent());
-	}
+	// 	//correct emails are sent
+	// 	//check that the correct email is sent
+	// 	assertEquals(false, emailService.isEmailStudyErrorSent());
+	// 	assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
+	// 	assertEquals(true, emailService.isEmailValidationReportSent());
+	// 	assertEquals(true, emailService.isEmailStudiesLoadedSent());
+	// 	assertEquals(true, emailService.isEmailGenericErrorSent());
+	// }
 }

@@ -45,7 +45,7 @@ cbioportal.docker.properties=<path-to-portal.properties>
 # Central share location (for validation reports and log files, can also be a S3 location).
 central.share.location=file:///tmp
 # (optional) Central share location web-portal
-#central.share.location.portal=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
+#central.share.location.web.address=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
 
 # Full transformation command and path to execute it
 transformation.command.script=./umccr_wrapper_parser.py
@@ -70,9 +70,9 @@ mail.smtp.starttls.enable=<boolean>
 # default log level / you can use this to debug and troubleshoot issues
 logging.level.root=INFO
 
-# add a command for the study publisher layer (study authorization), otherwise leave it empty (or comment it out)
+# add a command for the study authorizer layer, otherwise leave it empty (or comment it out)
 # the staging app will append the study id and the study.curator.emails to this command.
-#study.publish.command_prefix=
+#study.authorize.command_prefix=
 
 # email of the users, comma-separated, which will get automatic access to studies loaded, and also will receive a copy
 # of all emails sent by the staging app.

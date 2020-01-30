@@ -16,9 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidationService;
 import org.springframework.boot.test.context.TestComponent;
@@ -26,11 +25,11 @@ import org.springframework.boot.test.context.TestComponent;
 @TestComponent
 public class ValidationServiceMockupImpl implements ValidationService {
 
-	private int exitStatus;
+	private ExitStatus exitStatus;
 	private boolean throwError = false;
 
 	@Override
-	public int validate(String study, String studyPath, String reportPath, File logFile, String date) throws ValidatorException, ConfigurationException {
+	public ExitStatus validate(File studyPath, File report, File logFile) throws ValidatorException {
 		if (throwError) {
 			throw new ValidatorException("dummy test error");
 		}
@@ -39,13 +38,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 
 	public void reset() {
 		this.throwError = false;
-		this.exitStatus = 0;
+		this.exitStatus = ExitStatus.SUCCESS;
 	}
 
-	public void copyToResource(File reportFile, String centralShareLocation) throws IOException {
-    }
-
-    public String getCentralShareLocationPath(String centralShareLocation, String date) {
-        return centralShareLocation+"/"+date;
-    }
 }

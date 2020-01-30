@@ -15,9 +15,6 @@
 */
 package org.cbioportal.staging.exceptions;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 public class TransformerException extends Exception
 {
 	/**
@@ -28,14 +25,9 @@ public class TransformerException extends Exception
 	public TransformerException()
 	{
 	}
-	public TransformerException(String message, IOException e)
+	public TransformerException(String message, Exception e)
 	{
-		super(message);
-	}
-	
-	public TransformerException(String message, FileNotFoundException e)
-	{
-		super(message);
+		super(message, e);
 	}
 	public TransformerException(String message) {
 		super (message);
