@@ -30,55 +30,63 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Transformer {
-	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
+    private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-	@Autowired
+    @Autowired
     private TransformerService transformerService;
 
     public enum ExitStatus {
         SUCCESS, WARNINGS, ERRORS, NOTRANSF;
     }
 
-	boolean metaFileExists(File originPath) {
-		File metaStudyFile = new File(originPath+"/meta_study.txt");
-		if (metaStudyFile.exists() && metaStudyFile.isFile()) {
-			return true;
-		}
-		return false;
+    boolean metaFileExists(File originPath) {
+        File metaStudyFile = new File(originPath + "/meta_study.txt");
+        if (metaStudyFile.exists() && metaStudyFile.isFile()) {
+            return true;
+        }
+        return false;
     }
 
     File getTransformedFilesPath(File untransformedFilesPath) {
-        File transformedFilesPath = new File(untransformedFilesPath+"/staging");
+        File transformedFilesPath = new File(untransformedFilesPath + "/staging");
         if (!transformedFilesPath.exists()) {
             transformedFilesPath.mkdir();
         }
         return transformedFilesPath;
     }
 
-	Map<String, ExitStatus> transform(String date, Map<String, File> studyPaths, String transformationCommand, String logSuffix) throws TransformerException {
+    Map<String, ExitStatus> transform(String date, Map<String, File> studyPaths, String transformationCommand,
+            String logSuffix) throws TransformerException {
+
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
-		for (String studyId : studyPaths.keySet()) {
+
+        for (String studyId : studyPaths.keySet()) {
+
             File untransformedFilesPath = studyPaths.get(studyId);
             File transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
 
             ExitStatus transformationStatus = null;
-            //Create transformation log file
-            String logName = studyId+logSuffix;
-            File logFile = new File(transformedFilesPath+"/"+logName);
-			try {
-				if (metaFileExists(untransformedFilesPath)) {
+            // Create transformation log file
+            String logName = studyId + logSuffix;
+            File logFile = new File(transformedFilesPath + "/" + logName);
+            try {
+                if (metaFileExists(untransformedFilesPath)) {
                     try {
                         FileUtils.copyDirectory(untransformedFilesPath, transformedFilesPath);
-                    } catch(IOException e) {
-                        throw new TransformerException("The untransformed files path "+untransformedFilesPath.getAbsolutePath()+
-                            " or the transformed files path "+transformedFilesPath.getAbsolutePath()+" do not exist.", e);
+                    } catch (IOException e) {
+                        throw new TransformerException("The untransformed files path "
+                                + untransformedFilesPath.getAbsolutePath() + " or the transformed files path "
+                                + transformedFilesPath.getAbsolutePath() + " do not exist.", e);
                     } finally {
                         transformationStatus = ExitStatus.NOTRANSF;
                     }
-				} else {
-					transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
-				}
-			} finally {
+                } else {
+                    transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath,
+                            logFile);
+                }
+            } catch (Exception e) {
+                throw new TransformerException(e);
+            } finally {
                 //Add status of the validation for the study
                 statusStudies.put(studyId, transformationStatus);
                 if (transformationStatus == ExitStatus.SUCCESS) {

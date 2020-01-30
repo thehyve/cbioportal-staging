@@ -16,7 +16,7 @@
 package org.cbioportal.staging.services;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
@@ -28,14 +28,14 @@ import freemarker.template.TemplateNotFoundException;
 
 public interface EmailService {
 
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
-	
+	public void emailStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+
     public void emailTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,String> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
-	
+
 	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,String> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
-	
+
 	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,String> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
-	
+
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 
 }

@@ -3,7 +3,6 @@ package org.cbioportal.staging.etl;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,7 +15,6 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.RestarterService;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +28,7 @@ import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
+
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
@@ -49,16 +48,12 @@ public class IntegrationTestWarning {
     @Autowired
     private Validator validator;
 
-    @Before
-    public void init() throws InterruptedException, IOException, ConfigurationException {
-        doNothing().when(restarterService).restart();
-    }
-
     @Test
     public void throwValidationWarningsButLoad_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException {
+            IOException, TemplateException, InterruptedException, ConfigurationException {
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
+        verify(restarterService, times(1)).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
@@ -68,13 +63,14 @@ public class IntegrationTestWarning {
 
     @Test
     public void throwValidationWarningsAndFail_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException {
+            IOException, TemplateException, InterruptedException, ConfigurationException {
 
         // set the validation level to not load studies when there is a validation warning
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
+        verify(restarterService, never()).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));

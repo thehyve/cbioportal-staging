@@ -18,9 +18,9 @@ package org.cbioportal.staging.services;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -126,7 +126,7 @@ public class EmailServiceImpl implements EmailService {
 				});
 	}
 
-	public void emailStudyFileNotFound(Map<String, ArrayList<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+	public void emailStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
 		for (String failedStudy : failedStudies.keySet()) {
 			allFailedStudies.append("STUDY: "+failedStudy+"<br>");

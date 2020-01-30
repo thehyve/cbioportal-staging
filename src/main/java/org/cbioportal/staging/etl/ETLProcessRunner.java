@@ -30,6 +30,7 @@ import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.PublisherService;
+import org.cbioportal.staging.services.RestarterService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class ETLProcessRunner {
 	private Loader loader;
 
 	@Autowired
-	private Restarter restarter;
+	private RestarterService restarterService;
 
 	@Autowired
     private Authorizer authorizer;
@@ -101,24 +102,30 @@ public class ETLProcessRunner {
             //E (Extract) step:
 			Map<String,File> localResources = extractor.run(remoteResources);
 
+			if (! extractor.errorFiles().isEmpty()) {
+				emailService.emailStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
+			}
+
 			Map<String, String> logPaths = new HashMap<String, String>();
 
 			//T (TRANSFORM) STEP:
-			Map<String, File> transformedStudiesPaths = new HashMap<String, File>();
+			Map<String, File> transformedStudiesPaths;
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
 				String logSuffix = "_transformation_log.txt";
 				Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, localResources, "command", logSuffix);
-				publisher.publish(date, localResources, logPaths, "transformation log", logSuffix);
+				transformedStudiesPaths = transformer.getTransformedStudiesPaths(localResources, transformedStudiesStatus);
+				publisher.publish(date, transformedStudiesPaths, logPaths, "transformation log", logSuffix);
 				if (logPaths.size() > 0) {
+
+					// TODO ask transformer for logs
 					emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
 				}
-				transformedStudiesPaths = transformer.getTransformedStudiesPaths(localResources, transformedStudiesStatus);
 			}
 
 			//V (VALIDATE) STEP:
-			if (transformedStudiesPaths.keySet().size() > 0) {
+			if (! transformedStudiesPaths.isEmpty()) {
 				String reportSuffix = "_validation_report.html";
 				String logSuffix = "_validation_log.txt";
 				Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths, reportSuffix, logSuffix);
@@ -135,7 +142,7 @@ public class ETLProcessRunner {
 					emailService.emailStudiesLoaded(loadResults, logPaths);
 
 					if (loader.areStudiesLoaded()) {
-						restarter.restart();
+						restarterService.restart();
 						if (!studyAuthorizeCommandPrefix.equals("null")) {
 							authorizer.authorizeStudies(validatedStudies.keySet());
 						}

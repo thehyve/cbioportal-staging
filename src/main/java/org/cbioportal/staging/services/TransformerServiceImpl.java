@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -49,21 +50,24 @@ public class TransformerServiceImpl implements TransformerService {
     private ResourceUtils utils;
 
 	@Override
-	public ExitStatus transform(File untransformedFilesPath, File transformedFilesPath, File logFile) throws TransformerException {
+	public ExitStatus transform(File untransformedFilesPath, File transformedFilesPath, File logFile) throws TransformerException, ConfigurationException, IOException {
 
         if (transformationCommandScript.equals("")) {
             throw new TransformerException("No transformation command script has been specified in the application.properties.");
         }
 
         List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
-
         Resource script = resourceResolver.getResource(command.get(0));
-
-        // TODO add checking of correct file for script
-        // Skip transformation if skipTransformation=True or the study contains a meta_study.txt file
+        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
 
 		try {
-            script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
+            if (!script.exists()) {
+                throw new ConfigurationException("Transformation command script specified in the application.properties points does not exist at the indication location.");
+            }
+    
+            if (script.getFile().isDirectory()) {
+                throw new ConfigurationException("Transformation command script specified in the application.properties points to directory.");
+            }
             String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
             command.set(0, scriptPath);
 
@@ -102,9 +106,6 @@ public class TransformerServiceImpl implements TransformerService {
 			throw new TransformerException("The following file path was not found: "+untransformedFilesPath.getAbsolutePath(), e);
 		} catch (InterruptedException e) {
             throw new TransformerException("The transformation process has been interrupted by another process.", e);
-        } catch (IOException e) {
-            throw new TransformerException ("The working directory specified in the command or the transformation script file do not exist, "+
-                "or you do not have permissions to work with the transformation script file.", e);
         }
 	}
 }

@@ -17,7 +17,6 @@ import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.RestarterService;
 import org.cbioportal.staging.services.TransformerServiceImpl;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +33,9 @@ import freemarker.template.TemplateNotFoundException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(
-    locations = "classpath:e2e_studies/e2e_integration_test.properties",
-    properties = {
-        "scan.location=classpath:e2e_studies/es_0_tar",
-        "skip.transformation=false",
-        "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py"
-    }
-)
+@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties", properties = {
+        "scan.location=classpath:e2e_studies/es_0_tar", "skip.transformation=false",
+        "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py" })
 public class IntegrationTestTransformation {
 
     @MockBean
@@ -56,16 +50,16 @@ public class IntegrationTestTransformation {
     @Autowired
     private TransformerServiceImpl transformerService;
 
-    @Before
-    public void init() throws InterruptedException, IOException, ConfigurationException {
-        doNothing().when(restarterService).restart();
-    }
-
     @Test
-    public void transformSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException {
+    public void transformSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException,
+            ParseException, IOException, TemplateException, InterruptedException, ConfigurationException {
+
+        doNothing().when(restarterService).restart();
+
         boolean exitValue = scheduledScanner.scan();
+
         assert(exitValue);
+        verify(restarterService, times(1)).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
@@ -75,18 +69,22 @@ public class IntegrationTestTransformation {
 
     @Test
     public void transformFailure_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException {
+            IOException, TemplateException, InterruptedException, ConfigurationException {
+
+        doNothing().when(restarterService).restart();
 
         // wire in a failing transformation script
         ReflectionTestUtils.setField(transformerService,
             "transformationCommandScript", "classpath:e2e_studies/es_0_tar/exit1.py");
 
         boolean exitValue = scheduledScanner.scan();
+
         assert(exitValue);
+        verify(restarterService, never()).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).emailValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(emailServiceImpl, never()).emailStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).emailGenericError(any(),any());
     }
 

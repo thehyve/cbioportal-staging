@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.cbioportal.staging.etl.Restarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class PublisherServiceImpl implements PublisherService {
-	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
+
+	private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
 
 	@Value("${central.share.location}")
 	private String centralShareLocation;

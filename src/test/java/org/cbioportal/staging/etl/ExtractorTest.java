@@ -15,128 +15,68 @@
 */
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.junit.Before;
-import org.junit.Rule;
+import org.cbioportal.staging.exceptions.ExtractionException;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {Extractor.class, org.cbioportal.staging.services.resource.ResourceUtils.class, EmailServiceMockupImpl.class})
+@SpringBootTest(classes = {Extractor.class, org.cbioportal.staging.services.resource.ResourceUtils.class})
 public class ExtractorTest {
 
 	@Autowired
     private Extractor extractor;
 
-	@Autowired
-	private EmailServiceMockupImpl emailService;
+	// @Autowired
+	// private ResourcePatternResolver resourcePatternResolver;
 
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
+	private File etlDir = mock(File.class);
 
-	@Before
-    public void setUp() throws Exception {
-        emailService.reset();
-    }
+	@Test(expected = ExtractionException.class)
+	public void etlWorkingDir_doesNotExist() throws IOException, InterruptedException, ConfigurationException, ExtractionException {
 
-	@Rule
-    public TemporaryFolder etlWorkingDir = new TemporaryFolder();
+		// File etlDir = mock(File.class);
+		when(etlDir.exists()).thenReturn(false);
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlDir);
 
-	@Test
-	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		ReflectionTestUtils.setField(extractor, "timeRetry", 0);
-
-		//Run extractor step:
-        Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_1.yaml");
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-		Map<String, File> result = extractor.run(indexFile);
-
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(true, emailService.isEmailStudyFileNotFoundSent()); //Email is sent since a file does not exist
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-
-        //Build the expected outcome and check that is the same as the function output
-		Map<String, File> expectedResult = new HashMap<String, File>();
-		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
-		assertEquals(expectedResult, result);
-    }
-
-	@Test
-	public void allFilesFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-
-        Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_2.yaml");
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-		Map<String, File> result = extractor.run(indexFile);
-
-		//check that no emails are sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-
-        //Build the expected outcome and check that is the same as the function output
-        Map<String, File> expectedResult = new HashMap<String, File>();
-        expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
-		assertEquals(expectedResult, result);
+		Map<String,Resource[]> in = new HashMap<String,Resource[]>();
+		extractor.run(in);
 	}
 
-	@Test
-	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+	@Test(expected = ExtractionException.class)
+	public void etlWorkingDir_isFile() throws IOException, InterruptedException, ConfigurationException, ExtractionException {
 
-		Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_3.yaml");
-		extractor.run(indexFile);
+		// File etlDir = mock(File.class);
+		when(etlDir.exists()).thenReturn(true);
+		when(etlDir.isDirectory()).thenReturn(false);
+		when(etlDir.isFile()).thenReturn(true);
+		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlDir);
 
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
+		Map<String,Resource[]> in = new HashMap<String,Resource[]>();
+		extractor.run(in);
 	}
 
-	@Test
-	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "classpath:extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
+	// test correct study/destination path
 
-		Resource indexFile =  this.resourcePatternResolver.getResource("classpath:extractor_tests/list_of_studies_4.yaml");
-		extractor.run(indexFile);
+	// test correct remote base path
 
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
-	}
+	// test reaction after a number of attempts
+
+	// test handling of error files
+
+
+
 }

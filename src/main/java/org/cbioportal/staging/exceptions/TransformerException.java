@@ -30,6 +30,9 @@ public class TransformerException extends Exception
 		super(message, e);
 	}
 	public TransformerException(String message) {
-		super (message);
+		super(message);
+	}
+	public TransformerException(Exception e) {
+		super(e);
 	}
 }

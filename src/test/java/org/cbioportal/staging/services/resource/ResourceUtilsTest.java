@@ -41,6 +41,11 @@ public class ResourceUtilsTest {
     }
 
     @Test
+    public void copyResource_success() {
+        // TODO implement test
+    }
+
+    @Test
     public void getMostRecent_success() {
         Resource[] resources = createResources("prefix", "yaml").toArray(new Resource[0]);
         Resource selectedResource = utils.getMostRecent(resources);

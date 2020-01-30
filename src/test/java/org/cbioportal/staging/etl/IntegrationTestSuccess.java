@@ -16,7 +16,6 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.RestarterService;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,22 +37,19 @@ public class IntegrationTestSuccess {
     @MockBean
     private EmailServiceImpl emailServiceImpl;
 
-    @MockBean
-    private RestarterService restarterService;
-
     @Autowired
     private ScheduledScanner scheduledScanner;
 
-    @Before
-    public void init() throws InterruptedException, IOException, ConfigurationException {
-        doNothing().when(restarterService).restart();
-    }
+    @MockBean
+    private RestarterService restarterService;
 
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException {
+            IOException, TemplateException, InterruptedException, ConfigurationException {
+        doNothing().when(restarterService).restart();
         boolean exitValue = scheduledScanner.scan();
         assert(exitValue);
+        verify(restarterService, times(1)).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));

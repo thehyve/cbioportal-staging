@@ -34,7 +34,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { org.cbioportal.staging.etl.Transformer.class,
-        org.cbioportal.staging.etl.EmailServiceMockupImpl.class,
         org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
         org.cbioportal.staging.etl.PublisherServiceMockupImpl.class })
 @SpringBootTest

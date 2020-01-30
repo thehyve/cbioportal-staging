@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Set;
 
-import org.cbioportal.staging.etl.Restarter;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,23 +28,24 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AuthorizerServiceImpl implements AuthorizerService {
-	private static final Logger logger = LoggerFactory.getLogger(Restarter.class);
-	
+
+	private static final Logger logger = LoggerFactory.getLogger(AuthorizerServiceImpl.class);
+
 	@Value("${study.authorize.command_prefix:null}")
 	private String studyAuthorizeCommandPrefix;
-	
+
 	@Value("${study.curator.emails}")
 	private String studyCuratorEmails;
-	
+
 	public void authorizeStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
-		
+
 		if (!studyAuthorizeCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
                     String command = studyAuthorizeCommandPrefix + " "+ studyId + " " + studyCuratorEmail;
                     Process cmdProcess = Runtime.getRuntime().exec(command);
                     logger.info("Executing command: "+command);
-                    
+
                     BufferedReader reader = new BufferedReader(new InputStreamReader(cmdProcess.getInputStream()));
                     String line = null;
                     while ((line = reader.readLine()) != null)
@@ -58,9 +58,9 @@ public class AuthorizerServiceImpl implements AuthorizerService {
                     {
                         logger.warn(line2);
                     }
-                    
+
                     cmdProcess.waitFor();
-                    
+
                     if (cmdProcess.exitValue() != 0) {
                         throw new ConfigurationException("The command "+command+" has failed. Please check your configuration.");
                     }

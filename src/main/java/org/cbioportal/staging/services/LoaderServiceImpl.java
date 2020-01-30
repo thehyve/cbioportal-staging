@@ -40,7 +40,7 @@ public class LoaderServiceImpl implements LoaderService {
     private String cbioportalDockerNetwork;
 
     @Value("${cbioportal.docker.properties}")
-    private String cbioportalDockerProperties;
+    private File cbioportalDockerProperties;
 
 	@Value("${portal.source:.}")
 	private String portalSource;
@@ -56,7 +56,7 @@ public class LoaderServiceImpl implements LoaderService {
                 if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
                     loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
                             "-v", studyPath.toString()+":/study:ro",
-                            "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro",
+                            "-v", cbioportalDockerProperties.getAbsolutePath()+":/cbioportal/portal.properties:ro",
                             cbioportalDockerImage,
                             "cbioportalImporter.py", "-s", "/study");
                 } else {

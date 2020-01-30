@@ -61,10 +61,10 @@ public class Validator {
             logger.info("Starting validation of study "+studyId);
             File studyPath = studyPaths.get(studyId);
 
-            //Create validation report and logs
-            File report = new File(studyPath+"/"+studyId+reportSuffix);
-            File logFile = new File(studyPath+"/"+studyId+logSuffix);
-            ExitStatus exitStatus = validationService.validate(studyPath, report, logFile);
+            String reportFileName = studyId + reportSuffix;
+            String logFileName = studyId + logSuffix;
+
+            ExitStatus exitStatus = validationService.validate(studyPath, reportFileName, logFileName);
 
             //Add validation result for the email validation report
             validatedStudies.put(studyId, exitStatus);

@@ -16,12 +16,14 @@
 package org.cbioportal.staging.services;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 
 public interface TransformerService {
 	
-	public ExitStatus transform(File originPath, File finalPath, File logFile) throws TransformerException;
+	public ExitStatus transform(File originPath, File finalPath, File logFile) throws TransformerException, ConfigurationException, IOException;
 
 }
