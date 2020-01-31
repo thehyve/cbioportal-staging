@@ -16,6 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.util.HashMap;
@@ -23,10 +25,12 @@ import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -34,7 +38,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {org.cbioportal.staging.etl.Validator.class,
-        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class,
         org.cbioportal.staging.etl.ValidationServiceMockupImpl.class})
 @TestPropertySource(
 	properties= {
@@ -47,11 +50,16 @@ public class ValidatorTest {
 	@Autowired
 	private Validator validator;
 
+	@MockBean
+    private ResourceUtils resourceUtils;
+
 	@Autowired
     private ValidationServiceMockupImpl validationService;
 
 	@Test
 	public void studyHasPassedValidationNoWarnings() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.SUCCESS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -60,6 +68,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasPassedValidationWithWarnings() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.WARNINGS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -68,6 +78,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasFailedValidationWarningsWarning() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.WARNINGS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -76,6 +88,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasFailedValidationWarningsError() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.ERRORS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -84,6 +98,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasPassedFailedWithErrors() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.ERRORS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -92,6 +108,8 @@ public class ValidatorTest {
 
 	@Test(expected=ValidatorException.class)
 	public void studyHasPassedWrongLevel() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		boolean result = validator.hasStudyPassed("study", "WRONG_LEVEL", ExitStatus.ERRORS);
 
 		//Build the expected outcome and check that is the same as the function output
@@ -100,6 +118,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyPassedValidation() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validationService, "throwError", false);
 		ReflectionTestUtils.setField(validationService, "exitStatus", ExitStatus.WARNINGS);
@@ -116,6 +136,8 @@ public class ValidatorTest {
 
 	@Test
 	public void studyFailedValidation() throws ValidatorException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		ReflectionTestUtils.setField(validator, "validationService", validationService);
 		ReflectionTestUtils.setField(validationService, "throwError", false);
 		ReflectionTestUtils.setField(validationService, "exitStatus", ExitStatus.ERRORS);

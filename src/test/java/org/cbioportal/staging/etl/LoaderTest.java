@@ -26,6 +26,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +44,14 @@ public class LoaderTest {
     @MockBean
     private LoaderService loaderService;
 
+    @MockBean
+    private ResourceUtils resourceUtils;
+
     @Test
     public void studyLoaded() throws LoaderException {
 
         when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS);
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));
@@ -60,6 +65,7 @@ public class LoaderTest {
     public void multipleStudiesLoaded() throws LoaderException {
 
         when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));

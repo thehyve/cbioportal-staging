@@ -22,6 +22,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,13 @@ public class Validator {
 	@Autowired
     private ValidationService validationService;
 
+    @Autowired
+    private ResourceUtils resourceUtils;
+
 	@Value("${validation.level:ERROR}")
     private String validationLevel;
 
-    private String reportSuffix = "_validation_report.html";
-	private String logSuffix = "_validation_log.txt";
+    private Map<String, File> logAndReportFiles = new HashMap<String, File>();
 
 	boolean hasStudyPassed(String study, String validationLevel, ExitStatus exitStatus) throws ValidatorException {
 		if (validationLevel.equals("WARNING")) { //Load studies with no warnings and no errors
@@ -59,17 +62,17 @@ public class Validator {
 
 	Map<String, ExitStatus> validate(Map<String, File> studyPaths) throws ValidatorException {
         Map<String,ExitStatus> validatedStudies = new HashMap<String,ExitStatus>();
-        //Get studies from appropriate staging folder
+        
         for (String studyId : studyPaths.keySet()) {
             logger.info("Starting validation of study "+studyId);
             File studyPath = studyPaths.get(studyId);
 
-            String reportFileName = studyId + reportSuffix;
-            String logFileName = studyId + logSuffix;
+            File logFile = resourceUtils.createLogFile(studyId, studyPath, "validation_log.txt");
+            File reportFile = resourceUtils.createLogFile(studyId, studyPath, "validation_report.txt");
+            logAndReportFiles.put(studyId+" validation log", logFile);
+            logAndReportFiles.put(studyId+" validation report", reportFile);
 
-            ExitStatus exitStatus = validationService.validate(studyPath, reportFileName, logFileName);
-
-            //Add validation result for the email validation report
+            ExitStatus exitStatus = validationService.validate(studyPath, reportFile, logFile);
             validatedStudies.put(studyId, exitStatus);
 
             logger.info("Validation of study "+studyId+" finished.");
@@ -77,21 +80,8 @@ public class Validator {
 		return validatedStudies;
     }
 
-    Map<String, File> getLogFiles(Map<String, File> studyPaths, String logType) throws ValidatorException {
-        String suffix;
-        if (logType.toLowerCase().equals("log")) {
-            suffix = logSuffix;
-        } else if (logType.toLowerCase().equals("report")) {
-            suffix = reportSuffix;
-        } else {
-            throw new ValidatorException("Log Type can only be 'log' or 'report', your type is: "+logType);
-        }
-        Map<String, File> logFiles = new HashMap<String, File>();
-        for (String studyId : studyPaths.keySet()) {
-            File logFile = new File(studyPaths.get(studyId)+"/"+studyId+suffix);
-            logFiles.put(studyId, logFile);
-        }
-        return logFiles;
+    Map<String, File> getLogAndReportFiles() {
+        return logAndReportFiles;
     }
 
     Map<String,File> getValidStudies(Map<String, ExitStatus> validatedStudies, Map<String, File> studyPaths) throws ValidatorException {

@@ -148,6 +148,12 @@ public class ResourceUtils {
 		}
 
 		return shortest;
-	}
+    }
+    
+    public File createLogFile(String studyId, File studyPath, String logPrefix) {
+        String logName = studyId + "_" + logPrefix;
+        File logFile = new File(studyPath + "/" + logName);
+        return logFile;
+    }
 
 }

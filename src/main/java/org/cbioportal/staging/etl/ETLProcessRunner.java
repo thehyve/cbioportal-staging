@@ -114,8 +114,8 @@ public class ETLProcessRunner {
 				transformedStudiesPaths = localResources;
 			} else {
                 Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(localResources, "command");
-                Map<String, File> transformationLogFiles = transformer.getLogFiles(localResources);
-				publisher.publish(date, transformationLogFiles, logPaths, "transformation log");
+                Map<String, String> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
+                logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
 					emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
                 }
@@ -125,18 +125,16 @@ public class ETLProcessRunner {
 			//V (VALIDATE) STEP:
 			if (! transformedStudiesPaths.isEmpty()) {
                 Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths);
-                Map<String, File> validationLogFiles = validator.getLogFiles(transformedStudiesPaths, "log");
-                publisher.publish(date, validationLogFiles, logPaths, "validation log");
-                Map<String, File> validationReportsFiles = validator.getLogFiles(transformedStudiesPaths, "report");
-				publisher.publish(date, validationReportsFiles, logPaths, "validation report");
+                Map<String, String> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
+                logPaths.putAll(validationAndReportFiles);
 				emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
 				Map <String, File> studiesThatPassedValidation = validator.getValidStudies(validatedStudies, localResources);
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
                     Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation);
-                    Map<String, File> loadingLogFiles = validator.getLogFiles(studiesThatPassedValidation, "report");
-					publisher.publish(date, loadingLogFiles, logPaths, "loading log");
+                    Map<String, String> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
+                    logPaths.putAll(loadingLogFiles);
 					emailService.emailStudiesLoaded(loadResults, logPaths);
 
 					if (loader.areStudiesLoaded()) {

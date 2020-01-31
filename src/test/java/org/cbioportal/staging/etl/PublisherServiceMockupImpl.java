@@ -17,6 +17,7 @@ package org.cbioportal.staging.etl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.services.PublisherService;
@@ -29,8 +30,14 @@ public class PublisherServiceMockupImpl implements PublisherService {
     @Value("${central.share.location}")
     private String centralShareLocation;
 
-    public void publish(String date, Map<String, File> initialLogFiles, Map<String, String> finalLogFiles, String logType) throws IOException {
-
+    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException {
+        Map<String, String> finalLogFiles = new HashMap<String, String>();
+        for (String logName : initialLogFiles.keySet()) {
+            File initialLogFile = initialLogFiles.get(logName);
+            String finalLogFile = publish(initialLogFile, date);
+            finalLogFiles.put(logName, finalLogFile);
+        }
+        return finalLogFiles;
     }
 
     public String publish(File file, String date) throws IOException {

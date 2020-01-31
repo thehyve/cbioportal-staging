@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -51,12 +52,14 @@ public class PublisherServiceImpl implements PublisherService {
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
 
-    public void publish(String date, Map<String, File> initialLogFiles, Map<String, String> finalLogFiles, String logType) throws IOException {
-        for (String studyId : initialLogFiles.keySet()) {
-            File initialLogFile = initialLogFiles.get(studyId);
+    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException {
+        Map<String, String> finalLogFiles = new HashMap<String, String>();
+        for (String logName : initialLogFiles.keySet()) {
+            File initialLogFile = initialLogFiles.get(logName);
             String finalLogFile = publish(initialLogFile, date);
-            finalLogFiles.put(studyId+" "+logType, finalLogFile);
+            finalLogFiles.put(logName, finalLogFile);
         }
+        return finalLogFiles;
     }
 
 	public String publish(File file, String date) throws IOException {

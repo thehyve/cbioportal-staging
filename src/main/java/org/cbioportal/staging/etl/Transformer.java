@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.TransformerService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,14 @@ public class Transformer {
     @Autowired
     private TransformerService transformerService;
 
+    @Autowired
+    private ResourceUtils resourceUtils;
+
     public enum ExitStatus {
-        SUCCESS, WARNINGS, ERRORS, NOTRANSF;
+        SUCCESS, WARNINGS, ERRORS, NOTRANSF; //TODO - Remove "no transformation" option from this file and move it up to ETLProcessRunner
     }
 
-    private String logSuffix = "_transformation_log.txt";
+    private Map<String, File> logFiles = new HashMap<String, File>();
 
     boolean metaFileExists(File originPath) {
         File metaStudyFile = new File(originPath + "/meta_study.txt");
@@ -67,9 +71,8 @@ public class Transformer {
             File transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
 
             ExitStatus transformationStatus = null;
-            // Create transformation log file
-            String logName = studyId + logSuffix;
-            File logFile = new File(transformedFilesPath + "/" + logName);
+            File logFile = resourceUtils.createLogFile(studyId, transformedFilesPath, "transformation_log.txt");
+            logFiles.put(studyId+" loading log", logFile);
             try {
                 if (metaFileExists(untransformedFilesPath)) {
                     try {
@@ -105,13 +108,7 @@ public class Transformer {
         return statusStudies;
     }
 
-    Map<String, File> getLogFiles(Map<String, File> studyPaths) {
-        Map<String, File> logFiles = new HashMap<String, File>();
-        for (String studyId : studyPaths.keySet()) {
-            File transformedFilesPath = getTransformedFilesPath(studyPaths.get(studyId));
-            File logFile = new File(transformedFilesPath+"/"+studyId+logSuffix);
-            logFiles.put(studyId, logFile);
-        }
+    Map<String, File> getLogFiles() {
         return logFiles;
     }
 

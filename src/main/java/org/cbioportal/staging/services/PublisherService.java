@@ -21,7 +21,7 @@ import java.util.Map;
 
 public interface PublisherService {
 
-    public void publish(String date, Map<String, File> initialLogFiles, Map<String, String> finalLogFiles, String logType) throws IOException;
+    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException;
 	
     public String publish(File file, String date) throws IOException;
     
