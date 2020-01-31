@@ -48,6 +48,7 @@ public class ValidatorTest {
 	@Autowired
 	private Validator validator;
 
+
 	@Autowired
     private ValidationServiceMockupImpl validationService;
 
@@ -94,7 +95,6 @@ public class ValidatorTest {
 	@Test(expected=IllegalArgumentException.class)
 	@Ignore
 	public void studyHasPassedWrongLevel() throws ValidatorException {
-		//ReflectionTestUtils.setField(validator, "emailService", emailService);
 
 		boolean result = validator.hasStudyPassed("study", "WRONG_LEVEL", ExitStatus.ERRORS);
 

@@ -62,6 +62,59 @@ public class ResourceUtilsTest {
         assertEquals(selectedResources[0], target);
     }
 
+    @Test
+    public void getBasePath_identicalStrings() {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/abc");
+        paths.add("file:/abc");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/abc", common);
+    }
+
+    @Test
+    public void getBasePath_stringsDifferentLength() {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/abc");
+        paths.add("file:/abcdef");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/abc", common);
+    }
+
+    @Test
+    public void getBasePath_differentStrings() {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/abc");
+        paths.add("file:/def");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/", common);
+    }
+
+    @Test
+    public void getBasePath_includesEmptyString() {
+        List<String> paths = new ArrayList<>();
+        paths.add("");
+        paths.add("file:/def");
+        String common = utils.getBasePath(paths);
+        assertEquals("", common);
+    }
+
+    @Test
+    public void getBasePath_includesNullArgument() {
+        List<String> paths = new ArrayList<>();
+        paths.add(null);
+        paths.add("file:/def");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/def", common);
+    }
+
+    @Test
+    public void getBasePath_emptyString() {
+        List<String> paths = new ArrayList<>();
+        paths.add("");
+        String common = utils.getBasePath(paths);
+        assertEquals("", common);
+    }
+
     private List<Resource> createResources(String prefix, String extension) {
         List<Resource> resources = new ArrayList<>();
         IntStream.range(0,4).forEach(i -> {
