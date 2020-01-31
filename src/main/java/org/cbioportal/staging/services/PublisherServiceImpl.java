@@ -77,7 +77,7 @@ public class PublisherServiceImpl implements PublisherService {
 		return centralShareLocationWebAddress+"/"+date+"/"+file.getName();
     }
 
-    public void copyToResource(File filePath, String resourceOut) throws IOException {
+    public void copyToResource(File filePath, String resourceOut) throws IOException { //TODO: isn't this method overlapping with the one in ResourceUtils?
 		String resourcePath = resourceOut+"/"+filePath.getName();
 		Resource resource;
 		if (resourcePath.startsWith("file:")) {

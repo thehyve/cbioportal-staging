@@ -31,15 +31,13 @@ scan.location=file:///home/pnp300/staging-scan-folder/
 # Turn OFF any S3: leave this property enabled if *NOT* using S3, but disable it (and enable the ones above) otherwise:
 #spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
 
-# cbioportal mode, either "local" or "docker".
-cbioportal.mode=docker
-# properties for cbioportal.mode=docker:
+# properties for running cBioPortal in Docker (default):
 cbioportal.docker.image=<image-name>
 cbioportal.docker.network=<network-name>
 cbioportal.docker.cbio.container=<cbio-container>
 cbioportal.docker.properties=<path-to-portal.properties>
 
-#properties for cbioportal.mode=local:
+#properties for running cBioPortal locally:
 # portal.source=<path-to-source-code>
 
 # Central share location (for validation reports and log files, can also be a S3 location).

@@ -20,15 +20,20 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
-	private static final Logger logger = LoggerFactory.getLogger(LoaderServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoaderServiceImpl.class);
+    
+    @Autowired
+    private ICommandBuilder commandBuilder;
 
 	@Value("${cbioportal.mode}")
 	private String cbioportalMode;
@@ -48,25 +53,7 @@ public class LoaderServiceImpl implements LoaderService {
 	@Override
 	public ExitStatus load(File studyPath, File logFile) throws LoaderException {
         try {
-            ProcessBuilder loaderCmd;
-            if (cbioportalMode.equals("local")) {
-                loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyPath.toString());
-                loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
-            } else if (cbioportalMode.equals("docker")) {
-                if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-                    loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
-                            "-v", studyPath.toString()+":/study:ro",
-                            "-v", cbioportalDockerProperties.getAbsolutePath()+":/cbioportal/portal.properties:ro",
-                            cbioportalDockerImage,
-                            "cbioportalImporter.py", "-s", "/study");
-                } else {
-                    throw new LoaderException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
-                }
-            } else {
-                throw new LoaderException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-                        ". Please change the mode in the application.properties.");
-            }
-
+            ProcessBuilder loaderCmd = commandBuilder.buildLoaderCommand(studyPath);
             //Apply loader command
             logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
             loaderCmd.redirectErrorStream(true);
@@ -87,6 +74,8 @@ public class LoaderServiceImpl implements LoaderService {
         } catch (IOException e) {
             throw new LoaderException("The working directory specified in the command or the transformation script file do not exist, "+
                 "or you do not have permissions to work with the transformation script file.", e);
+        } catch (CommandBuilderException e) {
+            throw new LoaderException("A problem has occurred when building the loading command", e);
         }
 
 	}
