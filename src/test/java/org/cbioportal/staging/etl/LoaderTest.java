@@ -26,6 +26,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,14 +44,18 @@ public class LoaderTest {
     @MockBean
     private LoaderService loaderService;
 
+    @MockBean
+    private ResourceUtils resourceUtils;
+
     @Test
     public void studyLoaded() throws LoaderException {
 
         when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS);
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies, "");
+        Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
 		assertEquals(expectedLoadedStudies, loadedStudies); //The study has been loaded
@@ -60,11 +65,12 @@ public class LoaderTest {
     public void multipleStudiesLoaded() throws LoaderException {
 
         when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
 
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("lgg_ucsf_2014", new File("test/path"));
         studies.put("study_with_errors", new File("test/path2"));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies, "");
+        Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         expectedLoadedStudies.put("study_with_errors", ExitStatus.ERRORS);

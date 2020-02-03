@@ -22,6 +22,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +35,22 @@ public class Loader {
 	@Autowired
     private LoaderService loaderService;
 
+    @Autowired
+    private ResourceUtils resourceUtils;
+
     private boolean areStudiesLoaded = false;
 
-	Map<String, ExitStatus> load(final Map<String, File> studyPaths, String logSuffix) throws LoaderException {
+    private Map<String, File> logFiles = new HashMap<String, File>();
+
+	Map<String, ExitStatus> load(final Map<String, File> studyPaths) throws LoaderException {
 
         final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
 
         for (final String studyId : studyPaths.keySet()) {
             logger.info("Starting loading of study " + studyId + ". This can take some minutes.");
             final File studyPath = studyPaths.get(studyId);
-            // Create loading log file
-            final File logFile = new File(studyPath + "/" + studyId + logSuffix);
+            File logFile = resourceUtils.createLogFile(studyId, studyPath, "loading_log.txt");
+            logFiles.put(studyId+" loading log", logFile);
             ExitStatus loadingStatus = loaderService.load(studyPath, logFile);
             //Add loading result for the email loading report
             if (loadingStatus == ExitStatus.SUCCESS) {
@@ -57,6 +63,10 @@ public class Loader {
             }
         }
         return loadResults;
+    }
+
+    Map<String, File> getLogFiles() {
+        return logFiles;
     }
 
     boolean areStudiesLoaded() {

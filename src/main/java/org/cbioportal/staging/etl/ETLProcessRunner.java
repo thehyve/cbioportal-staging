@@ -113,32 +113,28 @@ public class ETLProcessRunner {
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
-				String logSuffix = "_transformation_log.txt";
-				Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(date, localResources, "command", logSuffix);
-				transformedStudiesPaths = transformer.getTransformedStudiesPaths(localResources, transformedStudiesStatus);
-				publisher.publish(date, transformedStudiesPaths, logPaths, "transformation log", logSuffix);
+                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(localResources, "command");
+                Map<String, String> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
+                logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
-
-					// TODO ask transformer for logs
 					emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
-				}
+                }
+                transformedStudiesPaths = transformer.getValidStudies(localResources, transformedStudiesStatus);
 			}
 
 			//V (VALIDATE) STEP:
 			if (! transformedStudiesPaths.isEmpty()) {
-				String reportSuffix = "_validation_report.html";
-				String logSuffix = "_validation_log.txt";
-				Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths, reportSuffix, logSuffix);
-				publisher.publish(date, transformedStudiesPaths, logPaths, "validation log", logSuffix);
-				publisher.publish(date, transformedStudiesPaths, logPaths, "validation report", reportSuffix);
+                Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths);
+                Map<String, String> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
+                logPaths.putAll(validationAndReportFiles);
 				emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
-				Map <String, File> studiesThatPassedValidation = validator.getStudiesThatPassedValidation(validatedStudies, localResources);
+				Map <String, File> studiesThatPassedValidation = validator.getValidStudies(validatedStudies, localResources);
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
-					String loadingLogSuffix = "_loading_log.txt";
-					Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation, loadingLogSuffix);
-					publisher.publish(date, studiesThatPassedValidation, logPaths, "loading log", loadingLogSuffix);
+                    Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation);
+                    Map<String, String> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
+                    logPaths.putAll(loadingLogFiles);
 					emailService.emailStudiesLoaded(loadResults, logPaths);
 
 					if (loader.areStudiesLoaded()) {

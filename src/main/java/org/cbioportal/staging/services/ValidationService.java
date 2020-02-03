@@ -22,6 +22,6 @@ import org.cbioportal.staging.exceptions.ValidatorException;
 
 public interface ValidationService {
 
-	public ExitStatus validate(File studyPath, String reportFileName, String logFileName) throws ValidatorException;
+	public ExitStatus validate(File studyPath, File reportFile, File logFile) throws ValidatorException;
 
 }

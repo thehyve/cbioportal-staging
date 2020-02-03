@@ -9,10 +9,15 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -27,10 +32,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResourceUtils {
 
-
-	@Autowired
+    @Autowired
 	private ResourcePatternResolver resourcePatternResolver;
-
 
     public String trimDir(String dir) {
         return dir.replaceFirst("\\/*\\**$", "");
@@ -94,46 +97,8 @@ public class ResourceUtils {
         return entries;
     }
 
-    /**
-	 * This method gets the "base path" of all entries. I.e. it assumes
-	 * all entries share a common parent path on the S3 or other resource folder
-	 * where they are originally shared. So for the following list of files configured in the
-	 * list of studies yaml as below:
-	 *   study1:
-     *    - folder/study1path/fileA.txt
-     *    - folder/study1path/fileB.txt
-     *    - folder/study1path/mafs/maf1.maf
-     *    - folder/study1path/mafs/mafn.maf
-     *
-     * this method will return "folder/study1path".
-	 * @throws ConfigurationException
-	 */
-	public String getBasePath(List<String> paths) throws ConfigurationException {
-		int shortest = Integer.MAX_VALUE;
-		String shortestPath = "";
-		for (String filePath : paths) {
-			if (filePath.length() < shortest) {
-				shortest = filePath.length();
-				shortestPath = filePath;
-			}
-		}
-		String result = "";
-		if (shortestPath.indexOf("/") != -1) {
-			result = shortestPath.substring(0, shortestPath.lastIndexOf("/"));
-		}
-		//validate if main assumption is correct (i.e. all paths contain the shortest path):
-		for (String filePath : paths) {
-			if (!filePath.contains(result)) {
-				throw new ConfigurationException("Study configuration contains mixed locations. Not allowed. E.g. "
-						+ "locations: "+ filePath + " and " + result + "/...");
-			}
-		}
-		return result;
-    }
-
-
-	public Resource copyResource(String destination, Resource resource, String remoteFilePath) throws IOException {
-        InputStream inputStream = resource.getInputStream();
+    public Resource copyResource(String destination, Resource resource, String remoteFilePath) throws IOException {
+		InputStream inputStream = resource.getInputStream();
 		String fullDestinationPath = destination + remoteFilePath;
 		ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
 		Files.copy(inputStream, Paths.get(fullDestinationPath));
@@ -149,6 +114,46 @@ public class ResourceUtils {
 
     public void ensureDirs(String path) throws IOException {
 		ensureDirs(new File(path));
+    }
+
+    /**
+	 * This method gets the "base path" of all entries. I.e. it assumes
+	 * all entries share a common parent path on the S3 or other resource folder
+	 * where they are originally shared. So for the following list of files configured in the
+	 * list of studies yaml as below:
+	 *   study1:
+     *    - folder/study1path/fileA.txt
+     *    - folder/study1path/fileB.txt
+     *    - folder/study1path/mafs/maf1.maf
+     *    - folder/study1path/mafs/mafn.maf
+     *
+     * this method will return "folder/study1path".
+	 * @throws ConfigurationException
+	 */
+	public String getBasePath(List<String> paths) {
+
+        List<String> pathsNoNull = paths.stream().filter(s -> s != null).collect(Collectors.toList());
+
+		Optional<String> shortestOpt = pathsNoNull.stream().min(Comparator.comparingInt(String::length));
+		if (!shortestOpt.isPresent())
+			return null;
+        String shortest = shortestOpt.get();
+
+		OptionalInt firstPositionMismatch = IntStream.range(0, shortest.length())
+			.filter(i -> ! pathsNoNull.stream().allMatch(p -> p.charAt(i) == shortest.charAt(i)))
+			.findFirst();
+
+		if (firstPositionMismatch.isPresent()) {
+			return shortest.substring(0, firstPositionMismatch.getAsInt());
+		}
+
+		return shortest;
+    }
+    
+    public File createLogFile(String studyId, File studyPath, String logPrefix) {
+        String logName = studyId + "_" + logPrefix;
+        File logFile = new File(studyPath + "/" + logName);
+        return logFile;
     }
 
 }

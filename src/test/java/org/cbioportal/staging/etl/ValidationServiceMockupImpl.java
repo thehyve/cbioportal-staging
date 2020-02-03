@@ -29,7 +29,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 	private boolean throwError = false;
 
 	@Override
-	public ExitStatus validate(File studyPath, String reportFileName, String logFileName) throws ValidatorException {
+	public ExitStatus validate(File studyPath, File reportFile, File logFile) throws ValidatorException {
 		if (throwError) {
 			throw new ValidatorException("dummy test error");
 		}

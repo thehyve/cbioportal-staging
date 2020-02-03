@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.TransformerService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,14 @@ public class Transformer {
     @Autowired
     private TransformerService transformerService;
 
+    @Autowired
+    private ResourceUtils resourceUtils;
+
     public enum ExitStatus {
-        SUCCESS, WARNINGS, ERRORS, NOTRANSF;
+        SUCCESS, WARNINGS, ERRORS, NOTRANSF; //TODO - Remove "no transformation" option from this file and move it up to ETLProcessRunner
     }
+
+    private Map<String, File> logFiles = new HashMap<String, File>();
 
     boolean metaFileExists(File originPath) {
         File metaStudyFile = new File(originPath + "/meta_study.txt");
@@ -55,8 +61,7 @@ public class Transformer {
         return transformedFilesPath;
     }
 
-    Map<String, ExitStatus> transform(String date, Map<String, File> studyPaths, String transformationCommand,
-            String logSuffix) throws TransformerException {
+    Map<String, ExitStatus> transform(Map<String, File> studyPaths, String transformationCommand) throws TransformerException {
 
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 
@@ -66,9 +71,8 @@ public class Transformer {
             File transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
 
             ExitStatus transformationStatus = null;
-            // Create transformation log file
-            String logName = studyId + logSuffix;
-            File logFile = new File(transformedFilesPath + "/" + logName);
+            File logFile = resourceUtils.createLogFile(studyId, transformedFilesPath, "transformation_log.txt");
+            logFiles.put(studyId+" loading log", logFile);
             try {
                 if (metaFileExists(untransformedFilesPath)) {
                     try {
@@ -104,12 +108,15 @@ public class Transformer {
         return statusStudies;
     }
 
-    Map<String, File> getTransformedStudiesPaths(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
+    Map<String, File> getLogFiles() {
+        return logFiles;
+    }
+
+    Map<String, File> getValidStudies(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
         Map<String, File> transformedFilesPaths = new HashMap<String, File>();
-        for (Map.Entry<String, ExitStatus> entry : transformedStudiesStatus.entrySet()) {
-            String studyId = entry.getKey();
-            File untransformedFilesPath = studyPaths.get(entry.getKey());
-            if (entry.getValue().equals(ExitStatus.SUCCESS) || entry.getValue().equals(ExitStatus.WARNINGS)) {
+        for (String studyId : transformedStudiesStatus.keySet()) {
+            if (transformedStudiesStatus.get(studyId).equals(ExitStatus.SUCCESS) || transformedStudiesStatus.get(studyId).equals(ExitStatus.WARNINGS)) {
+                File untransformedFilesPath = studyPaths.get(studyId);
                 transformedFilesPaths.put(studyId, getTransformedFilesPath(untransformedFilesPath));
             }
         }

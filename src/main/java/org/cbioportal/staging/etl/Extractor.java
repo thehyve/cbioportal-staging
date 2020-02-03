@@ -55,9 +55,6 @@ class Extractor {
 	@Autowired
     private ResourceUtils utils;
 
-	@Value("${scan.location}")
-	private String scanLocation;
-
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
 	public Map<String,File> run(Map<String, Resource[]> resources) throws ExtractionException {
@@ -132,7 +129,6 @@ class Extractor {
 		}
 		return r;
 	}
-
 
 	private String getBasePathResources(Resource[] resources) throws ConfigurationException {
 		List<String> paths = Stream.of(resources)

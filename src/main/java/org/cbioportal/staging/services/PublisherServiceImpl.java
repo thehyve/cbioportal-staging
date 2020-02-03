@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -51,14 +52,14 @@ public class PublisherServiceImpl implements PublisherService {
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
 
-    public void publish(String date, Map<String, File> studyPaths, Map<String, String> logPaths, String logType, String logSuffix) throws IOException {
-        for (String study : studyPaths.keySet()) {
-            //Create transformation log file
-            String logName = study+logSuffix;
-            File logFile = new File(studyPaths.get(study)+"/"+logName);
-            String transformationLogPath = publish(logFile, date);
-            logPaths.put(study+" "+logType, transformationLogPath);
+    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException {
+        Map<String, String> finalLogFiles = new HashMap<String, String>();
+        for (String logName : initialLogFiles.keySet()) {
+            File initialLogFile = initialLogFiles.get(logName);
+            String finalLogFile = publish(initialLogFile, date);
+            finalLogFiles.put(logName, finalLogFile);
         }
+        return finalLogFiles;
     }
 
 	public String publish(File file, String date) throws IOException {
@@ -76,7 +77,7 @@ public class PublisherServiceImpl implements PublisherService {
 		return centralShareLocationWebAddress+"/"+date+"/"+file.getName();
     }
 
-    public void copyToResource(File filePath, String resourceOut) throws IOException {
+    public void copyToResource(File filePath, String resourceOut) throws IOException { //TODO: isn't this method overlapping with the one in ResourceUtils?
 		String resourcePath = resourceOut+"/"+filePath.getName();
 		Resource resource;
 		if (resourcePath.startsWith("file:")) {

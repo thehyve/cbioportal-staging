@@ -16,6 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -25,10 +27,12 @@ import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -42,8 +46,13 @@ public class TransformerTest {
     @Autowired
     private Transformer transformer;
 
+    @MockBean
+    private ResourceUtils resourceUtils;
+
     @Test
     public void studyWithTransformation() {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
         File studyPath = new File("src/test/resources/transformer_tests/study1/");
         boolean metaFileExists = transformer.metaFileExists(studyPath);
 
@@ -54,11 +63,13 @@ public class TransformerTest {
     //Study 1, which goes through transformation, should be successfully returned as transformed:
     @Test
     public void transformStudyWithTransformation() throws TransformerException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
         String transformationCommand = "test";
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(date, studies, transformationCommand, "");
+        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
 
         Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
         expectedResult.put("study1", ExitStatus.SUCCESS);
@@ -69,6 +80,8 @@ public class TransformerTest {
 
     @Test
 	public void studyWithNoTransformation() {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		File studyPath = new File("src/test/resources/transformer_tests/study2/");
 		boolean metaFileExists = transformer.metaFileExists(studyPath);
 
@@ -79,11 +92,13 @@ public class TransformerTest {
     //Study 2, which skips transformation, should be successfully returned as (already) transformed:
     @Test
     public void transformStudyWithNoTransformation() throws TransformerException {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
         String transformationCommand = "test";
         Map<String, File> studies = new HashMap<String, File>();
         studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
         String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(date, studies, transformationCommand, "");
+        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
 
         Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
         expectedResult.put("study2", ExitStatus.NOTRANSF);
@@ -94,6 +109,8 @@ public class TransformerTest {
 
 	@Test
 	public void studyWithTransformationFakeMetaStudy() {
+        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+
 		File studyPath = new File("src/test/resources/transformer_tests/study3/");
 		boolean metaFileExists = transformer.metaFileExists(studyPath);
 

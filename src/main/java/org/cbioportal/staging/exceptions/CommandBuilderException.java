@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 The Hyve B.V.
+* Copyright (c) 2018 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -13,20 +13,24 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.exceptions;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-
-public interface PublisherService {
-
-    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException;
+public class CommandBuilderException extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5072243529310767969L;
 	
-    public String publish(File file, String date) throws IOException;
-    
-    public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
-    
-    public String getCentralShareLocationPath(String centralShareLocation, String date);
+	public CommandBuilderException()
+	{
+	}
+	public CommandBuilderException(String message, Exception e)
+	{
+		super(message);
+	}
+	public CommandBuilderException(String message)
+	{
+		super(message);
+	}
 
 }
