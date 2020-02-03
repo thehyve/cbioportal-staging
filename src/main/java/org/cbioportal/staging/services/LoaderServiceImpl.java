@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 
@@ -27,7 +26,6 @@ import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -37,21 +35,6 @@ public class LoaderServiceImpl implements LoaderService {
 
     @Autowired
     private ICommandBuilder commandBuilder;
-
-    @Value("${cbioportal.mode}")
-    private String cbioportalMode;
-
-    @Value("${cbioportal.docker.image}")
-    private String cbioportalDockerImage;
-
-    @Value("${cbioportal.docker.network}")
-    private String cbioportalDockerNetwork;
-
-    @Value("${cbioportal.docker.properties}")
-    private File cbioportalDockerProperties;
-
-    @Value("${portal.source:.}")
-    private String portalSource;
 
     @Autowired
     private ResourceUtils utils;

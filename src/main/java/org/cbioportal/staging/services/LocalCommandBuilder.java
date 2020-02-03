@@ -32,11 +32,34 @@ import org.springframework.stereotype.Component;
 @Primary
 public class LocalCommandBuilder implements ICommandBuilder {
 
-	@Value("${portal.source:.}")
-	private String portalSource;
-
-	@Autowired
+    @Autowired
 	private ResourceUtils utils;
+
+	@Value("${portal.source:.}")
+    private String portalSource;
+    
+    @Override
+    public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
+        try {
+            ProcessBuilder portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", utils.getFile(portalInfoFolder).toString());
+            portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
+            return portalInfoCmd;
+        } catch (ResourceCollectionException e) {
+            throw new CommandBuilderException("File IO problem during the build of the Portal Info command", e);
+        }
+    }
+
+    @Override
+    public ProcessBuilder buildValidatorCommand(Resource studyPath, Resource portalInfoFolder, Resource reportFile) throws CommandBuilderException {
+        try {
+            ProcessBuilder validationCmd = new ProcessBuilder("./validateData.py", "-s", utils.getFile(studyPath).getAbsolutePath(), "-p", 
+            portalInfoFolder.toString(), "-html", utils.getFile(reportFile).getAbsolutePath(), "-v");
+            validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
+            return validationCmd;
+        } catch (ResourceCollectionException e) {
+            throw new CommandBuilderException("File IO problem during the build of the validator command", e);
+        }
+    }
 
 	@Override
 	public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {

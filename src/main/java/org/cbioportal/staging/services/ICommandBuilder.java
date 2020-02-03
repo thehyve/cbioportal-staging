@@ -18,11 +18,12 @@ package org.cbioportal.staging.services;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.springframework.core.io.Resource;
 
-
 public interface ICommandBuilder {
 
+    public ProcessBuilder buildPortalInfoCommand(Resource PortalInfoFolder) throws CommandBuilderException;
+
+    public ProcessBuilder buildValidatorCommand(Resource studyPath, Resource portalInfoFolder, Resource reportFile) throws CommandBuilderException;
+	
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException;
-
-    //TODO: implement buildValidationCommand
-
+    
 }
