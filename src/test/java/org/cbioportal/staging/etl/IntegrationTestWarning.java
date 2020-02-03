@@ -15,11 +15,12 @@ import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailServiceImpl;
+import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
-import org.cbioportal.staging.services.RestarterService;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidationServiceImpl;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class IntegrationTestWarning {
     private EmailServiceImpl emailServiceImpl;
 
     @MockBean
-    private RestarterService restarterService;
+    private IRestarter restarterService;
 
     @Autowired
     private ScheduledScanner scheduledScanner;
@@ -68,7 +69,7 @@ public class IntegrationTestWarning {
     @Test
     public void throwValidationWarningsButLoad_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
     IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException {
+    ValidatorException, LoaderException, RestarterException {
 
         doNothing().when(restarterService).restart();
 
@@ -91,7 +92,7 @@ public class IntegrationTestWarning {
     @Test
     public void throwValidationWarningsAndFail_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
     IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException {
+    ValidatorException, LoaderException, RestarterException {
 
         // set the validation level to not load studies when there is a validation warning
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");

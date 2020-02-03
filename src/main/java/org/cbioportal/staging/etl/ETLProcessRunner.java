@@ -29,8 +29,8 @@ import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.PublisherService;
-import org.cbioportal.staging.services.RestarterService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ public class ETLProcessRunner {
 	private Loader loader;
 
 	@Autowired
-	private RestarterService restarterService;
+	private IRestarter restarterService;
 
 	@Autowired
     private Authorizer authorizer;
@@ -76,7 +76,7 @@ public class ETLProcessRunner {
 	@Autowired
 	private ResourceUtils utils;
 
-	@Value("${study.authorize.command_prefix:null}")
+	@Value("${study.authorize.command_prefix:}")
     private String studyAuthorizeCommandPrefix;
 
     @Value("${central.share.location}")
@@ -141,7 +141,7 @@ public class ETLProcessRunner {
 
 					if (loader.areStudiesLoaded()) {
 						restarterService.restart();
-						if (!studyAuthorizeCommandPrefix.equals("null")) {
+						if (!studyAuthorizeCommandPrefix.equals(null)) {
 							authorizer.authorizeStudies(validatedStudies.keySet());
 						}
 					}

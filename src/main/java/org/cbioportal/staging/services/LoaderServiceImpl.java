@@ -78,10 +78,8 @@ public class LoaderServiceImpl implements LoaderService {
         } catch (InterruptedException e) {
             throw new LoaderException("The loading process has been interrupted by another process.", e);
         } catch (IOException e) {
-            throw new LoaderException(
-                    "The working directory specified in the command or the transformation script file do not exist, "
-                            + "or you do not have permissions to work with the transformation script file.",
-                    e);
+            throw new LoaderException("The study directory specified in the command do not exist, "+
+                "or you do not have permissions to execute the loading command.", e);
         } catch (CommandBuilderException e) {
             throw new LoaderException("A problem has occurred when building the loading command", e);
         } catch (ResourceCollectionException e) {

@@ -15,33 +15,29 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.RestarterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+@Profile("local")
 @Component
-public class RestarterService {
+@Primary
+public class LocalRestarter implements IRestarter {
 
-	private static final Logger logger = LoggerFactory.getLogger(RestarterService.class);
-
-	@Value("${cbioportal.mode}")
-	private String cbioportalMode;
-
-	@Value("${cbioportal.docker.cbio.container}")
-	private String cbioContainer;
+	private static final Logger logger = LoggerFactory.getLogger(LocalRestarter.class);
 
 	@Value("${portal.source:.}")
 	private String portalSource;
 
-	public void restart() throws InterruptedException, IOException, ConfigurationException {
-		if (cbioportalMode.equals("local")) {
+	public void restart() throws RestarterException {
+		try {
 			logger.info("Stopping Tomcat...");
 			ProcessBuilder stopCmd = new ProcessBuilder("catalina", "stop", "-force");
 			stopCmd.directory(new File(portalSource));
@@ -54,23 +50,12 @@ public class RestarterService {
 			Process startProcess = startCmd.start();
 			startProcess.waitFor();
 			logger.info("Tomcat successfully restarted.");
-		} else if (cbioportalMode.equals("docker")) {
-			logger.info("Restarting Tomcat...");
-			ProcessBuilder restarterCmd = new ProcessBuilder ("docker", "restart", cbioContainer);
-			logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
-			Process restartProcess = restarterCmd.start();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
-			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				logger.info(line); //Print output if an error occurs
-			}
-			restartProcess.waitFor();
-			logger.info("Tomcat successfully restarted.");
-		} else {
-			throw new ConfigurationException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-					". Please change the mode in the application.properties.");
-		}
+		} catch (IOException e) {
+            throw new RestarterException("The cBioPortal container specified in the command do not exist, "+
+            "or you do not have permissions to execute the restarter command.", e);
+        } catch (InterruptedException e) {
+             throw new RestarterException("The loading process has been interrupted by another process.", e);
+        }
 	}
 
 }
