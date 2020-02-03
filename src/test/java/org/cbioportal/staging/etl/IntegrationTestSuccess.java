@@ -46,8 +46,11 @@ public class IntegrationTestSuccess {
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException, InterruptedException, ConfigurationException {
+
         doNothing().when(restarterService).restart();
+
         boolean exitValue = scheduledScanner.scan();
+
         assert(exitValue);
         verify(restarterService, times(1)).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
