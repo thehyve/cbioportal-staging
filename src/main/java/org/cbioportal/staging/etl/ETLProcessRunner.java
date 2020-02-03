@@ -110,6 +110,7 @@ public class ETLProcessRunner {
 
 			//T (TRANSFORM) STEP:
 			Map<String, File> transformedStudiesPaths;
+			// TODO add this condition in the V (alidate) block
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
@@ -128,7 +129,8 @@ public class ETLProcessRunner {
                 Map<String, String> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
 				emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
-				Map <String, File> studiesThatPassedValidation = validator.getValidStudies(validatedStudies, localResources);
+
+				Map <String, File> studiesThatPassedValidation = validator.getValidStudies(validatedStudies, transformedStudiesPaths);
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
