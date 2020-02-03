@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,34 +64,34 @@ public class ResourceUtilsTest {
     }
 
     @Test
-    public void getBasePath_identicalStrings() {
+    public void getBasePath_identicalStrings() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add("file:/abc");
         paths.add("file:/abc");
         String common = utils.getBasePath(paths);
-        assertEquals("file:/abc", common);
+        assertEquals("file:", common);
     }
 
     @Test
-    public void getBasePath_stringsDifferentLength() {
+    public void getBasePath_stringsDifferentLength() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add("file:/abc");
         paths.add("file:/abcdef");
         String common = utils.getBasePath(paths);
+        assertEquals("file:", common);
+    }
+
+    @Test
+    public void getBasePath_differentStrings() throws ConfigurationException {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/abc/def");
+        paths.add("file:/abc/ghi");
+        String common = utils.getBasePath(paths);
         assertEquals("file:/abc", common);
     }
 
     @Test
-    public void getBasePath_differentStrings() {
-        List<String> paths = new ArrayList<>();
-        paths.add("file:/abc");
-        paths.add("file:/def");
-        String common = utils.getBasePath(paths);
-        assertEquals("file:/", common);
-    }
-
-    @Test
-    public void getBasePath_includesEmptyString() {
+    public void getBasePath_includesEmptyString() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add("");
         paths.add("file:/def");
@@ -99,16 +100,16 @@ public class ResourceUtilsTest {
     }
 
     @Test
-    public void getBasePath_includesNullArgument() {
+    public void getBasePath_includesNullArgument() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add(null);
         paths.add("file:/def");
         String common = utils.getBasePath(paths);
-        assertEquals("file:/def", common);
+        assertEquals("file:", common);
     }
 
     @Test
-    public void getBasePath_emptyString() {
+    public void getBasePath_emptyString() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add("");
         String common = utils.getBasePath(paths);
