@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DockerCommandBuilder implements ICommandBuilder {
-    
+
 	@Value("${cbioportal.docker.image}")
 	private String cbioportalDockerImage;
 
@@ -31,7 +31,7 @@ public class DockerCommandBuilder implements ICommandBuilder {
     private String cbioportalDockerNetwork;
 
     @Value("${cbioportal.docker.properties}")
-    private String cbioportalDockerProperties;
+    private File cbioportalDockerProperties;
 
 	@Override
 	public ProcessBuilder buildLoaderCommand(File studyPath) throws CommandBuilderException {
@@ -39,7 +39,7 @@ public class DockerCommandBuilder implements ICommandBuilder {
         if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
             loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
                     "-v", studyPath.toString()+":/study:ro",
-                    "-v", cbioportalDockerProperties+":/cbioportal/portal.properties:ro",
+                    "-v", cbioportalDockerProperties.getAbsolutePath()+":/cbioportal/portal.properties:ro",
                     cbioportalDockerImage,
                     "cbioportalImporter.py", "-s", "/study");
         } else {
