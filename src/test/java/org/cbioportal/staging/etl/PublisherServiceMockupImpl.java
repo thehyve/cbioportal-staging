@@ -20,12 +20,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cbioportal.staging.services.PublisherService;
+import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestComponent;
 
 @TestComponent
-public class PublisherServiceMockupImpl implements PublisherService {
+public class PublisherServiceMockupImpl extends PublisherServiceImpl {
 
     @Value("${central.share.location}")
     private String centralShareLocation;
@@ -41,15 +41,11 @@ public class PublisherServiceMockupImpl implements PublisherService {
     }
 
     public String publish(File file, String date) throws IOException {
-
         String centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
         return centralShareLocationPath+"/"+file.getName();
-
     }
 
-	public void copyToResource(File file, String centralShareLocation) throws IOException {
-    }
-
+    @Override
     public String getCentralShareLocationPath(String centralShareLocation, String date) {
         return centralShareLocation+"/"+date;
     }

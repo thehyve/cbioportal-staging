@@ -62,7 +62,7 @@ public class PublisherServiceImpl implements PublisherService {
         return finalLogFiles;
     }
 
-	public String publish(File file, String date) throws IOException {
+	private String publish(File file, String date) throws IOException {
 
         //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
 		if (centralShareLocationWebAddress.equals("")) {

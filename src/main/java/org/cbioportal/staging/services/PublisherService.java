@@ -22,11 +22,9 @@ import java.util.Map;
 public interface PublisherService {
 
     public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException;
-	
-    public String publish(File file, String date) throws IOException;
-    
+
     public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
-    
+
     public String getCentralShareLocationPath(String centralShareLocation, String date);
 
 }
