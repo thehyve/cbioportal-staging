@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -17,7 +18,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -27,7 +30,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ResourceUtils {
-
 
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
@@ -136,14 +138,25 @@ public class ResourceUtils {
     }
 
 
-	public Resource copyResource(String destination, Resource resource, String remoteFilePath) throws IOException {
+	public Resource copyResource(String destination, InputStreamSource resource, String remoteFilePath)
+            throws ResourceCollectionException {
+		try {
         InputStream inputStream = resource.getInputStream();
 		String fullDestinationPath = destination + remoteFilePath;
-		ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
-		Files.copy(inputStream, Paths.get(fullDestinationPath));
-		inputStream.close();
-		return resourcePatternResolver.getResource(fullDestinationPath);
-	}
+            ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
+            Files.copy(inputStream, Paths.get(fullDestinationPath));
+            inputStream.close();
+            return resourcePatternResolver.getResource(fullDestinationPath);
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot copy resource", e);
+        }
+    }
+
+	public Resource copyResource(Resource destination, InputStreamSource resource, String remoteFilePath)
+            throws ResourceCollectionException {
+        return copyResource(getURL(destination).toString(), resource, remoteFilePath);
+    }
+
 
     public void ensureDirs(File path) {
 		if (!path.exists()) {
@@ -151,14 +164,67 @@ public class ResourceUtils {
 		}
     }
 
+    public void ensureDirs(Resource path) throws ResourceCollectionException {
+        if (getFile(path).isFile()) {
+            throw new ResourceCollectionException(
+                    "Resource is a file (should be a directory): " + getFile(path).getAbsolutePath());
+        }
+        if (!path.exists()) {
+            getFile(path).mkdirs();
+        }
+    }
+
     public void ensureDirs(String path) throws IOException {
 		ensureDirs(new File(path));
     }
 
-    public File createLogFile(String studyId, File studyPath, String logPrefix) {
+    public Resource createLogFile(String studyId, Resource studyPath, String logPrefix)
+            throws ResourceCollectionException {
         String logName = studyId + "_" + logPrefix;
-        File logFile = new File(studyPath + "/" + logName);
-        return logFile;
+        try {
+            Resource logFile = studyPath.createRelative(studyPath + "/" + logName);
+            // File logFile = new File(studyPath + "/" + logName);
+            return logFile;
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot create relative path: " + studyPath.getDescription());
+        }
+    }
+
+	public Resource getResource(String path) {
+		return resourcePatternResolver.getResource(path);
+	}
+
+	public Resource getResource(Resource basePath, String ... fileElements)
+            throws ResourceCollectionException {
+        try {
+            return basePath.createRelative(Stream.of(fileElements).collect(Collectors.joining("/")));
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot create relative path: " + basePath.getDescription());
+        }
+    }
+
+    public boolean isFile(Resource resource) throws ResourceCollectionException {
+        try {
+            return resource.getFile().isFile();
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot het File from Resource object: " + resource.getDescription());
+        }
+    }
+
+    public URL getURL(Resource resource) throws ResourceCollectionException {
+        try {
+            return resource.getURL();
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot read URL from Resource: " + resource.getDescription());
+        }
+    }
+
+    public File getFile(Resource resource) throws ResourceCollectionException {
+        try {
+            return resource.getFile();
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot read File from Resource: " + resource.getDescription());
+        }
     }
 
 }
