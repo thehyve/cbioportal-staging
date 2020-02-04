@@ -66,6 +66,9 @@ public class Transformer {
 
     public Map<String, ExitStatus> transform(Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
 
+        logFiles = new HashMap<>();
+        dirsValidStudies = new HashMap<>();
+
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 
         for (String studyId : studyPaths.keySet()) {
