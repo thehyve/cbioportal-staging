@@ -50,21 +50,51 @@ public class LoaderTest {
     private ResourceUtils resourceUtils;
 
     @Test
-    public void studyLoaded() throws LoaderException, ResourceCollectionException {
+    public void studySuccessfullyLoaded() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
         when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
-        expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-		assertEquals(expectedLoadedStudies, loadedStudies); //The study has been loaded
+        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
+		assertEquals(expectedLoadingStatus, loadingStatus);
     }
 
     @Test
-    public void multipleStudiesLoaded() throws LoaderException, ResourceCollectionException {
+    public void studyNotLoaded() throws LoaderException, ResourceCollectionException {
+
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
+
+        Map<String, Resource> studies = new HashMap<>();
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
+		assertEquals(expectedLoadingStatus, loadingStatus);
+    }
+
+    @Test
+    public void multipleStudiesAllLoaded() throws LoaderException, ResourceCollectionException {
+
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
+
+        Map<String, Resource> studies = new HashMap<>();
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        studies.put("study_2", TestUtils.createMockResource("test/path2", 1));
+        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
+        expectedLoadingStatus.put("study_2", ExitStatus.SUCCESS);
+		assertEquals(expectedLoadingStatus, loadingStatus); //The study has been loaded
+    }
+
+    @Test
+    public void multipleStudiesLoadedWithErrors() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
         when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
@@ -72,10 +102,26 @@ public class LoaderTest {
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
         studies.put("study_with_errors", TestUtils.createMockResource("test/path2", 1));
-        Map<String, ExitStatus> loadedStudies = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
-        expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedLoadedStudies.put("study_with_errors", ExitStatus.ERRORS);
-		assertEquals(expectedLoadedStudies, loadedStudies); //The study has been loaded
+        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
+        expectedLoadingStatus.put("study_with_errors", ExitStatus.ERRORS);
+		assertEquals(expectedLoadingStatus, loadingStatus); //The study has been loaded
+    }
+
+    @Test
+    public void multipleStudiesAllErrors() throws LoaderException, ResourceCollectionException {
+
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
+
+        Map<String, Resource> studies = new HashMap<>();
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        studies.put("study_2", TestUtils.createMockResource("test/path2", 1));
+        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
+        expectedLoadingStatus.put("study_2", ExitStatus.ERRORS);
+		assertEquals(expectedLoadingStatus, loadingStatus); //The study has been loaded
     }
 }
