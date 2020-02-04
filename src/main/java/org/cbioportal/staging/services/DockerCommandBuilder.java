@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
@@ -40,23 +39,26 @@ public class DockerCommandBuilder implements ICommandBuilder {
     private String cbioportalDockerNetwork;
 
     @Value("${cbioportal.docker.properties}")
-    private File cbioportalDockerPropertiesFile;
+    private Resource cbioportalDockerPropertiesFile;
 
-    private String propertiesFile = utils.stripResourceTypePrefix(cbioportalDockerPropertiesFile.getAbsolutePath());
 
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
         try {
+            String propertiesFilePath = utils.getFile(cbioportalDockerPropertiesFile).getAbsolutePath();
+            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
+
             ProcessBuilder portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork,
-                                                        "-v", utils.getFile(portalInfoFolder).toString()+":/portalinfo",
-                                                        "-v", propertiesFile+":/cbioportal/portal.properties:ro",
-                                                        "-w", "/cbioportal/core/src/main/scripts",
-                                                        cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
+            "-v", portalInfoPath + ":/portalinfo",
+            "-v", propertiesFilePath + ":/cbioportal/portal.properties:ro",
+            "-w", "/cbioportal/core/src/main/scripts",
+            cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
+
             return portalInfoCmd;
         } catch (ResourceCollectionException e) {
             throw new CommandBuilderException("File IO problem during the build of the Portal Info command", e);
         }
-        
+
     }
 
     @Override
@@ -65,13 +67,20 @@ public class DockerCommandBuilder implements ICommandBuilder {
             //make sure report file exists first, otherwise docker will map it as a folder:
             utils.getFile(reportFile).getParentFile().mkdirs();
             utils.getFile(reportFile).createNewFile();
+
+            String propertiesFilePath = utils.getFile(cbioportalDockerPropertiesFile).getAbsolutePath();
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
+            String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
+            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
+
             //docker command:
             ProcessBuilder validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-                                                            "-v", utils.getFile(studyPath).toString()+":/study:ro", "-v",
-                                                            utils.getFile(reportFile).getAbsolutePath()+":/outreport.html",
-                                                            "-v", utils.getFile(portalInfoFolder).toString()+ ":/portalinfo:ro",
-                                                            "-v", propertiesFile+":/cbioportal/portal.properties:ro", cbioportalDockerImage,
-                                                            "validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
+            "-v", studyDirPath + ":/study:ro",
+            "-v", reportFilePath + ":/outreport.html",
+            "-v", portalInfoPath + ":/portalinfo:ro",
+            "-v", propertiesFilePath + ":/cbioportal/portal.properties:ro", cbioportalDockerImage,
+            "validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
+
             return validationCmd;
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
@@ -82,16 +91,22 @@ public class DockerCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
-        ProcessBuilder loaderCmd;
-        if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-            loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
-                    "-v", studyPath.toString()+":/study:ro",
-                    "-v", cbioportalDockerPropertiesFile.getAbsolutePath()+":/cbioportal/portal.properties:ro",
-                    cbioportalDockerImage,
-                    "cbioportalImporter.py", "-s", "/study");
-        } else {
-            throw new CommandBuilderException("No Docker image or network has been specified in the application.properties.");
+        try {
+            ProcessBuilder loaderCmd;
+            if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
+                String propertiesFilePath = utils.getFile(cbioportalDockerPropertiesFile).getAbsolutePath();
+                String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
+                loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
+                "-v", studyDirPath + ":/study:ro",
+                "-v", propertiesFilePath+":/cbioportal/portal.properties:ro",
+                cbioportalDockerImage,
+                "cbioportalImporter.py", "-s", "/study");
+            } else {
+                throw new CommandBuilderException("No Docker image or network has been specified in the application.properties.");
+            }
+            return loaderCmd;
+        } catch (ResourceCollectionException e) {
+            throw new CommandBuilderException("CommandBuilder experiences File IO problems.", e);
         }
-        return loaderCmd;
     }
 }

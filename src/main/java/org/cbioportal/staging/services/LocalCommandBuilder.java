@@ -37,11 +37,13 @@ public class LocalCommandBuilder implements ICommandBuilder {
 
 	@Value("${portal.source:.}")
     private String portalSource;
-    
+
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
         try {
-            ProcessBuilder portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", utils.getFile(portalInfoFolder).toString());
+            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
+
+            ProcessBuilder portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoPath);
             portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
             return portalInfoCmd;
         } catch (ResourceCollectionException e) {
@@ -52,8 +54,12 @@ public class LocalCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildValidatorCommand(Resource studyPath, Resource portalInfoFolder, Resource reportFile) throws CommandBuilderException {
         try {
-            ProcessBuilder validationCmd = new ProcessBuilder("./validateData.py", "-s", utils.getFile(studyPath).getAbsolutePath(), "-p", 
-            portalInfoFolder.toString(), "-html", utils.getFile(reportFile).getAbsolutePath(), "-v");
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
+            String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
+            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
+
+            ProcessBuilder validationCmd = new ProcessBuilder("./validateData.py", "-s", studyDirPath, "-p",
+            portalInfoPath, "-html", reportFilePath, "-v");
             validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
             return validationCmd;
         } catch (ResourceCollectionException e) {
@@ -64,9 +70,10 @@ public class LocalCommandBuilder implements ICommandBuilder {
 	@Override
 	public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
 		try {
-		ProcessBuilder loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", utils.getFile(studyPath).getAbsolutePath());
-        loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
-        return loaderCmd;
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
+            ProcessBuilder loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyDirPath);
+            loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
+            return loaderCmd;
 		} catch (ResourceCollectionException e) {
 			throw new CommandBuilderException("File IO problem for 'studyPath' in command builder.", e);
 		}
