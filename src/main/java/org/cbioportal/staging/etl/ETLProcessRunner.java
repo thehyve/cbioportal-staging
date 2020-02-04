@@ -28,6 +28,7 @@ import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.AuthorizerService;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.PublisherService;
@@ -65,7 +66,7 @@ public class ETLProcessRunner {
 	private IRestarter restarterService;
 
 	@Autowired
-    private Authorizer authorizer;
+    private AuthorizerService authorizer;
 
     @Autowired
     private PublisherService publisher;
