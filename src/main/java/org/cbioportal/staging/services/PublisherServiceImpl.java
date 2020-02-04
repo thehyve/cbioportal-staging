@@ -56,7 +56,7 @@ public class PublisherServiceImpl implements PublisherService {
         }
     }
 
-    protected Resource publish(Resource file, String date) throws ResourceCollectionException {
+    private Resource publish(Resource file, String date) throws ResourceCollectionException {
 
         //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
 		if (centralShareLocationWebAddress == null) {
@@ -68,7 +68,7 @@ public class PublisherServiceImpl implements PublisherService {
         return utils.copyResource(centralShareLocationPath, file, file.getFilename());
     }
 
-    protected Resource getCentralShareLocationPath(Resource centralShareLocation, String date)
+    private Resource getCentralShareLocationPath(Resource centralShareLocation, String date)
             throws ResourceCollectionException {
         Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, date);
         if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {

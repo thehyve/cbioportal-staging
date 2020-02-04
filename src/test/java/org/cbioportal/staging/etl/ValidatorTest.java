@@ -92,7 +92,7 @@ public class ValidatorTest {
 	@Test
 	public void studyHasPassedValidationNoWarnings() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.SUCCESS);
+		boolean result = validator.hasStudyPassed(ExitStatus.SUCCESS);
 
 		assertEquals(true, result);
     }
@@ -100,7 +100,7 @@ public class ValidatorTest {
     @Test
 	public void studyHasFailedValidationWarningsWarning() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.WARNINGS);
+		boolean result = validator.hasStudyPassed(ExitStatus.WARNINGS);
 
 		assertEquals(false, result);
 	}
@@ -108,7 +108,7 @@ public class ValidatorTest {
 	@Test
 	public void studyHasFailedValidationWarningsError() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.ERRORS);
+		boolean result = validator.hasStudyPassed(ExitStatus.ERRORS);
 
 		assertEquals(false, result);
     }
@@ -116,7 +116,7 @@ public class ValidatorTest {
     @Test
 	public void studyHasPassedValidationErrorLevel() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.SUCCESS);
+		boolean result = validator.hasStudyPassed(ExitStatus.SUCCESS);
 
 		assertEquals(true, result);
 	}
@@ -124,7 +124,7 @@ public class ValidatorTest {
 	@Test
 	public void studyHasPassedValidationWithWarnings() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.WARNINGS);
+		boolean result = validator.hasStudyPassed(ExitStatus.WARNINGS);
 
 		assertEquals(true, result);
 	}
@@ -132,7 +132,7 @@ public class ValidatorTest {
 	@Test
 	public void studyHasPassedFailedWithErrors() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.ERRORS);
+		boolean result = validator.hasStudyPassed(ExitStatus.ERRORS);
 
 		assertEquals(false, result);
 	}
@@ -140,7 +140,7 @@ public class ValidatorTest {
 	@Test(expected=ValidatorException.class)
 	public void studyHasPassedWrongLevel() throws ValidatorException, ResourceCollectionException {
 
-		boolean result = validator.hasStudyPassed("study", "WRONG_LEVEL", ExitStatus.ERRORS);
+		boolean result = validator.hasStudyPassed(ExitStatus.ERRORS);
 
 		assertEquals(null, result);
     }

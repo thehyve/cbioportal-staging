@@ -46,7 +46,7 @@ public class Validator {
     private Map<String, Resource> logAndReportFiles = new HashMap<>();
     Map<String, Resource> dirsValidStudies = new HashMap<>();
 
-    boolean hasStudyPassed(String study, String validationLevel, ExitStatus exitStatus) throws ValidatorException {
+    boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
         if (validationLevel.equals("WARNING")) { // Load studies with no warnings and no errors
             if (exitStatus == ExitStatus.SUCCESS) {
                 return true;
@@ -79,7 +79,7 @@ public class Validator {
                 ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
                 validatedStudies.put(studyId, exitStatus);
 
-                if (exitStatus == ExitStatus.SUCCESS) {
+                if (hasStudyPassed(exitStatus)) {
                     dirsValidStudies.put(studyId, studyPath);
                     logger.info("Transformation of study "+studyId+" finished successfully.");
                 } else {

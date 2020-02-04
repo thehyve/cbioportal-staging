@@ -15,12 +15,14 @@ import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
+import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
 import org.junit.Test;
@@ -42,14 +44,17 @@ import freemarker.template.TemplateNotFoundException;
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
 public class IntegrationTestSuccess {
 
-    @MockBean
-    private EmailServiceImpl emailServiceImpl;
-
     @Autowired
     private ScheduledScanner scheduledScanner;
 
     @MockBean
+    private EmailServiceImpl emailServiceImpl;
+
+    @MockBean
     private IRestarter restarterService;
+
+    @SpyBean
+    private PublisherServiceImpl publisherService;
 
     @SpyBean
     private ValidatorServiceImpl validatorService;
@@ -62,8 +67,8 @@ public class IntegrationTestSuccess {
 
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-    IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException, RestarterException {
+            IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
+            ValidatorException, LoaderException, RestarterException, PublisherException {
 
         doNothing().when(restarterService).restart();
 
@@ -75,6 +80,7 @@ public class IntegrationTestSuccess {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
+        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
 
         verify(restarterService, times(1)).restart();
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());

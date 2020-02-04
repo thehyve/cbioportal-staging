@@ -15,12 +15,14 @@ import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
+import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
 import org.junit.Test;
@@ -38,11 +40,9 @@ import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties",
-                    properties = "scan.location=classpath:e2e_studies/es_1")
+@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties", properties = "scan.location=classpath:e2e_studies/es_1")
 public class IntegrationTestWarning {
 
     @MockBean
@@ -58,6 +58,9 @@ public class IntegrationTestWarning {
     private Validator validator;
 
     @SpyBean
+    private PublisherServiceImpl publisherService;
+
+    @SpyBean
     private ValidatorServiceImpl validatorService;
 
     @SpyBean
@@ -67,9 +70,9 @@ public class IntegrationTestWarning {
     private LoaderServiceImpl loaderService;
 
     @Test
-    public void throwValidationWarningsButLoad_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-    IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException, RestarterException {
+    public void throwValidationWarningsButLoad_es1() throws TemplateNotFoundException, MalformedTemplateNameException,
+            ParseException, IOException, TemplateException, InterruptedException, ConfigurationException,
+            TransformerException, ValidatorException, LoaderException, RestarterException, PublisherException {
 
         doNothing().when(restarterService).restart();
 
@@ -81,6 +84,7 @@ public class IntegrationTestWarning {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
+        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
@@ -92,7 +96,7 @@ public class IntegrationTestWarning {
     @Test
     public void throwValidationWarningsAndFail_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
     IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException, RestarterException {
+    ValidatorException, LoaderException, RestarterException, PublisherException {
 
         // set the validation level to not load studies when there is a validation warning
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
@@ -107,6 +111,7 @@ public class IntegrationTestWarning {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
+        verify(publisherService, times(1)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
