@@ -22,7 +22,7 @@ import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
-import org.cbioportal.staging.services.ValidationServiceImpl;
+import org.cbioportal.staging.services.ValidatorServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ public class IntegrationTestStudyFolderSuccess {
     private ScheduledScanner scheduledScanner;
 
     @SpyBean
-    private ValidationServiceImpl validationService;
+    private ValidatorServiceImpl validatorService;
 
     @SpyBean
     private TransformerServiceImpl transformationService;
@@ -74,7 +74,7 @@ public class IntegrationTestStudyFolderSuccess {
         assert(exitValue);
 
         verify(transformationService, never()).transform(any(), any(), any());
-        verify(validationService, times(1)).validate(any(), any(), any());
+        verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
 

@@ -21,7 +21,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.services.ValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class Validator {
     private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
     @Autowired
-    private ValidationService validationService;
+    private ValidatorService validatorService;
 
     @Autowired
     private ResourceUtils utils;
@@ -77,7 +77,7 @@ public class Validator {
                     logAndReportFiles.put(studyId+" validation log", logFile);
                     logAndReportFiles.put(studyId+" validation report", reportFile);
 
-                    ExitStatus exitStatus = validationService.validate(studyPath, reportFile, logFile);
+                    ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
                     validatedStudies.put(studyId, exitStatus);
 
                     if (exitStatus == ExitStatus.SUCCESS) {

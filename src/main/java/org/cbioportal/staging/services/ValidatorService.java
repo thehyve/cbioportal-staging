@@ -13,31 +13,14 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.etl;
+package org.cbioportal.staging.services;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.ValidationService;
-import org.springframework.boot.test.context.TestComponent;
 import org.springframework.core.io.Resource;
 
-@TestComponent
-public class ValidationServiceMockupImpl implements ValidationService {
+public interface ValidatorService {
 
-	private ExitStatus exitStatus;
-	private boolean throwError = false;
-
-	@Override
-	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException {
-		if (throwError) {
-			throw new ValidatorException("dummy test error");
-		}
-		return exitStatus;
-	}
-
-	public void reset() {
-		this.throwError = false;
-		this.exitStatus = ExitStatus.SUCCESS;
-	}
+	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException;
 
 }
