@@ -15,12 +15,11 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
-
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidationService;
 import org.springframework.boot.test.context.TestComponent;
+import org.springframework.core.io.Resource;
 
 @TestComponent
 public class ValidationServiceMockupImpl implements ValidationService {
@@ -29,7 +28,7 @@ public class ValidationServiceMockupImpl implements ValidationService {
 	private boolean throwError = false;
 
 	@Override
-	public ExitStatus validate(File studyPath, File reportFile, File logFile) throws ValidatorException {
+	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException {
 		if (throwError) {
 			throw new ValidatorException("dummy test error");
 		}

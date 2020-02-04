@@ -49,10 +49,10 @@ public class FolderStudyResourceResolverTest {
     public void testDetectStudyIdFromPath() throws ResourceCollectionException, FileNotFoundException, IOException {
 
         List<Resource> providedResources = new ArrayList<>();
-        providedResources.add(TestUtils.createResource("file:/study_folder/not_a_study_meta_file.txt", 0));
+        providedResources.add(TestUtils.createMockResource("file:/study_folder/not_a_study_meta_file.txt", 0));
         when(resourceProvider.list(any(),anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
 
-        Resource[] studyDirs = new Resource[] {TestUtils.createResource("file:/study_folder/", 1)};
+        Resource[] studyDirs = new Resource[] {TestUtils.createMockResource("file:/study_folder/", 1)};
         Map<String,String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.extractDirs(any())).thenReturn(studyDirs);
@@ -68,10 +68,10 @@ public class FolderStudyResourceResolverTest {
     public void testDetectStudyIdFromMetaFile() throws ResourceCollectionException, FileNotFoundException, IOException {
 
         List<Resource> providedResources = new ArrayList<>();
-        providedResources.add(TestUtils.createResource("file:/study_folder/meta_study.txt", 0));
+        providedResources.add(TestUtils.createMockResource("file:/study_folder/meta_study.txt", 0));
         when(resourceProvider.list(any(),anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
 
-        Resource[] studyDirs = new Resource[] {TestUtils.createResource("file:/study_folder/", 1)};
+        Resource[] studyDirs = new Resource[] {TestUtils.createMockResource("file:/study_folder/", 1)};
         Map<String,String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.readMetaFile(any())).thenReturn(metaFileContents);

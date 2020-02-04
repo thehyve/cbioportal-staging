@@ -15,107 +15,127 @@
 */
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.TransformerServiceImpl;
+import org.cbioportal.staging.services.resource.DefaultResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.TestUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.core.io.Resource;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { org.cbioportal.staging.etl.Transformer.class,
-        org.cbioportal.staging.etl.TransformerServiceMockupImpl.class,
-        org.cbioportal.staging.etl.PublisherServiceMockupImpl.class })
-@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {Transformer.class, TransformerServiceImpl.class, ResourceUtils.class, DefaultResourceProvider.class})
 public class TransformerTest {
 
     @Autowired
     private Transformer transformer;
 
     @MockBean
-    private ResourceUtils resourceUtils;
+    private TransformerServiceImpl transformerService;
 
-    @Test
-    public void studyWithTransformation() {
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+    @MockBean
+    private ResourceUtils utils;
 
-        File studyPath = new File("src/test/resources/transformer_tests/study1/");
-        boolean metaFileExists = transformer.metaFileExists(studyPath);
+    @MockBean
+    private DefaultResourceProvider provider;
 
-        // Build the expected outcome and check that is the same as the function output
-        assertEquals(false, metaFileExists);
+    @Before
+    public void init() throws ResourceCollectionException, IOException, TransformerException, ConfigurationException {
+        // mock utils.ensuredirs -> do nothing
+        doNothing().when(utils).ensureDirs(any(Resource.class));
+
+        // mock utils.getResource() -> return input
+        when(utils.getResource(any(Resource.class),anyString())).thenAnswer(i -> i.getArguments()[0]);
+
+        // mock utils.copyDirectory -> do nothing, check called
+        doNothing().when(utils).copyDirectory(any(Resource.class),any(Resource.class));
+
+        // mock transformerService.transform -> do nothing, check called
+        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+
+        // mock utils.createLogFiles -> return Resource mock that has getFile()
+        Resource logFile = TestUtils.createMockResource("file:/dummy_study_folder/log_file.txt", 0);
+        when(logFile.getFile()).thenReturn(null);
+        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(logFile);
     }
 
-    //Study 1, which goes through transformation, should be successfully returned as transformed:
     @Test
-    public void transformStudyWithTransformation() throws TransformerException {
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
 
-        String transformationCommand = "test";
-        Map<String, File> studies = new HashMap<String, File>();
-        studies.put("study1", new File("src/test/resources/transformer_tests/study1"));
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
+        // mock provider.list() -> return resource list that contains a meta_study file
+        Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
+        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
-        expectedResult.put("study1", ExitStatus.SUCCESS);
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
 
-        assertEquals(1, transformedStudy.size());
-        assertEquals(transformedStudy, expectedResult);
-	}
-
-    @Test
-	public void studyWithNoTransformation() {
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
-
-		File studyPath = new File("src/test/resources/transformer_tests/study2/");
-		boolean metaFileExists = transformer.metaFileExists(studyPath);
-
-		//Build the expected outcome and check that is the same as the function output
-		assertEquals(true, metaFileExists);
+        verify(utils, times(1)).copyDirectory(any(Resource.class),any(Resource.class));
+        verify(transformerService, never()).transform(any(Resource.class),any(Resource.class),any(Resource.class));
+        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.NOTRANSF);
+        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assert(transformer.getValidStudies().containsKey("dummy_study"));
     }
 
-    //Study 2, which skips transformation, should be successfully returned as (already) transformed:
     @Test
-    public void transformStudyWithNoTransformation() throws TransformerException {
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+    public void testTransform_studyThatNeedsTransformation()
+            throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
 
-        String transformationCommand = "test";
-        Map<String, File> studies = new HashMap<String, File>();
-        studies.put("study2", new File("src/test/resources/transformer_tests/study2"));
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        Map<String, ExitStatus> transformedStudy = transformer.transform(studies, transformationCommand);
+        // mock provider.list() -> return resource list that does not contain a meta_study file
+        Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
+        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> expectedResult = new HashMap<String, ExitStatus>();
-        expectedResult.put("study2", ExitStatus.NOTRANSF);
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
 
-        assertEquals(1, transformedStudy.size());
-        assertEquals(expectedResult, transformedStudy);
-	}
+        verify(utils, never()).copyDirectory(any(Resource.class),any(Resource.class));
+        verify(transformerService, times(1)).transform(any(Resource.class),any(Resource.class),any(Resource.class));
+        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
+        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assert(transformer.getValidStudies().containsKey("dummy_study"));
+    }
 
-	@Test
-	public void studyWithTransformationFakeMetaStudy() {
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+    @Test
+    public void testTransform_studyWithWarnings()
+            throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
 
-		File studyPath = new File("src/test/resources/transformer_tests/study3/");
-		boolean metaFileExists = transformer.metaFileExists(studyPath);
+        // mock provider.list() -> return resource list that does not contain a meta_study file
+        Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
+        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
 
-		//Build the expected outcome and check that is the same as the function output
-		assertEquals(false, metaFileExists);
+        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
+
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+
+        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNINGS);
+        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assertFalse(transformer.getValidStudies().containsKey("dummy_study"));
+    }
+
+    private Map<String,Resource> dummyStudyInput() {
+        Map<String,Resource> studyPaths = new HashMap<>();
+        Resource studyPath = TestUtils.createMockResource("file:/dummy_study_folder/", 0);
+        studyPaths.put("dummy_study", studyPath);
+        return studyPaths;
     }
 
 }

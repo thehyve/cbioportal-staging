@@ -100,42 +100,42 @@ public class ETLProcessRunner {
 			utils.ensureDirs(etlWorkingDir);
 
             //E (Extract) step:
-			Map<String,File> localResources = extractor.run(remoteResources);
+			Map<String,Resource> localResources = extractor.run(remoteResources);
 
 			if (! extractor.errorFiles().isEmpty()) {
 				emailService.emailStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
 			}
 
-			Map<String, String> logPaths = new HashMap<String, String>();
+			Map<String, Resource> logPaths = new HashMap<>();
 
 			//T (TRANSFORM) STEP:
-			Map<String, File> transformedStudiesPaths;
+			Map<String, Resource> transformedStudiesPaths;
 			// TODO add this condition in the V (alidate) block
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
                 Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(localResources, "command");
-                Map<String, String> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
+                Map<String, Resource> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
 					emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
                 }
-                transformedStudiesPaths = transformer.getValidStudies(localResources, transformedStudiesStatus);
+                transformedStudiesPaths = transformer.getValidStudies();
 			}
 
 			//V (VALIDATE) STEP:
 			if (! transformedStudiesPaths.isEmpty()) {
                 Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths);
-                Map<String, String> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
+                Map<String, Resource> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
 				emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
 
-				Map <String, File> studiesThatPassedValidation = validator.getValidStudies(validatedStudies, transformedStudiesPaths);
+				Map <String, Resource> studiesThatPassedValidation = validator.getValidStudies();
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
                     Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation);
-                    Map<String, String> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
+                    Map<String, Resource> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
                     logPaths.putAll(loadingLogFiles);
 					emailService.emailStudiesLoaded(loadResults, logPaths);
 

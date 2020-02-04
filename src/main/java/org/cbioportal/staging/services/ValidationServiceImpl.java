@@ -23,12 +23,14 @@ import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.etl.Validator;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -42,10 +44,10 @@ public class ValidationServiceImpl implements ValidationService {
 	private String cbioportalDockerImage;
 
 	@Value("${cbioportal.docker.network}")
-    private String cbioportalDockerNetwork;
+	private String cbioportalDockerNetwork;
 
-    @Value("${cbioportal.docker.properties}")
-    private File cbioportalDockerPropertiesFile;
+	@Value("${cbioportal.docker.properties}")
+	private File cbioportalDockerPropertiesFile;
 
 	@Value("${portal.source:.}")
 	private String portalSource;
@@ -54,51 +56,54 @@ public class ValidationServiceImpl implements ValidationService {
 	private ResourceUtils utils;
 
 	@Override
-	public ExitStatus validate(File studyPath, File reportFile, File logFile) throws ValidatorException {
+	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException {
 		try {
 			String propertiesFile = utils.stripResourceTypePrefix(cbioportalDockerPropertiesFile.getAbsolutePath());
-			File portalInfoFolder = new File(studyPath+"/portalInfo");
+			File portalInfoFolder = new File(studyPath + "/portalInfo");
 
 			ProcessBuilder validationCmd;
 			ProcessBuilder portalInfoCmd;
 			if (cbioportalMode.equals("local")) {
-				validationCmd = new ProcessBuilder("./validateData.py", "-s", studyPath.getAbsolutePath(), "-p", portalInfoFolder.toString(), "-html", reportFile.getAbsolutePath(), "-v");
+				validationCmd = new ProcessBuilder("./validateData.py", "-s",
+						utils.getFile(studyPath).getAbsolutePath(), "-p", portalInfoFolder.toString(), "-html",
+						utils.getFile(reportFile).getAbsolutePath(), "-v");
 				portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoFolder.toString());
-				portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
-				validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
+				portalInfoCmd.directory(new File(portalSource + "/core/src/main/scripts"));
+				validationCmd.directory(new File(portalSource + "/core/src/main/scripts/importer"));
 			} else if (cbioportalMode.equals("docker")) {
 				if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
-					//make sure report file exists first, otherwise docker will map it as a folder:
-					reportFile.getParentFile().mkdirs();
-					reportFile.createNewFile();
-					//docker command:
-					validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
-							"-v", studyPath.toString()+":/study:ro", "-v", reportFile.getAbsolutePath()+":/outreport.html",
-                            "-v", portalInfoFolder.toString()+ ":/portalinfo:ro",
-                            "-v", propertiesFile+":/cbioportal/portal.properties:ro", cbioportalDockerImage,
+					// make sure report file exists first, otherwise docker will map it as a folder:
+					utils.getFile(reportFile).getParentFile().mkdirs();
+					utils.getFile(reportFile).createNewFile();
+					// docker command:
+					validationCmd = new ProcessBuilder("docker", "run", "-i", "--rm", "-v",
+							studyPath.toString() + ":/study:ro", "-v",
+							utils.getFile(reportFile).getAbsolutePath() + ":/outreport.html", "-v",
+							portalInfoFolder.toString() + ":/portalinfo:ro", "-v",
+							propertiesFile + ":/cbioportal/portal.properties:ro", cbioportalDockerImage,
 							"validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
 
-					portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork,
-                            "-v", portalInfoFolder.toString()+":/portalinfo",
-                            "-v", propertiesFile+":/cbioportal/portal.properties:ro",
-                            "-w", "/cbioportal/core/src/main/scripts",
-							cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
+					portalInfoCmd = new ProcessBuilder("docker", "run", "--rm", "--net", cbioportalDockerNetwork, "-v",
+							portalInfoFolder.toString() + ":/portalinfo", "-v",
+							propertiesFile + ":/cbioportal/portal.properties:ro", "-w",
+							"/cbioportal/core/src/main/scripts", cbioportalDockerImage, "./dumpPortalInfo.pl",
+							"/portalinfo");
 				} else {
-					throw new ValidatorException("cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
+					throw new ValidatorException(
+							"cbioportal.mode is 'docker', but no Docker image or network has been specified in the application.properties.");
 				}
 			} else {
-				throw new ValidatorException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "+cbioportalMode+
-						". Please change the mode in the application.properties.");
+				throw new ValidatorException("cbioportal.mode is not 'local' or 'docker'. Value encountered: "
+						+ cbioportalMode + ". Please change the mode in the application.properties.");
 			}
 
 			logger.info("Dumping portalInfo...");
-			logger.info("Executing command: "+String.join(" ", portalInfoCmd.command()));
+			logger.info("Executing command: " + String.join(" ", portalInfoCmd.command()));
 			Process pInfo = portalInfoCmd.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
 			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				logger.warn(line);//TODO warn, since this is error stream output ^ ?
+			while ((line = reader.readLine()) != null) {
+				logger.warn(line);// TODO warn, since this is error stream output ^ ?
 			}
 			pInfo.waitFor();
 			if (pInfo.exitValue() != 0) {
@@ -107,35 +112,43 @@ public class ValidationServiceImpl implements ValidationService {
 
 			logger.info("Dump portalInfo finished. Continuing validation...");
 
-			//Apply validation command
-			logger.info("Starting validation. Report will be stored in: " + reportFile.getAbsolutePath());
-			logger.info("Executing command: "+String.join(" ", validationCmd.command()));
+			// Apply validation command
+			logger.info(
+					"Starting validation. Report will be stored in: " + utils.getFile(reportFile).getAbsolutePath());
+			logger.info("Executing command: " + String.join(" ", validationCmd.command()));
 			validationCmd.redirectErrorStream(true);
-			validationCmd.redirectOutput(Redirect.appendTo(logFile));
+			validationCmd.redirectOutput(Redirect.appendTo(utils.getFile(logFile)));
 			Process validateProcess = validationCmd.start();
-			validateProcess.waitFor(); //Wait until validation is finished
+			validateProcess.waitFor(); // Wait until validation is finished
 
-            //Interprete exit status of the process and return it
-            ExitStatus exitStatus = null;
-            if (validateProcess.exitValue() == 0) {
-                exitStatus = ExitStatus.SUCCESS;
-            } else if (validateProcess.exitValue() == 3) {
-                exitStatus = ExitStatus.WARNINGS;
-            } else {
-                exitStatus = ExitStatus.ERRORS;
-            }
-            return exitStatus;
+			// Interprete exit status of the process and return it
+			ExitStatus exitStatus = null;
+			if (validateProcess.exitValue() == 0) {
+				exitStatus = ExitStatus.SUCCESS;
+			} else if (validateProcess.exitValue() == 3) {
+				exitStatus = ExitStatus.WARNINGS;
+			} else {
+				exitStatus = ExitStatus.ERRORS;
+			}
+			return exitStatus;
 
 		} catch (IOException e) {
 			if (cbioportalMode.equals("docker")) {
-				throw new ValidatorException("Error during validation execution: check if Docker is installed, check whether the current"
-						+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.", e);
+				throw new ValidatorException(
+						"Error during validation execution: check if Docker is installed, check whether the current"
+								+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.",
+						e);
 			} else {
-				throw new ValidatorException("Check if portal source is correctly set in application.properties. Configured portal source is: "+portalSource, e);
+				throw new ValidatorException(
+						"Check if portal source is correctly set in application.properties. Configured portal source is: "
+								+ portalSource,
+						e);
 			}
 		} catch (InterruptedException e) {
-            throw new ValidatorException("The validation process has been interrupted by another process.", e);
-        }
+			throw new ValidatorException("The validation process has been interrupted by another process.", e);
+		} catch (ResourceCollectionException e) {
+			throw new ValidatorException("File IO error occured while validating study", e);
+		}
 	}
 
 }

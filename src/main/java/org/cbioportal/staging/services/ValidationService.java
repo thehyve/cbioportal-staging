@@ -15,13 +15,12 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
-
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.springframework.core.io.Resource;
 
 public interface ValidationService {
 
-	public ExitStatus validate(File studyPath, File reportFile, File logFile) throws ValidatorException;
+	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException;
 
 }

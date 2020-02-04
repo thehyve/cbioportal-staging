@@ -15,8 +15,6 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
@@ -26,6 +24,7 @@ import java.util.stream.Stream;
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -38,9 +37,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TransformerServiceImpl implements TransformerService {
-	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
+    private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-	@Value("${transformation.command.script:}")
+    @Value("${transformation.command.script:}")
     private String transformationCommandScript;
 
     @Autowired
@@ -49,49 +48,51 @@ public class TransformerServiceImpl implements TransformerService {
     @Autowired
     private ResourceUtils utils;
 
-	@Override
-	public ExitStatus transform(File untransformedFilesPath, File transformedFilesPath, File logFile) throws TransformerException, ConfigurationException, IOException {
+    @Override
+    public ExitStatus transform(Resource untransformedFilesPath, Resource transformedFilesPath, Resource logFile)
+            throws TransformerException, ConfigurationException, IOException {
 
         if (transformationCommandScript.equals("")) {
-            throw new TransformerException("No transformation command script has been specified in the application.properties.");
+            throw new TransformerException(
+                    "No transformation command script has been specified in the application.properties.");
         }
 
         List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
         Resource script = resourceResolver.getResource(command.get(0));
-        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource dir
+        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
+                                              // dir
 
-		try {
+        try {
             if (!script.exists()) {
-                throw new ConfigurationException("Transformation command script specified in the application.properties points does not exist at the indication location.");
+                throw new ConfigurationException(
+                        "Transformation command script specified in the application.properties points does not exist at the indication location.");
             }
-    
+
             if (script.getFile().isDirectory()) {
-                throw new ConfigurationException("Transformation command script specified in the application.properties points to directory.");
+                throw new ConfigurationException(
+                        "Transformation command script specified in the application.properties points to directory.");
             }
             String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
             command.set(0, scriptPath);
 
-            logger.info("Starting transformation for study: "+untransformedFilesPath.getName());
+            logger.info("Starting transformation for study: " + untransformedFilesPath.getFilename());
 
-            if (!transformedFilesPath.exists()) {
-                transformedFilesPath.mkdir();
-            }
+            utils.ensureDirs(transformedFilesPath);
 
-            //Build transformation command
-            Stream.of(  "-i", untransformedFilesPath.getAbsolutePath(),
-                        "-o", transformedFilesPath.getAbsolutePath())
-                        .forEach(e -> command.add(e));
+            // Build transformation command
+            Stream.of("-i", utils.getFile(untransformedFilesPath).getAbsolutePath(), "-o",
+                    utils.getFile(transformedFilesPath).getAbsolutePath()).forEach(e -> command.add(e));
 
-            //Run transformation command
+            // Run transformation command
             ProcessBuilder transformation = new ProcessBuilder(command);
             logger.info("Executing command: " + String.join(" ", transformation.command()));
             transformation.redirectErrorStream(true);
-            transformation.redirectOutput(Redirect.appendTo(logFile));
+            transformation.redirectOutput(Redirect.appendTo(utils.getFile(logFile)));
             Process transformationProcess = transformation.start();
 
             transformationProcess.waitFor();
 
-            //Interprete exit status of the process and return it
+            // Interprete exit status of the process and return it
             ExitStatus exitStatus = null;
             if (transformationProcess.exitValue() == 0) {
                 exitStatus = ExitStatus.SUCCESS;
@@ -102,10 +103,13 @@ public class TransformerServiceImpl implements TransformerService {
             }
             return exitStatus;
 
-		} catch (FileNotFoundException e) {
-			throw new TransformerException("The following file path was not found: "+untransformedFilesPath.getAbsolutePath(), e);
-		} catch (InterruptedException e) {
+            // } catch (FileNotFoundException e) {
+            // throw new TransformerException("The following file path was not found:
+            // "+utils.getFile(untransformedFilesPath).getAbsolutePath(), e);
+        } catch (InterruptedException e) {
             throw new TransformerException("The transformation process has been interrupted by another process.", e);
+        } catch (ResourceCollectionException e) {
+            throw new TransformerException("Could not read from Resource.", e);
         }
 	}
 }

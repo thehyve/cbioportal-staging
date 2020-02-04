@@ -13,17 +13,24 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.exceptions;
 
-import java.io.IOException;
+public class PublisherException extends Exception {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -5072243529310767969L;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.TransformerException;
-import org.springframework.core.io.Resource;
+	public PublisherException() {
+	}
 
-public interface TransformerService {
+	public PublisherException(String message, Exception e) {
+		super(message);
+	}
 
-	public ExitStatus transform(Resource originPath, Resource finalPath, Resource logFile) throws TransformerException, ConfigurationException, IOException;
+	public PublisherException(String message)
+	{
+		super(message);
+	}
 
 }

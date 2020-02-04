@@ -15,13 +15,12 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
-
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.springframework.core.io.Resource;
 
 public interface LoaderService {
-	
-	public ExitStatus load(File studyPath, File logFile) throws LoaderException;
+
+	public ExitStatus load(Resource studyPath, Resource logFile) throws LoaderException;
 
 }

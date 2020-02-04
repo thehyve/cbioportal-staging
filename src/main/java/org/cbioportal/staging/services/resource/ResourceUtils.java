@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,6 +136,14 @@ public class ResourceUtils {
 			}
 		}
 		return result;
+    }
+
+    public void copyDirectory(Resource sourceDir, Resource targetDir) throws ResourceCollectionException {
+        try {
+            FileUtils.copyDirectory(sourceDir.getFile(), targetDir.getFile());
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot copy directory: " + targetDir.getDescription());
+        }
     }
 
 

@@ -47,7 +47,7 @@ public class DefaultResourceCollectorServiceTest {
         Mockito.when(resourceFilter.filterResources(any())).thenAnswer(i -> i.getArguments()[0]);
     }
 
-    Resource fakeScanLocation = TestUtils.createResource("file:/tmp", 0);
+    Resource fakeScanLocation = TestUtils.createMockResource("file:/tmp", 0);
 
     @Test
     public void testGetResources_success() throws ResourceCollectionException, ConfigurationException {

@@ -67,7 +67,7 @@ public class DefaultResourceFilterTest {
 
     private Map<String, Resource[]> createResourceMap(String studyId, String ... fileNames) {
         List<Resource> resources = new ArrayList<>();
-        Stream.of(fileNames).forEach(e -> resources.add(TestUtils.createResource(e, 0)));
+        Stream.of(fileNames).forEach(e -> resources.add(TestUtils.createMockResource(e, 0)));
         Map<String, Resource[]> studyFiles = new HashMap<>();
         studyFiles.put(studyId, resources.toArray(new Resource[0]));
         return studyFiles;

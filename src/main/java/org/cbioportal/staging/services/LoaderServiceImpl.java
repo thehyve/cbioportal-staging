@@ -22,46 +22,52 @@ import java.lang.ProcessBuilder.Redirect;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoaderServiceImpl implements LoaderService {
     private static final Logger logger = LoggerFactory.getLogger(LoaderServiceImpl.class);
-    
+
     @Autowired
     private ICommandBuilder commandBuilder;
 
-	@Value("${cbioportal.mode}")
-	private String cbioportalMode;
+    @Value("${cbioportal.mode}")
+    private String cbioportalMode;
 
-	@Value("${cbioportal.docker.image}")
-	private String cbioportalDockerImage;
+    @Value("${cbioportal.docker.image}")
+    private String cbioportalDockerImage;
 
-	@Value("${cbioportal.docker.network}")
+    @Value("${cbioportal.docker.network}")
     private String cbioportalDockerNetwork;
 
     @Value("${cbioportal.docker.properties}")
     private File cbioportalDockerProperties;
 
-	@Value("${portal.source:.}")
-	private String portalSource;
+    @Value("${portal.source:.}")
+    private String portalSource;
 
-	@Override
-	public ExitStatus load(File studyPath, File logFile) throws LoaderException {
+    @Autowired
+    private ResourceUtils utils;
+
+    @Override
+    public ExitStatus load(Resource studyPath, Resource logFile) throws LoaderException {
         try {
             ProcessBuilder loaderCmd = commandBuilder.buildLoaderCommand(studyPath);
-            //Apply loader command
-            logger.info("Executing command: "+String.join(" ", loaderCmd.command()));
+            // Apply loader command
+            logger.info("Executing command: " + String.join(" ", loaderCmd.command()));
             loaderCmd.redirectErrorStream(true);
-            loaderCmd.redirectOutput(Redirect.appendTo(logFile));
+            loaderCmd.redirectOutput(Redirect.appendTo(utils.getFile(logFile)));
             Process loadProcess = loaderCmd.start();
-            loadProcess.waitFor(); //Wait until loading is finished
+            loadProcess.waitFor(); // Wait until loading is finished
 
-            //Interprete exit status of the process and return it
+            // Interprete exit status of the process and return it
             ExitStatus exitStatus = null;
             if (loadProcess.exitValue() == 0) {
                 exitStatus = ExitStatus.SUCCESS;
@@ -72,10 +78,14 @@ public class LoaderServiceImpl implements LoaderService {
         } catch (InterruptedException e) {
             throw new LoaderException("The loading process has been interrupted by another process.", e);
         } catch (IOException e) {
-            throw new LoaderException("The working directory specified in the command or the transformation script file do not exist, "+
-                "or you do not have permissions to work with the transformation script file.", e);
+            throw new LoaderException(
+                    "The working directory specified in the command or the transformation script file do not exist, "
+                            + "or you do not have permissions to work with the transformation script file.",
+                    e);
         } catch (CommandBuilderException e) {
             throw new LoaderException("A problem has occurred when building the loading command", e);
+        } catch (ResourceCollectionException e) {
+            throw new LoaderException("File IO problem during running of the Loader", e);
         }
 
 	}

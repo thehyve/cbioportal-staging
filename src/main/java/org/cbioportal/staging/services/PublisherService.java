@@ -15,16 +15,13 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
+
+import org.cbioportal.staging.exceptions.PublisherException;
+import org.springframework.core.io.Resource;
 
 public interface PublisherService {
 
-    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException;
-
-    public void copyToResource(File reportPath, String centralShareLocation) throws IOException;
-
-    public String getCentralShareLocationPath(String centralShareLocation, String date);
+    public Map<String, Resource> publish(String date, Map<String, Resource> initialLogFiles) throws PublisherException;
 
 }

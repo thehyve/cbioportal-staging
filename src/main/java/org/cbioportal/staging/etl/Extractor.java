@@ -30,6 +30,7 @@ import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ExtractionException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
 
 /*
 	Copies all files from scan.location to the etl.working.directory.
@@ -53,34 +53,37 @@ class Extractor {
 	private Integer timeRetry;
 
 	@Autowired
-    private ResourceUtils utils;
+	private ResourceUtils utils;
 
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
-	public Map<String,File> run(Map<String, Resource[]> resources) throws ExtractionException {
+	public Map<String, Resource> run(Map<String, Resource[]> resources) throws ExtractionException {
 
-		Map<String,File> out = new HashMap<String,File>();
+		Map<String, Resource> out = new HashMap<>();
 
 		try {
 
-			if (! etlWorkingDir.exists()) {
-				throw new ExtractionException("etl.working.dir does not exist on the local file system: " + etlWorkingDir);
+			if (!etlWorkingDir.exists()) {
+				throw new ExtractionException(
+						"etl.working.dir does not exist on the local file system: " + etlWorkingDir);
 			}
 			if (etlWorkingDir.isFile()) {
-				throw new ExtractionException("etl.working.dir points to a file on the local file system, but should point to a directory.: " + etlWorkingDir);
+				throw new ExtractionException(
+						"etl.working.dir points to a file on the local file system, but should point to a directory.: "
+								+ etlWorkingDir);
 			}
 
 			// TODO make abstraction of organization of local working dir
 			String workingDir = etlWorkingDir.getAbsolutePath() + "/" + utils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
 
-			for (Entry<String,Resource[]> studyResources: resources.entrySet()) {
+			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
 
 				String studyId = studyResources.getKey();
 				String studyDir = workingDir + studyId + "/";
 				String remoteBasePath = getBasePathResources(studyResources.getValue());
 
 				List<String> errorFiles = new ArrayList<>();
-				for (Resource remoteResource: studyResources.getValue()) {
+				for (Resource remoteResource : studyResources.getValue()) {
 
 					String fullOriginalFilePath = remoteResource.getURI().toString();
 					String remoteFilePath = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
@@ -93,7 +96,7 @@ class Extractor {
 
 				// register successfully extracted study
 				if (errorFiles.isEmpty()) {
-					out.put(studyId, new File(studyDir));
+					out.put(studyId, utils.getResource(studyDir));
 				} else {
 					filesNotFound.put(studyId, errorFiles);
 				}
@@ -105,13 +108,16 @@ class Extractor {
 			throw new ExtractionException(e.getMessage(), e);
 		} catch (InterruptedException e) {
 			throw new ExtractionException("Timeout for resource downloads was interrupted.", e);
+		} catch (ResourceCollectionException e) {
+			throw new ExtractionException("Cannot copy Resource.", e);
 		}
 
 		logger.info("Extractor step finished");
-        return out;
+		return out;
 	}
 
-	private Resource attemptCopyResource(String destination, Resource resource, String remoteFilePath) throws InterruptedException {
+	private Resource attemptCopyResource(String destination, Resource resource, String remoteFilePath)
+			throws InterruptedException, ResourceCollectionException {
 		int i = 1;
 		int times = 5;
 		Resource r = null;

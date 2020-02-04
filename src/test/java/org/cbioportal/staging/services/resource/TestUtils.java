@@ -6,11 +6,18 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.URL;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TestUtils {
 
-    public static Resource createResource(String fileName, int number) {
+    @Autowired
+    private static ResourcePatternResolver resourceResolver;
+
+    public static Resource createMockResource(String fileName, int number) {
         Resource r = mock(Resource.class);
         try {
             long modifiedDate = (long) number;
@@ -25,7 +32,7 @@ public class TestUtils {
     }
 
     public static Resource createResource(String prefix, String extension, int number) {
-        return createResource("file:/"+prefix+"_"+String.valueOf(number)+"."+extension, number);
+        return createMockResource("file:/"+prefix+"_"+String.valueOf(number)+"."+extension, number);
     }
 
 }

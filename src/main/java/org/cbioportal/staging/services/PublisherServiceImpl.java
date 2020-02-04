@@ -15,25 +15,16 @@
 */
 package org.cbioportal.staging.services;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.WritableResource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
-
 
 /*
     Calls a command when study loading is finished.
@@ -41,28 +32,31 @@ import org.springframework.stereotype.Component;
 @Component
 public class PublisherServiceImpl implements PublisherService {
 
-	private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
+    @Value("${central.share.location}")
+    private Resource centralShareLocation;
 
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-
-	@Value("${central.share.location.web.address:}")
-	private String centralShareLocationWebAddress;
+    @Value("${central.share.location.web.address:}")
+    private Resource centralShareLocationWebAddress;
 
     @Autowired
-    private ResourcePatternResolver resourcePatternResolver;
+    private ResourceUtils utils;
 
-    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException {
-        Map<String, String> finalLogFiles = new HashMap<String, String>();
-        for (String logName : initialLogFiles.keySet()) {
-            File initialLogFile = initialLogFiles.get(logName);
-            String finalLogFile = publish(initialLogFile, date);
-            finalLogFiles.put(logName, finalLogFile);
+    public Map<String, Resource> publish(String date, Map<String, Resource> initialLogFiles) throws PublisherException {
+        try {
+            Map<String, Resource> finalLogFiles = new HashMap<>();
+            for (String logName : initialLogFiles.keySet()) {
+                Resource initialLogFile = initialLogFiles.get(logName);
+                Resource finalLogFile;
+                finalLogFile = publish(initialLogFile, date);
+                finalLogFiles.put(logName, finalLogFile);
+            }
+            return finalLogFiles;
+        } catch (ResourceCollectionException e) {
+            throw new PublisherException("Could not publish log files");
         }
-        return finalLogFiles;
     }
 
-	private String publish(File file, String date) throws IOException {
+    protected Resource publish(Resource file, String date) throws ResourceCollectionException {
 
         //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
 		if (centralShareLocationWebAddress.equals("")) {
@@ -70,41 +64,15 @@ public class PublisherServiceImpl implements PublisherService {
         }
 
         //Get Central Share Location Path and copy the file to the path
-        String centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
-        copyToResource(file, centralShareLocationPath);
-
-        //Return the path where the file has been copied
-		return centralShareLocationWebAddress+"/"+date+"/"+file.getName();
+        Resource centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
+        return utils.copyResource(centralShareLocationPath, file, file.getFilename());
     }
 
-    public void copyToResource(File filePath, String resourceOut) throws IOException { //TODO: isn't this method overlapping with the one in ResourceUtils?
-		String resourcePath = resourceOut+"/"+filePath.getName();
-		Resource resource;
-		if (resourcePath.startsWith("file:")) {
-			resource = new FileSystemResource(resourcePath.replace("file:", ""));
-		}
-		else {
-			resource = this.resourcePatternResolver.getResource(resourcePath);
-        }
-		WritableResource writableResource = (WritableResource) resource;
-        try (OutputStream outputStream = writableResource.getOutputStream();
-            InputStream inputStream = new FileInputStream(filePath)) {
-                IOUtils.copy(inputStream, outputStream);
-		}
-    }
-
-    public String getCentralShareLocationPath(String centralShareLocation, String date) {
-        String centralShareLocationPath = centralShareLocation+"/"+date;
-        if (!centralShareLocationPath.startsWith("s3:")) {
-            File cslPath = new File(centralShareLocation+"/"+date);
-            if (centralShareLocationPath.startsWith("file:")) {
-                cslPath = new File(centralShareLocationPath.replace("file:", ""));
-            }
-            logger.info("Central Share Location path: "+cslPath.getAbsolutePath());
-            //If the Central Share Location path does not exist, create it:
-            if (!cslPath.exists()) {
-                cslPath.mkdirs();
-            }
+    protected Resource getCentralShareLocationPath(Resource centralShareLocation, String date)
+            throws ResourceCollectionException {
+        Resource centralShareLocationPath = utils.getResource(centralShareLocation, date);
+        if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
+            utils.ensureDirs(centralShareLocation);
         }
         return centralShareLocationPath;
     }

@@ -15,39 +15,47 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.PublisherServiceImpl;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestComponent;
+import org.springframework.core.io.Resource;
 
 @TestComponent
 public class PublisherServiceMockupImpl extends PublisherServiceImpl {
 
     @Value("${central.share.location}")
-    private String centralShareLocation;
+    private Resource centralShareLocation;
 
-    public Map<String, String> publish(String date, Map<String, File> initialLogFiles) throws IOException {
-        Map<String, String> finalLogFiles = new HashMap<String, String>();
-        for (String logName : initialLogFiles.keySet()) {
-            File initialLogFile = initialLogFiles.get(logName);
-            String finalLogFile = publish(initialLogFile, date);
-            finalLogFiles.put(logName, finalLogFile);
+    @Autowired
+    private ResourceUtils utils;
+
+    @Override
+    public Map<String, Resource> publish(String date, Map<String, Resource> initialLogFiles)
+            throws PublisherException {
+        try {
+            Map<String, Resource> finalLogFiles = new HashMap<>();
+            for (String logName : initialLogFiles.keySet()) {
+                Resource initialLogFile = initialLogFiles.get(logName);
+                Resource finalLogFile = this.publish(initialLogFile, date);
+                finalLogFiles.put(logName, finalLogFile);
+            }
+            return finalLogFiles;
+        } catch (ResourceCollectionException e) {
+            throw new PublisherException("Could not publish log files");
         }
-        return finalLogFiles;
-    }
-
-    public String publish(File file, String date) throws IOException {
-        String centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
-        return centralShareLocationPath+"/"+file.getName();
     }
 
     @Override
-    public String getCentralShareLocationPath(String centralShareLocation, String date) {
-        return centralShareLocation+"/"+date;
+    protected Resource publish(Resource file, String date) throws ResourceCollectionException {
+        Resource centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
+        return utils.getResource(centralShareLocationPath, utils.getFile(file).getName());
     }
 
 }

@@ -19,19 +19,21 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.LoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.TestUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -48,13 +50,13 @@ public class LoaderTest {
     private ResourceUtils resourceUtils;
 
     @Test
-    public void studyLoaded() throws LoaderException {
+    public void studyLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS);
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
-        Map<String, File> studies = new HashMap<String, File>();
-        studies.put("lgg_ucsf_2014", new File("test/path"));
+        Map<String, Resource> studies = new HashMap<>();
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
         Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -62,14 +64,14 @@ public class LoaderTest {
     }
 
     @Test
-    public void multipleStudiesLoaded() throws LoaderException {
+    public void multipleStudiesLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(File.class), any(File.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
-        when(resourceUtils.createLogFile(any(String.class), any(File.class), any(String.class))).thenReturn(null);
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
+        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
-        Map<String, File> studies = new HashMap<String, File>();
-        studies.put("lgg_ucsf_2014", new File("test/path"));
-        studies.put("study_with_errors", new File("test/path2"));
+        Map<String, Resource> studies = new HashMap<>();
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        studies.put("study_with_errors", TestUtils.createMockResource("test/path2", 1));
         Map<String, ExitStatus> loadedStudies = loader.load(studies);
         Map<String, ExitStatus> expectedLoadedStudies = new HashMap<String, ExitStatus>();
         expectedLoadedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);

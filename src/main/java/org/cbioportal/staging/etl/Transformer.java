@@ -15,18 +15,19 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.TransformerService;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,89 +38,83 @@ public class Transformer {
     private TransformerService transformerService;
 
     @Autowired
-    private ResourceUtils resourceUtils;
+    private ResourceUtils utils;
+
+    @Autowired
+    private IResourceProvider provider;
 
     public enum ExitStatus {
-        SUCCESS, WARNINGS, ERRORS, NOTRANSF; //TODO - Remove "no transformation" option from this file and move it up to ETLProcessRunner
+        SUCCESS, WARNINGS, ERRORS, NOTRANSF; // TODO - Remove "no transformation" option from this file and move it up
+                                             // to ETLProcessRunner
     }
 
-    private Map<String, File> logFiles = new HashMap<String, File>();
+    private Map<String, Resource> logFiles = new HashMap<>();
+    private Map<String, Resource> dirsValidStudies = new HashMap<>();
 
-    boolean metaFileExists(File originPath) {
-        File metaStudyFile = new File(originPath + "/meta_study.txt");
-        if (metaStudyFile.exists() && metaStudyFile.isFile()) {
-            return true;
-        }
-        return false;
+    private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
+        Resource[] studyFiles = provider.list(originPath);
+        return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
+        // Resource metaStudyFile = utils.getResource(originPath, "meta_study.txt");
+        // return metaStudyFile != null && metaStudyFile.exists() && utils.isFile(metaStudyFile);
     }
 
-    File getTransformedFilesPath(File untransformedFilesPath) {
-        File transformedFilesPath = new File(untransformedFilesPath + "/staging");
-        if (!transformedFilesPath.exists()) {
-            transformedFilesPath.mkdir();
-        }
+    private Resource getTransformedFilesPath(Resource untransformedFilesPath) throws ResourceCollectionException {
+        Resource transformedFilesPath = utils.getResource(untransformedFilesPath, "staging");
+        utils.ensureDirs(untransformedFilesPath);
         return transformedFilesPath;
     }
 
-    Map<String, ExitStatus> transform(Map<String, File> studyPaths, String transformationCommand) throws TransformerException {
+    public Map<String, ExitStatus> transform(Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
 
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 
         for (String studyId : studyPaths.keySet()) {
 
-            File untransformedFilesPath = studyPaths.get(studyId);
-            File transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
-
-            ExitStatus transformationStatus = null;
-            File logFile = resourceUtils.createLogFile(studyId, transformedFilesPath, "transformation_log.txt");
-            logFiles.put(studyId+" loading log", logFile);
+            ExitStatus transformationStatus = ExitStatus.SUCCESS;
+            Resource transformedFilesPath;
             try {
+                Resource untransformedFilesPath = studyPaths.get(studyId);
+                transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
+
+                Resource logFile = utils.createLogFile(studyId, transformedFilesPath, "transformation_log.txt");
+                logFiles.put(studyId+" loading log", logFile);
+
                 if (metaFileExists(untransformedFilesPath)) {
-                    try {
-                        FileUtils.copyDirectory(untransformedFilesPath, transformedFilesPath);
-                    } catch (IOException e) {
-                        throw new TransformerException("The untransformed files path "
-                                + untransformedFilesPath.getAbsolutePath() + " or the transformed files path "
-                                + transformedFilesPath.getAbsolutePath() + " do not exist.", e);
-                    } finally {
-                        transformationStatus = ExitStatus.NOTRANSF;
-                    }
+                    utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
+                    transformationStatus = ExitStatus.NOTRANSF;
                 } else {
-                    transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath,
-                            logFile);
+                    transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
                 }
+
             } catch (Exception e) {
                 throw new TransformerException(e);
-            } finally {
-                //Add status of the validation for the study
-                statusStudies.put(studyId, transformationStatus);
-                if (transformationStatus == ExitStatus.SUCCESS) {
-                    logger.info("Transformation of study "+studyId+" finished successfully.");
-                } else if (transformationStatus == ExitStatus.WARNINGS) {
-                    logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
-                } else if (transformationStatus == ExitStatus.NOTRANSF) {
-                    logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
-                } else {
-                    logger.error("Transformation process of study "+studyId+" failed.");
-                }
             }
+
+            //Add status of the validation for the study
+            statusStudies.put(studyId, transformationStatus);
+            if (transformationStatus == ExitStatus.SUCCESS) {
+                dirsValidStudies.put(studyId, transformedFilesPath);
+                logger.info("Transformation of study "+studyId+" finished successfully.");
+            } else if (transformationStatus == ExitStatus.WARNINGS) {
+                logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
+            } else if (transformationStatus == ExitStatus.NOTRANSF) {
+                dirsValidStudies.put(studyId, transformedFilesPath);
+                logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
+            } else {
+                logger.error("Transformation process of study "+studyId+" failed.");
+            }
+
         }
+
         logger.info("Transformation step finished.");
         return statusStudies;
     }
 
-    Map<String, File> getLogFiles() {
+    public Map<String, Resource> getLogFiles() {
         return logFiles;
     }
 
-    Map<String, File> getValidStudies(Map<String, File> studyPaths, Map<String, ExitStatus> transformedStudiesStatus) {
-        Map<String, File> transformedFilesPaths = new HashMap<String, File>();
-        for (String studyId : transformedStudiesStatus.keySet()) {
-            if (transformedStudiesStatus.get(studyId).equals(ExitStatus.SUCCESS) || transformedStudiesStatus.get(studyId).equals(ExitStatus.WARNINGS)) {
-                File untransformedFilesPath = studyPaths.get(studyId);
-                transformedFilesPaths.put(studyId, getTransformedFilesPath(untransformedFilesPath));
-            }
-        }
-        return transformedFilesPaths;
+    public Map<String, Resource> getValidStudies() {
+        return dirsValidStudies;
     }
 }

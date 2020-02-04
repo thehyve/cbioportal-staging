@@ -19,22 +19,24 @@ import java.io.File;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
 
 @Component
 public class DockerCommandBuilder implements ICommandBuilder {
 
-	@Value("${cbioportal.docker.image}")
-	private String cbioportalDockerImage;
+    @Value("${cbioportal.docker.image}")
+    private String cbioportalDockerImage;
 
-	@Value("${cbioportal.docker.network}")
+    @Value("${cbioportal.docker.network}")
     private String cbioportalDockerNetwork;
 
     @Value("${cbioportal.docker.properties}")
     private File cbioportalDockerProperties;
 
-	@Override
-	public ProcessBuilder buildLoaderCommand(File studyPath) throws CommandBuilderException {
+    @Override
+    public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         ProcessBuilder loaderCmd;
         if (!cbioportalDockerImage.equals("") && !cbioportalDockerNetwork.equals("")) {
             loaderCmd = new ProcessBuilder ("docker", "run", "-i", "--rm", "--net", cbioportalDockerNetwork,
