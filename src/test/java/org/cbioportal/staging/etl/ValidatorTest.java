@@ -178,7 +178,7 @@ public class ValidatorTest {
         logPaths.put("lgg_ucsf_2014 validation report", null);
         assertEquals(logPaths, validator.getLogAndReportFiles());
     }
-
+    
     @Test
 	public void multipleStudiesValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);
