@@ -55,7 +55,7 @@ public class PublisherServiceMockupImpl extends PublisherServiceImpl {
     @Override
     protected Resource publish(Resource file, String date) throws ResourceCollectionException {
         Resource centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
-        return utils.getResource(centralShareLocationPath, utils.getFile(file).getName());
+        return utils.createFileResource(centralShareLocationPath, utils.getFile(file).getName());
     }
 
 }

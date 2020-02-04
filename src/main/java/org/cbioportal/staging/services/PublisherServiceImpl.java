@@ -70,7 +70,7 @@ public class PublisherServiceImpl implements PublisherService {
 
     protected Resource getCentralShareLocationPath(Resource centralShareLocation, String date)
             throws ResourceCollectionException {
-        Resource centralShareLocationPath = utils.getResource(centralShareLocation, date);
+        Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, date);
         if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
             utils.ensureDirs(centralShareLocation);
         }

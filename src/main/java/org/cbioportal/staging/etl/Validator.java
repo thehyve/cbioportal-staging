@@ -71,22 +71,21 @@ public class Validator {
                 logger.info("Starting validation of study " + studyId);
                 Resource studyPath = studyPaths.get(studyId);
 
-                Resource logFile;
-                    logFile = utils.createLogFile(studyId, studyPath, "validation_log.txt");
-                    Resource reportFile = utils.createLogFile(studyId, studyPath, "validation_report.txt");
-                    logAndReportFiles.put(studyId+" validation log", logFile);
-                    logAndReportFiles.put(studyId+" validation report", reportFile);
+                Resource logFile = utils.createFileResource(studyPath, studyId + "_validation_log.txt");
+                Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.txt");
+                logAndReportFiles.put(studyId+" validation log", logFile);
+                logAndReportFiles.put(studyId+" validation report", reportFile);
 
-                    ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
-                    validatedStudies.put(studyId, exitStatus);
+                ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
+                validatedStudies.put(studyId, exitStatus);
 
-                    if (exitStatus == ExitStatus.SUCCESS) {
-                        dirsValidStudies.put(studyId, studyPath);
-                        logger.info("Transformation of study "+studyId+" finished successfully.");
-                    } else {
-                        logger.info("Validation of study "+studyId+" finished unsuccessfully");
-                    }
+                if (exitStatus == ExitStatus.SUCCESS) {
+                    dirsValidStudies.put(studyId, studyPath);
+                    logger.info("Transformation of study "+studyId+" finished successfully.");
+                } else {
+                    logger.info("Validation of study "+studyId+" finished unsuccessfully");
                 }
+            }
         } catch (ResourceCollectionException e) {
             throw new ValidatorException("Error occured while validating studies.", e);
         }

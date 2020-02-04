@@ -51,7 +51,7 @@ public class Loader {
                 logger.info("Starting loading of study " + studyId + ". This can take some minutes.");
                 final Resource studyPath = studyPaths.get(studyId);
                 Resource logFile;
-                logFile = utils.createLogFile(studyId, studyPath, "loading_log.txt");
+                logFile = utils.createFileResource(studyPath, studyId + "_loading_log.txt");
                 logFiles.put(studyId+" loading log", logFile);
                 ExitStatus loadingStatus = loaderService.load(studyPath, logFile);
                 //Add loading result for the email loading report

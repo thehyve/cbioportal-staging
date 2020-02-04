@@ -59,7 +59,7 @@ public class Transformer {
     }
 
     private Resource getTransformedFilesPath(Resource untransformedFilesPath) throws ResourceCollectionException {
-        Resource transformedFilesPath = utils.getResource(untransformedFilesPath, "staging");
+        Resource transformedFilesPath = utils.createDirResource(untransformedFilesPath, "staging");
         utils.ensureDirs(untransformedFilesPath);
         return transformedFilesPath;
     }
@@ -76,7 +76,7 @@ public class Transformer {
                 Resource untransformedFilesPath = studyPaths.get(studyId);
                 transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
 
-                Resource logFile = utils.createLogFile(studyId, transformedFilesPath, "transformation_log.txt");
+                Resource logFile = utils.createFileResource(transformedFilesPath, studyId + "_transformation_log.txt");
                 logFiles.put(studyId+" loading log", logFile);
 
                 if (metaFileExists(untransformedFilesPath)) {

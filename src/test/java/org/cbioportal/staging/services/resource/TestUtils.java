@@ -6,16 +6,11 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.URL;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TestUtils {
-
-    @Autowired
-    private static ResourcePatternResolver resourceResolver;
 
     public static Resource createMockResource(String fileName, int number) {
         Resource r = mock(Resource.class);

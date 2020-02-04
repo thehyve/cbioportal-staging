@@ -67,7 +67,7 @@ public class TransformerTest {
         doNothing().when(utils).ensureDirs(any(Resource.class));
 
         // mock utils.getResource() -> return input
-        when(utils.getResource(any(Resource.class),anyString())).thenAnswer(i -> i.getArguments()[0]);
+        when(utils.createDirResource(any(Resource.class),anyString())).thenAnswer(i -> i.getArguments()[0]);
 
         // mock utils.copyDirectory -> do nothing, check called
         doNothing().when(utils).copyDirectory(any(Resource.class),any(Resource.class));
@@ -78,7 +78,7 @@ public class TransformerTest {
         // mock utils.createLogFiles -> return Resource mock that has getFile()
         Resource logFile = TestUtils.createMockResource("file:/dummy_study_folder/log_file.txt", 0);
         when(logFile.getFile()).thenReturn(null);
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(logFile);
+        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(logFile);
     }
 
     @Test

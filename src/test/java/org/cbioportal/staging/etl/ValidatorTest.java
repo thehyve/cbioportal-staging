@@ -24,6 +24,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,12 @@ public class ValidatorTest {
     private ValidatorService validatorService;
 
     @MockBean
-    private ResourceUtils utils;
+	private ResourceUtils utils;
+
+	@Before
+	public void init() throws ResourceCollectionException {
+        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
+	}
 
     //Tests for "validate" and its associate methods
 	// @Test
@@ -85,16 +91,14 @@ public class ValidatorTest {
     //Tests for "hasStudyPassed" method
 	@Test
 	public void studyHasPassedValidationNoWarnings() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.SUCCESS);
 
 		assertEquals(true, result);
     }
-    
+
     @Test
 	public void studyHasFailedValidationWarningsWarning() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.WARNINGS);
 
@@ -103,16 +107,14 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasFailedValidationWarningsError() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "WARNING", ExitStatus.ERRORS);
 
 		assertEquals(false, result);
     }
-    
+
     @Test
 	public void studyHasPassedValidationErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.SUCCESS);
 
@@ -121,7 +123,6 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasPassedValidationWithWarnings() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.WARNINGS);
 
@@ -130,7 +131,6 @@ public class ValidatorTest {
 
 	@Test
 	public void studyHasPassedFailedWithErrors() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "ERROR", ExitStatus.ERRORS);
 
@@ -139,7 +139,6 @@ public class ValidatorTest {
 
 	@Test(expected=ValidatorException.class)
 	public void studyHasPassedWrongLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
 		boolean result = validator.hasStudyPassed("study", "WRONG_LEVEL", ExitStatus.ERRORS);
 

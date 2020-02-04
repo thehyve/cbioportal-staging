@@ -28,6 +28,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.LoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.TestUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +50,15 @@ public class LoaderTest {
     @MockBean
     private ResourceUtils resourceUtils;
 
+    @Before
+    public void init() throws ResourceCollectionException {
+        when(resourceUtils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
+    }
+
     @Test
     public void studySuccessfullyLoaded() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
-        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
@@ -97,7 +102,6 @@ public class LoaderTest {
     public void multipleStudiesLoadedWithErrors() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
-        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));

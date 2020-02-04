@@ -146,12 +146,11 @@ public class ResourceUtils {
         }
     }
 
-
 	public Resource copyResource(String destination, InputStreamSource resource, String remoteFilePath)
             throws ResourceCollectionException {
 		try {
-        InputStream inputStream = resource.getInputStream();
-		String fullDestinationPath = destination + remoteFilePath;
+            InputStream inputStream = resource.getInputStream();
+            String fullDestinationPath = destination + remoteFilePath;
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
             Files.copy(inputStream, Paths.get(fullDestinationPath));
             inputStream.close();
@@ -165,7 +164,6 @@ public class ResourceUtils {
             throws ResourceCollectionException {
         return copyResource(getURL(destination).toString(), resource, remoteFilePath);
     }
-
 
     public void ensureDirs(File path) {
 		if (!path.exists()) {
@@ -187,30 +185,34 @@ public class ResourceUtils {
 		ensureDirs(new File(path));
     }
 
-    public Resource createLogFile(String studyId, Resource studyPath, String logPrefix)
-            throws ResourceCollectionException {
-        String logName = studyId + "_" + logPrefix;
-        try {
-            Resource logFile = studyPath.createRelative(studyPath + "/" + logName);
-            // File logFile = new File(studyPath + "/" + logName);
-            return logFile;
-        } catch (IOException e) {
-            throw new ResourceCollectionException("Cannot create relative path: " + studyPath.getDescription());
-        }
-    }
-
 	public Resource getResource(String path) {
 		return resourcePatternResolver.getResource(path);
 	}
 
-	public Resource getResource(Resource basePath, String ... fileElements)
+	public Resource createFileResource(Resource basePath, String ... fileElements)
             throws ResourceCollectionException {
         try {
-            return basePath.createRelative(Stream.of(fileElements).collect(Collectors.joining("/")));
+            String base = basePath.getURL().toString();
+            Resource res = getResource(base + Stream.of(fileElements).collect(Collectors.joining("/")));
+            res.getFile().createNewFile();
+            return res;
         } catch (IOException e) {
-            throw new ResourceCollectionException("Cannot create relative path: " + basePath.getDescription());
+            throw new ResourceCollectionException("Cannot create new file Resource: " + basePath.getDescription());
         }
     }
+
+	public Resource createDirResource(Resource basePath, String ... fileElements)
+            throws ResourceCollectionException {
+        try {
+            String base = basePath.getURL().toString();
+            Resource res = getResource(base + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
+            ensureDirs(res);
+            return res;
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot create new directory Resource: " + basePath.getDescription());
+        }
+    }
+
 
     public boolean isFile(Resource resource) throws ResourceCollectionException {
         try {

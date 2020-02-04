@@ -15,7 +15,6 @@
  */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +46,7 @@ class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
 	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private File etlWorkingDir;
+	private Resource etlWorkingDir;
 
 	@Value("${scan.retry.time:5}")
 	private Integer timeRetry;
@@ -67,19 +66,20 @@ class Extractor {
 				throw new ExtractionException(
 						"etl.working.dir does not exist on the local file system: " + etlWorkingDir);
 			}
-			if (etlWorkingDir.isFile()) {
+			if (utils.isFile(etlWorkingDir)) {
 				throw new ExtractionException(
 						"etl.working.dir points to a file on the local file system, but should point to a directory.: "
 								+ etlWorkingDir);
 			}
 
 			// TODO make abstraction of organization of local working dir
-			String workingDir = etlWorkingDir.getAbsolutePath() + "/" + utils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
+			Resource workingDir = utils.createDirResource(etlWorkingDir, utils.getTimeStamp("yyyyMMdd-HHmmss"));
+			// String workingDir = utils.getFile(etlWorkingDir).getAbsolutePath() + "/" + utils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
 
 			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
 
 				String studyId = studyResources.getKey();
-				String studyDir = workingDir + studyId + "/";
+				Resource studyDir = utils.createDirResource(workingDir, studyId);
 				String remoteBasePath = getBasePathResources(studyResources.getValue());
 
 				List<String> errorFiles = new ArrayList<>();
@@ -96,7 +96,7 @@ class Extractor {
 
 				// register successfully extracted study
 				if (errorFiles.isEmpty()) {
-					out.put(studyId, utils.getResource(studyDir));
+					out.put(studyId, studyDir);
 				} else {
 					filesNotFound.put(studyId, errorFiles);
 				}
@@ -116,7 +116,7 @@ class Extractor {
 		return out;
 	}
 
-	private Resource attemptCopyResource(String destination, Resource resource, String remoteFilePath)
+	private Resource attemptCopyResource(Resource destination, Resource resource, String remoteFilePath)
 			throws InterruptedException, ResourceCollectionException {
 		int i = 1;
 		int times = 5;
