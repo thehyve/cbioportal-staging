@@ -59,7 +59,7 @@ public class PublisherServiceImpl implements PublisherService {
     protected Resource publish(Resource file, String date) throws ResourceCollectionException {
 
         //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-		if (centralShareLocationWebAddress.equals("")) {
+		if (centralShareLocationWebAddress == null) {
 			centralShareLocationWebAddress = centralShareLocation;
         }
 

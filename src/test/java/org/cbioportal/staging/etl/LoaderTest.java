@@ -48,11 +48,11 @@ public class LoaderTest {
     private LoaderService loaderService;
 
     @MockBean
-    private ResourceUtils resourceUtils;
+    private ResourceUtils utils;
 
     @Before
     public void init() throws ResourceCollectionException {
-        when(resourceUtils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
+        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
     }
 
     @Test
@@ -72,7 +72,6 @@ public class LoaderTest {
     public void studyNotLoaded() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
-        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
@@ -86,7 +85,6 @@ public class LoaderTest {
     public void multipleStudiesAllLoaded() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
-        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
@@ -117,7 +115,6 @@ public class LoaderTest {
     public void multipleStudiesAllErrors() throws LoaderException, ResourceCollectionException {
 
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
-        when(resourceUtils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));

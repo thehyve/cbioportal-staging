@@ -64,7 +64,7 @@ public class Validator {
     }
 
     Map<String, ExitStatus> validate(Map<String, Resource> studyPaths) throws ValidatorException {
-        Map<String, ExitStatus> validatedStudies = new HashMap<String, ExitStatus>();
+        Map<String, ExitStatus> validatedStudies = new HashMap<>();
 
         try {
             for (String studyId : studyPaths.keySet()) {

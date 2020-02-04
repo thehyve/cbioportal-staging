@@ -45,8 +45,8 @@ public class ValidatorServiceImpl implements ValidatorService {
 	@Override
 	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException {
 		try {
-			
-			Resource portalInfoFolder = utils.getResource(studyPath+"/portalInfo");
+
+			Resource portalInfoFolder = utils.createDirResource(studyPath, "portalInfo");
 
 			ProcessBuilder validationCmd = commandBuilder.buildValidatorCommand(studyPath, portalInfoFolder, reportFile);
 			ProcessBuilder portalInfoCmd = commandBuilder.buildPortalInfoCommand(portalInfoFolder);

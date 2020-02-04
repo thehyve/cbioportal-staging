@@ -74,7 +74,6 @@ class Extractor {
 
 			// TODO make abstraction of organization of local working dir
 			Resource workingDir = utils.createDirResource(etlWorkingDir, utils.getTimeStamp("yyyyMMdd-HHmmss"));
-			// String workingDir = utils.getFile(etlWorkingDir).getAbsolutePath() + "/" + utils.getTimeStamp("yyyyMMdd-HHmmss") + "/";
 
 			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
 

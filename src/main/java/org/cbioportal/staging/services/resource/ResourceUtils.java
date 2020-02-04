@@ -5,10 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,11 +15,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +32,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResourceUtils {
 
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
-
+    @Autowired
+    private ResourcePatternResolver resourceResolver;
 
     public String trimDir(String dir) {
         return dir.replaceFirst("\\/*\\**$", "");
+    }
+
+    public String trimFile(String dir) {
+        return dir.replaceFirst("^\\/*", "");
     }
 
     public String stripResourceTypePrefix(String dir) {
@@ -83,7 +86,7 @@ public class ResourceUtils {
     }
 
     public Map<String, String> readMetaFile(Resource studyMetaFile) throws FileNotFoundException, IOException {
-        Map<String,String> entries = new HashMap<>();
+        Map<String, String> entries = new HashMap<>();
         BufferedReader bufferedReader = new BufferedReader(new FileReader(studyMetaFile.getFile()));
         try {
             String line = bufferedReader.readLine();
@@ -99,43 +102,42 @@ public class ResourceUtils {
     }
 
     /**
-	 * This method gets the "base path" of all entries. I.e. it assumes
-	 * all entries share a common parent path on the S3 or other resource folder
-	 * where they are originally shared. So for the following list of files configured in the
-	 * list of studies yaml as below:
-	 *   study1:
-     *    - folder/study1path/fileA.txt
-     *    - folder/study1path/fileB.txt
-     *    - folder/study1path/mafs/maf1.maf
-     *    - folder/study1path/mafs/mafn.maf
+     * This method gets the "base path" of all entries. I.e. it assumes all entries
+     * share a common parent path on the S3 or other resource folder where they are
+     * originally shared. So for the following list of files configured in the list
+     * of studies yaml as below: study1: - folder/study1path/fileA.txt -
+     * folder/study1path/fileB.txt - folder/study1path/mafs/maf1.maf -
+     * folder/study1path/mafs/mafn.maf
      *
      * this method will return "folder/study1path".
-	 * @throws ConfigurationException
-	 */
-	public String getBasePath(List<String> paths) throws ConfigurationException {
+     *
+     * @throws ConfigurationException
+     */
+    public String getBasePath(List<String> paths) throws ConfigurationException {
 
         List<String> pathsNoNull = paths.stream().filter(s -> s != null).collect(Collectors.toList());
 
-		int shortest = Integer.MAX_VALUE;
-		String shortestPath = "";
-		for (String filePath : pathsNoNull) {
-			if (filePath.length() < shortest) {
-				shortest = filePath.length();
-				shortestPath = filePath;
-			}
-		}
-		String result = "";
-		if (shortestPath.indexOf("/") != -1) {
-			result = shortestPath.substring(0, shortestPath.lastIndexOf("/"));
-		}
-		//validate if main assumption is correct (i.e. all paths contain the shortest path):
-		for (String filePath : pathsNoNull) {
-			if (!filePath.contains(result)) {
-				throw new ConfigurationException("Study configuration contains mixed locations. Not allowed. E.g. "
-						+ "locations: "+ filePath + " and " + result + "/...");
-			}
-		}
-		return result;
+        int shortest = Integer.MAX_VALUE;
+        String shortestPath = "";
+        for (String filePath : pathsNoNull) {
+            if (filePath.length() < shortest) {
+                shortest = filePath.length();
+                shortestPath = filePath;
+            }
+        }
+        String result = "";
+        if (shortestPath.indexOf("/") != -1) {
+            result = shortestPath.substring(0, shortestPath.lastIndexOf("/"));
+        }
+        // validate if main assumption is correct (i.e. all paths contain the shortest
+        // path):
+        for (String filePath : pathsNoNull) {
+            if (!filePath.contains(result)) {
+                throw new ConfigurationException("Study configuration contains mixed locations. Not allowed. E.g. "
+                        + "locations: " + filePath + " and " + result + "/...");
+            }
+        }
+        return result;
     }
 
     public void copyDirectory(Resource sourceDir, Resource targetDir) throws ResourceCollectionException {
@@ -146,23 +148,22 @@ public class ResourceUtils {
         }
     }
 
-	public Resource copyResource(String destination, InputStreamSource resource, String remoteFilePath)
+    // TODO this method is not agnostic for the target system (only FileSYstem is supported; resource resolver
+    // does not return a resource that has an output stream.). Consider a better solution that does
+    // notmake use of FileSystemResource
+    public Resource copyResource(Resource destination, InputStreamSource resource, String remoteFilePath)
             throws ResourceCollectionException {
-		try {
-            InputStream inputStream = resource.getInputStream();
-            String fullDestinationPath = destination + remoteFilePath;
+        try {
+            String fullDestinationPath = trimDir(getFile(destination).getAbsolutePath()) + "/" + trimFile(remoteFilePath);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
-            Files.copy(inputStream, Paths.get(fullDestinationPath));
-            inputStream.close();
-            return resourcePatternResolver.getResource(fullDestinationPath);
+            WritableResource localFile = new FileSystemResource(fullDestinationPath);
+            IOUtils.copy(resource.getInputStream(), localFile.getOutputStream());
+            // resource.getInputStream().close();
+            // localFile.getOutputStream().close();
+            return localFile;
         } catch (IOException e) {
             throw new ResourceCollectionException("Cannot copy resource", e);
         }
-    }
-
-	public Resource copyResource(Resource destination, InputStreamSource resource, String remoteFilePath)
-            throws ResourceCollectionException {
-        return copyResource(getURL(destination).toString(), resource, remoteFilePath);
     }
 
     public void ensureDirs(File path) {
@@ -186,14 +187,14 @@ public class ResourceUtils {
     }
 
 	public Resource getResource(String path) {
-		return resourcePatternResolver.getResource(path);
+		return resourceResolver.getResource(path);
 	}
 
 	public Resource createFileResource(Resource basePath, String ... fileElements)
             throws ResourceCollectionException {
         try {
-            String base = basePath.getURL().toString();
-            Resource res = getResource(base + Stream.of(fileElements).collect(Collectors.joining("/")));
+            String base = trimDir(basePath.getURL().toString());
+            Resource res = getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")));
             res.getFile().createNewFile();
             return res;
         } catch (IOException e) {
@@ -204,8 +205,8 @@ public class ResourceUtils {
 	public Resource createDirResource(Resource basePath, String ... fileElements)
             throws ResourceCollectionException {
         try {
-            String base = basePath.getURL().toString();
-            Resource res = getResource(base + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
+            String base = trimDir(basePath.getURL().toString());
+            Resource res = getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
             ensureDirs(res);
             return res;
         } catch (IOException e) {
