@@ -65,7 +65,6 @@ public class ValidatorTest {
 
 	@Test
 	public void studySuccessValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
@@ -85,7 +84,6 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
@@ -105,7 +103,6 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
@@ -125,7 +122,6 @@ public class ValidatorTest {
 
     @Test
 	public void studySuccessValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
@@ -145,7 +141,6 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
@@ -165,7 +160,6 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
@@ -187,7 +181,6 @@ public class ValidatorTest {
     
     @Test
 	public void multipleStudiesValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
@@ -218,7 +211,6 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(utils.createLogFile(any(String.class), any(Resource.class), any(String.class))).thenReturn(null);
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
