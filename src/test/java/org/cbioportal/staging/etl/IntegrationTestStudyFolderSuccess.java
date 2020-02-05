@@ -2,6 +2,7 @@ package org.cbioportal.staging.etl;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -20,6 +21,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
@@ -73,6 +75,9 @@ public class IntegrationTestStudyFolderSuccess {
     @SpyBean
     private ResourceIgnoreSet ignoreSet;
 
+    @MockBean
+    private AuthorizerServiceImpl authorizerService;
+
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
@@ -90,6 +95,7 @@ public class IntegrationTestStudyFolderSuccess {
         verify(restarterService, times(1)).restart();
         verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
+        verify(authorizerService, times(1)).authorizeStudies(anySet());
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));

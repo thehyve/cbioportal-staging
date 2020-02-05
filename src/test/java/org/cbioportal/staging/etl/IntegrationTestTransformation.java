@@ -2,6 +2,7 @@ package org.cbioportal.staging.etl;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -20,6 +21,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
@@ -77,6 +79,9 @@ public class IntegrationTestTransformation {
     @SpyBean
     private ResourceIgnoreSet ignoreSet;
 
+    @MockBean
+    private AuthorizerServiceImpl authorizerService;
+
     @Test
     public void transformSuccessful_es0()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
@@ -95,6 +100,7 @@ public class IntegrationTestTransformation {
         verify(restarterService, times(1)).restart();
         verify(publisherService, times(3)).publish(anyString(), any(Map.class));
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
+        verify(authorizerService, times(1)).authorizeStudies(anySet());
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
@@ -124,6 +130,7 @@ public class IntegrationTestTransformation {
         verify(restarterService, never()).restart();
         verify(publisherService, times(1)).publish(anyString(), any(Map.class));
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
+        verify(authorizerService, never()).authorizeStudies(anySet());
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));

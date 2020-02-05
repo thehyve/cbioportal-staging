@@ -150,7 +150,7 @@ public class ETLProcessRunner {
 
 					if (loader.areStudiesLoaded()) {
 						restarterService.restart();
-						if (!studyAuthorizeCommandPrefix.equals(null)) {
+						if (studyAuthorizeCommandPrefix != null && ! studyAuthorizeCommandPrefix.equals("")) {
 							authorizer.authorizeStudies(validatorExitStatus.keySet());
 						}
 					}
