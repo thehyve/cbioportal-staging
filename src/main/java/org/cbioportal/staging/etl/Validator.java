@@ -64,6 +64,10 @@ public class Validator {
     }
 
     public Map<String, ExitStatus> validate(Map<String, Resource> studyPaths) throws ValidatorException {
+
+        logAndReportFiles.clear();
+        dirsValidStudies.clear();
+
         Map<String, ExitStatus> validatedStudies = new HashMap<>();
 
         try {

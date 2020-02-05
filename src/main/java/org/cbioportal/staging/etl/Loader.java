@@ -41,11 +41,15 @@ public class Loader {
 
     private boolean areStudiesLoaded = false;
 
-    private Map<String, Resource> logFiles = new HashMap<>();
+    final private Map<String, Resource> logFiles = new HashMap<>();
 
     Map<String, ExitStatus> load(final Map<String, Resource> studyPaths) throws LoaderException {
 
+        areStudiesLoaded = false;
+        logFiles.clear();
+
         final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
+
         try {
             for (final String studyId : studyPaths.keySet()) {
                 logger.info("Starting loading of study " + studyId + ". This can take some minutes.");

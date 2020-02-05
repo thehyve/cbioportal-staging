@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -29,9 +30,11 @@ import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -80,6 +83,14 @@ public class IntegrationTestWarning {
     @MockBean
     private AuthorizerServiceImpl authorizerService;
 
+    @Value("${scan.ignore.file:}")
+    private File ignoreFile;
+
+    @After
+    public void cleanUp() {
+        ignoreFile.delete();
+    }
+
     @Test
     public void throwValidationWarningsButLoad_es1()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
@@ -96,7 +107,7 @@ public class IntegrationTestWarning {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
-        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, publish() not called
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 

@@ -48,8 +48,8 @@ public class Transformer {
                                              // to ETLProcessRunner
     }
 
-    private Map<String, Resource> logFiles = new HashMap<>();
-    private Map<String, Resource> dirsValidStudies = new HashMap<>();
+    final private Map<String, Resource> logFiles = new HashMap<>();
+    final private Map<String, Resource> dirsValidStudies = new HashMap<>();
 
     private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
         Resource[] studyFiles = provider.list(originPath);
@@ -66,8 +66,8 @@ public class Transformer {
 
     public Map<String, ExitStatus> transform(Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
 
-        logFiles = new HashMap<>();
-        dirsValidStudies = new HashMap<>();
+        logFiles.clear();
+        dirsValidStudies.clear();
 
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 

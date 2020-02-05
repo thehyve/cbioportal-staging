@@ -73,7 +73,7 @@ public class LoaderTest {
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         assertEquals(expectedLoadingStatus, loadingStatus);
-        
+
         assertEquals(true, loader.areStudiesLoaded());
 
         Map<String, Resource> logPaths = new HashMap<>();
@@ -92,7 +92,7 @@ public class LoaderTest {
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
         assertEquals(expectedLoadingStatus, loadingStatus);
-        
+
         assertEquals(false, loader.areStudiesLoaded());
 
         Map<String, Resource> logPaths = new HashMap<>();
@@ -113,7 +113,7 @@ public class LoaderTest {
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         expectedLoadingStatus.put("study_2", ExitStatus.SUCCESS);
         assertEquals(expectedLoadingStatus, loadingStatus);
-        
+
         assertEquals(true, loader.areStudiesLoaded());
 
         Map<String, Resource> logPaths = new HashMap<>();
@@ -135,7 +135,7 @@ public class LoaderTest {
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         expectedLoadingStatus.put("study_with_errors", ExitStatus.ERRORS);
         assertEquals(expectedLoadingStatus, loadingStatus);
-        
+
         assertEquals(true, loader.areStudiesLoaded());
 
         Map<String, Resource> logPaths = new HashMap<>();
@@ -157,7 +157,7 @@ public class LoaderTest {
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
         expectedLoadingStatus.put("study_2", ExitStatus.ERRORS);
         assertEquals(expectedLoadingStatus, loadingStatus);
-        
+
         assertEquals(false, loader.areStudiesLoaded());
 
         Map<String, Resource> logPaths = new HashMap<>();
