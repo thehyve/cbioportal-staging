@@ -17,12 +17,18 @@ package org.cbioportal.staging.app;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.ScheduledScannerService;
 import org.cbioportal.staging.services.resource.IResourceCollector;
+import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +55,9 @@ public class ScheduledScanner {
 	private Integer scanIterations;
 	private int nrIterations = 0;
 
+	@Value("${scan.ignore.appendonsuccess:false}")
+	private boolean ignoreAppend;
+
 	@Autowired
 	private IResourceCollector resourceCollector;
 
@@ -63,6 +72,9 @@ public class ScheduledScanner {
 
 	@Autowired
 	private ResourcePatternResolver resourcePatternResolver;
+
+	@Autowired
+	private ResourceIgnoreSet resourceIgnoreSet;
 
 	@Scheduled(cron = "${scan.cron}")
 	public boolean scan() {
@@ -81,12 +93,10 @@ public class ScheduledScanner {
 
 			logger.info("Started ETL process for studies: ", String.join(", ", resourcesPerStudy.keySet()));
 
-			// TODO return list of successfully processed files
-			// Keep paths relative to remote source so these can
-			// be added tot the ignore file
 			etlProcessRunner.run(resourcesPerStudy);
 
-			// TODO Optional: add 'resourcesPerStudy' files to inore file
+			if (ignoreAppend)
+				addToIgnoreFile(etlProcessRunner.getLoaderExitStatus(), resourcesPerStudy);
 
 		} catch (Exception e) {
 			try {
@@ -103,6 +113,26 @@ public class ScheduledScanner {
 
 		//return true when an ETL process was triggered
 		return true;
+	}
+
+	private void addToIgnoreFile(Map<String,ExitStatus> loaderStatus, Map<String, Resource[]> resourcesPerStudy) {
+
+		List<String> successStudies = loaderStatus.entrySet().stream()
+			.filter(e -> e.getValue() == ExitStatus.SUCCESS)
+			.map(Entry::getKey)
+			.collect(Collectors.toList());
+
+		List<Entry<String,Resource[]>> exludeResources = resourcesPerStudy.entrySet().stream()
+			.filter(e -> successStudies.contains(e.getKey()))
+			.collect(Collectors.toList());
+
+		exludeResources.stream().forEach(e -> {
+			try {
+				resourceIgnoreSet.appendResources(e.getValue());
+			} catch (ResourceCollectionException ex) {
+				throw new RuntimeException(ex);
+			}
+		});
 	}
 
 	/**

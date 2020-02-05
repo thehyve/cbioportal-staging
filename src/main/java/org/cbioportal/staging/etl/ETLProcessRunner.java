@@ -91,6 +91,10 @@ public class ETLProcessRunner {
     @Value("${validation.level:ERROR}")
 	private String validationLevel;
 
+	Map<String, ExitStatus> transformerExitStatus;
+	Map<String, ExitStatus> validatorExitStatus;
+	Map<String, ExitStatus> loaderExitStatus;
+
 	public void run(Map<String, Resource[]> remoteResources) throws Exception {
 		try  {
 
@@ -108,41 +112,45 @@ public class ETLProcessRunner {
 
 			Map<String, Resource> logPaths = new HashMap<>();
 
+			transformerExitStatus = new HashMap<>();
+			validatorExitStatus = new HashMap<>();
+			loaderExitStatus = new HashMap<>();
+
 			//T (TRANSFORM) STEP:
 			Map<String, Resource> transformedStudiesPaths;
 			// TODO add this condition in the V (alidate) block
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
-                Map<String, ExitStatus> transformedStudiesStatus = transformer.transform(localResources, "command");
+    			transformerExitStatus = transformer.transform(localResources, "command");
                 Map<String, Resource> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
-					emailService.emailTransformedStudies(transformedStudiesStatus, logPaths);
+					emailService.emailTransformedStudies(transformerExitStatus, logPaths);
                 }
                 transformedStudiesPaths = transformer.getValidStudies();
 			}
 
 			//V (VALIDATE) STEP:
 			if (! transformedStudiesPaths.isEmpty()) {
-                Map<String, ExitStatus> validatedStudies = validator.validate(transformedStudiesPaths);
+                validatorExitStatus = validator.validate(transformedStudiesPaths);
                 Map<String, Resource> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
-				emailService.emailValidationReport(validatedStudies, validationLevel, logPaths);
+				emailService.emailValidationReport(validatorExitStatus, validationLevel, logPaths);
 
 				Map <String, Resource> studiesThatPassedValidation = validator.getValidStudies();
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
-                    Map<String, ExitStatus> loadResults = loader.load(studiesThatPassedValidation);
+                    loaderExitStatus = loader.load(studiesThatPassedValidation);
                     Map<String, Resource> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
                     logPaths.putAll(loadingLogFiles);
-					emailService.emailStudiesLoaded(loadResults, logPaths);
+					emailService.emailStudiesLoaded(loaderExitStatus, logPaths);
 
 					if (loader.areStudiesLoaded()) {
 						restarterService.restart();
 						if (!studyAuthorizeCommandPrefix.equals(null)) {
-							authorizer.authorizeStudies(validatedStudies.keySet());
+							authorizer.authorizeStudies(validatorExitStatus.keySet());
 						}
 					}
 				}
@@ -216,4 +224,17 @@ public class ETLProcessRunner {
 			e.printStackTrace();
 		}
 	}
+
+	public Map<String, ExitStatus> getTransformerExitStatus() {
+		return transformerExitStatus;
+	}
+
+	public Map<String, ExitStatus> getValidatorExitStatus() {
+		return validatorExitStatus;
+	}
+
+	public Map<String, ExitStatus> getLoaderExitStatus() {
+		return loaderExitStatus;
+	}
+
 }

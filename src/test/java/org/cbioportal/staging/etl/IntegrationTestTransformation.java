@@ -16,6 +16,7 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
@@ -25,12 +26,14 @@ import org.cbioportal.staging.services.LoaderServiceImpl;
 import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
+import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -71,10 +74,14 @@ public class IntegrationTestTransformation {
     @SpyBean
     private LoaderServiceImpl loaderService;
 
+    @SpyBean
+    private ResourceIgnoreSet ignoreSet;
+
     @Test
-    public void transformSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException,
-            ParseException, IOException, TemplateException, InterruptedException, ConfigurationException,
-            TransformerException, ValidatorException, LoaderException, RestarterException, PublisherException {
+    public void transformSuccessful_es0()
+            throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
+            TemplateException, InterruptedException, ConfigurationException, TransformerException, ValidatorException,
+            LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         doNothing().when(restarterService).restart();
 
@@ -87,6 +94,7 @@ public class IntegrationTestTransformation {
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
         verify(publisherService, times(3)).publish(anyString(), any(Map.class));
+        verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
@@ -98,7 +106,7 @@ public class IntegrationTestTransformation {
     @Test
     public void transformFailure_es0() throws  TemplateNotFoundException, MalformedTemplateNameException, ParseException,
     IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
-    ValidatorException, LoaderException, RestarterException, PublisherException {
+    ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         // wire in a failing transformation script
         ReflectionTestUtils.setField(transformerService,
@@ -115,6 +123,7 @@ public class IntegrationTestTransformation {
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
         verify(publisherService, times(1)).publish(anyString(), any(Map.class));
+        verify(ignoreSet, never()).appendResources(any(Resource[].class));
 
         verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));

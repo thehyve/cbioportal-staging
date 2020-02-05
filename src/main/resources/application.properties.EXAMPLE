@@ -16,6 +16,11 @@ scan.location=file:///home/pnp300/staging-scan-folder/
 # extract from scan location (relative paths, each will be seen as 1 study
 # to be transformed and loaded):
 #scan.extract.folders=dir1,dir2,etc
+#(optional) resources in this file will be exluded from the scan
+#scan.ignore.file=file:/example/scanignore.txt
+# (optional) when true, resources from the scanlocation that were loaded successfully
+# are appended to the ignore file, and will be exluded from the next scan.
+#scan.ignore.appendonsuccess=true
 #scan.yaml.fileprefix=list_of_studies
 
 

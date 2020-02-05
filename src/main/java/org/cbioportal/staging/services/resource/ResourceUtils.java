@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -148,18 +150,15 @@ public class ResourceUtils {
         }
     }
 
-    // TODO this method is not agnostic for the target system (only FileSYstem is supported; resource resolver
-    // does not return a resource that has an output stream.). Consider a better solution that does
-    // notmake use of FileSystemResource
     public Resource copyResource(Resource destination, InputStreamSource resource, String remoteFilePath)
             throws ResourceCollectionException {
         try {
             String fullDestinationPath = trimDir(getFile(destination).getAbsolutePath()) + "/" + trimFile(remoteFilePath);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
-            WritableResource localFile = new FileSystemResource(fullDestinationPath);
+
+            WritableResource localFile = getWritableResource(fullDestinationPath);
             IOUtils.copy(resource.getInputStream(), localFile.getOutputStream());
-            // resource.getInputStream().close();
-            // localFile.getOutputStream().close();
+
             return localFile;
         } catch (IOException e) {
             throw new ResourceCollectionException("Cannot copy resource", e);
@@ -188,7 +187,17 @@ public class ResourceUtils {
 
 	public Resource getResource(String path) {
 		return resourceResolver.getResource(path);
+    }
+
+    // TODO writable resources are hard coded to be on the local system
+    // if needed (writable remote files) update implementation.
+    public WritableResource getWritableResource(String path) {
+        return new FileSystemResource(path);
 	}
+
+    public WritableResource getWritableResource(Resource resource) throws ResourceCollectionException {
+        return new FileSystemResource(getFile(resource));
+    }
 
 	public Resource createFileResource(Resource basePath, String ... fileElements)
             throws ResourceCollectionException {
@@ -214,6 +223,9 @@ public class ResourceUtils {
         }
     }
 
+	public Resource createDirResource(Resource dir) throws ResourceCollectionException {
+        return createDirResource(dir, "");
+    }
 
     public boolean isFile(Resource resource) throws ResourceCollectionException {
         try {
@@ -236,6 +248,17 @@ public class ResourceUtils {
             return resource.getFile();
         } catch (IOException e) {
             throw new ResourceCollectionException("Cannot read File from Resource: " + resource.getDescription());
+        }
+    }
+
+    public void writeToFile(WritableResource file, Collection<String> lines, boolean append) throws ResourceCollectionException {
+        try {
+            FileWriter writer = new FileWriter(file.getFile(), append);
+            String line = lines.stream().collect(Collectors.joining("\n")) + "\n";
+            writer.write(line);
+            writer.close();
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Error while writing to file.", e);
         }
     }
 

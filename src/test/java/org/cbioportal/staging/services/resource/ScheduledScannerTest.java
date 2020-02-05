@@ -3,6 +3,7 @@ package org.cbioportal.staging.services.resource;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.ETLProcessRunner;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.EmailService;
 import org.cbioportal.staging.services.ScheduledScannerService;
@@ -26,9 +28,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = { "scan.cron.iterations=5" })
+@TestPropertySource(properties = { "scan.cron.iterations=5", "scan.ignore.append=false" })
 @SpringBootTest(classes = ScheduledScanner.class)
 public class ScheduledScannerTest {
 
@@ -46,6 +49,9 @@ public class ScheduledScannerTest {
 
     @Autowired
     private ScheduledScanner scheduledScanner;
+
+    @MockBean
+    private ResourceIgnoreSet ignoreSet;
 
     @Test
     public void testScan_sucess() throws Exception {
@@ -98,6 +104,29 @@ public class ScheduledScannerTest {
 
         verify(emailService, never()).emailGenericError(anyString(), any());
         assertFalse(exitStatus);
+    }
+
+    @Test
+    public void testScan_addsToIgnoreSet() throws Exception {
+
+        ReflectionTestUtils.setField(scheduledScanner, "ignoreAppend", true);
+
+        Map<String, Resource[]> res = new HashMap<>();
+        Resource[] resToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/success_resource.txt", 0)};
+        Resource[] resNotToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/failure_resource.txt", 0)};
+        res.put("dummy_study_success", resToBeIgnored);
+        res.put("dummy_study_failure", resNotToBeIgnored);
+        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
+
+        Map<String, ExitStatus> exit = new HashMap<>();
+        exit.put("dummy_study_success", ExitStatus.SUCCESS);
+        exit.put("dummy_study_failure", ExitStatus.ERRORS);
+        when(etlProcessRunner.getLoaderExitStatus()).thenReturn(exit);
+
+        scheduledScanner.scan();
+
+        verify(ignoreSet, times(1)).appendResources(eq(resToBeIgnored));
+        verify(ignoreSet, never()).appendResources(eq(resNotToBeIgnored));
     }
 
 }
