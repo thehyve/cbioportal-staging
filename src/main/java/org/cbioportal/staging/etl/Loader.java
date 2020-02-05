@@ -39,7 +39,7 @@ public class Loader {
     @Autowired
     private ResourceUtils utils;
 
-    private boolean areStudiesLoaded = false;
+    private boolean areStudiesLoaded;
 
     final private Map<String, Resource> logFiles = new HashMap<>();
 
@@ -49,7 +49,6 @@ public class Loader {
         logFiles.clear();
 
         final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
-
         try {
             for (final String studyId : studyPaths.keySet()) {
                 logger.info("Starting loading of study " + studyId + ". This can take some minutes.");

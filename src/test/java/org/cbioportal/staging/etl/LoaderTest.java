@@ -36,7 +36,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = org.cbioportal.staging.etl.Loader.class)
@@ -54,12 +53,6 @@ public class LoaderTest {
     @Before
     public void init() throws ResourceCollectionException {
         when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
-    }
-
-    @Before
-    public void resetMethods() {
-        ReflectionTestUtils.setField(loader, "areStudiesLoaded", false);
-        ReflectionTestUtils.setField(loader, "logFiles", new HashMap<>());
     }
 
     @Test

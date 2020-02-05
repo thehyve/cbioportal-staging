@@ -57,12 +57,6 @@ public class ValidatorTest {
         when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
 	}
 
-    @Before
-    public void resetMethods() {
-        ReflectionTestUtils.setField(validator, "dirsValidStudies", new HashMap<>());
-        ReflectionTestUtils.setField(validator, "logAndReportFiles", new HashMap<>());
-    }
-
 	@Test
 	public void studySuccessValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);

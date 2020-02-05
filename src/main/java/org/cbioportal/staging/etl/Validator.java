@@ -43,8 +43,8 @@ public class Validator {
     @Value("${validation.level:ERROR}")
     private String validationLevel;
 
-    private Map<String, Resource> logAndReportFiles = new HashMap<>();
-    Map<String, Resource> dirsValidStudies = new HashMap<>();
+    private Map<String, Resource> logAndReportFiles;
+    Map<String, Resource> dirsValidStudies;
 
     private boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
         if (validationLevel.equals("WARNING")) { // Load studies with no warnings and no errors
@@ -69,6 +69,8 @@ public class Validator {
         dirsValidStudies.clear();
 
         Map<String, ExitStatus> validatedStudies = new HashMap<>();
+        logAndReportFiles = new HashMap<>();
+        dirsValidStudies = new HashMap<>();
 
         try {
             for (String studyId : studyPaths.keySet()) {
