@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,7 +25,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -78,8 +78,9 @@ public class ResourceIgnoreSetTest {
     @Test
     public void testAppendResources_success() throws IOException, ResourceCollectionException {
 
-        FileSystemResource ignoreFile = TestUtils.createMockResource("file:/mock_ignore_file.txt", 0);
+        WritableResource ignoreFile = TestUtils.createMockResource("file:/mock_ignore_file.txt", 0);
         ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", ignoreFile);
+        when(utils.getWritableResource(any(Resource.class))).thenReturn(ignoreFile);
 
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});
@@ -91,6 +92,8 @@ public class ResourceIgnoreSetTest {
 
     @Test
     public void testAppendResources_noIgnoreFileSpecified() throws IOException, ResourceCollectionException {
+
+        ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", null);
 
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});
