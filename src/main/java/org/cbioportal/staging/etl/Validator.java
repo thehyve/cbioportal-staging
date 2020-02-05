@@ -46,7 +46,7 @@ public class Validator {
     private Map<String, Resource> logAndReportFiles = new HashMap<>();
     Map<String, Resource> dirsValidStudies = new HashMap<>();
 
-    boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
+    private boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
         if (validationLevel.equals("WARNING")) { // Load studies with no warnings and no errors
             if (exitStatus == ExitStatus.SUCCESS) {
                 return true;
@@ -63,7 +63,7 @@ public class Validator {
         }
     }
 
-    Map<String, ExitStatus> validate(Map<String, Resource> studyPaths) throws ValidatorException {
+    public Map<String, ExitStatus> validate(Map<String, Resource> studyPaths) throws ValidatorException {
         Map<String, ExitStatus> validatedStudies = new HashMap<>();
 
         try {
@@ -81,9 +81,9 @@ public class Validator {
 
                 if (hasStudyPassed(exitStatus)) {
                     dirsValidStudies.put(studyId, studyPath);
-                    logger.info("Transformation of study "+studyId+" finished successfully.");
+                    logger.info("Study "+studyId+" has passed validation.");
                 } else {
-                    logger.info("Validation of study "+studyId+" finished unsuccessfully");
+                    logger.info("Study "+studyId+" has failed validation.");
                 }
             }
         } catch (ResourceCollectionException e) {
@@ -92,11 +92,11 @@ public class Validator {
 		return validatedStudies;
     }
 
-    Map<String, Resource> getLogAndReportFiles() {
+    public Map<String, Resource> getLogAndReportFiles() {
         return logAndReportFiles;
     }
 
-    Map<String,Resource> getValidStudies() throws ValidatorException {
+    public Map<String,Resource> getValidStudies() throws ValidatorException {
         return dirsValidStudies;
     }
 }
