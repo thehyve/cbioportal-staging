@@ -71,6 +71,22 @@ public class DirectoryCreatorTest {
     }
 
     @Test
+	public void etlWorkingDir_isCorrect() throws DirectoryCreatorException, ResourceCollectionException {
+
+		when(etlDir.exists()).thenReturn(true);
+		when(utils.isFile(any(Resource.class))).thenReturn(false);
+		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
+        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
+
+        Resource expectedStudyDir = TestUtils.createMockResource("/studyId", 0);
+		when(utils.createDirResource(any(Resource.class), any(String.class), any(String.class))).thenReturn(expectedStudyDir);
+
+        Resource generatedStudyDir = directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
+        
+        assertEquals(generatedStudyDir, expectedStudyDir);
+    }
+
+    @Test
 	public void transformationDir_transformationDirNull() throws DirectoryCreatorException, ResourceCollectionException {
 
         when(etlDir.exists()).thenReturn(false);
@@ -94,6 +110,30 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
-	}
+    }
+    
+    @Test
+	public void transformationDir_isCorrect() throws DirectoryCreatorException, ResourceCollectionException {
+
+		when(etlDir.exists()).thenReturn(false);
+		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
+        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
+
+		Resource transDir = TestUtils.createMockResource("/transf", 0);
+		when(utils.createDirResource(any(Resource.class), any(String.class), any(String.class))).thenReturn(transDir);
+
+        Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
+
+        assertEquals(transformedDir, transDir);
+    }
+
+	@Test(expected = DirectoryCreatorException.class)
+	public void centralShareLocation_isFile() throws DirectoryCreatorException, ResourceCollectionException {
+
+        Resource csl = mock(Resource.class);
+		when(utils.isFile(any(Resource.class))).thenReturn(true);
+
+		directoryCreator.getCentralShareLocationPath(csl, "mock-timestamp");
+    }
 
 }

@@ -15,6 +15,8 @@
 */
 package org.cbioportal.staging.services;
 
+import java.io.IOException;
+
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -80,14 +82,14 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
 						"central.share.location points to a file on the local file system, but should point to a directory.: "
 								+ centralShareLocation);
 			}
-            Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, timestamp);
-            // TODO is this condition really needed? Better be resource-type independent
-            if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
-                utils.ensureDirs(centralShareLocation);
+            if (utils.getURL(centralShareLocation).toString().contains("file:")) {
+                return utils.createDirResource(centralShareLocation, timestamp);
             }
-            return centralShareLocationPath;
+            return centralShareLocation.createRelative(timestamp);
         } catch (ResourceCollectionException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
+        } catch (IOException e) {
+            throw new DirectoryCreatorException("Cannot create the relative folder.", e);
         }
     }
 }

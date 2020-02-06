@@ -15,6 +15,8 @@
 */
 package org.cbioportal.staging.services;
 
+import java.io.IOException;
+
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -79,22 +81,19 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
     @Override
     public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException {
         try {
-            if (!centralShareLocation.exists()) {
-				throw new DirectoryCreatorException(
-						"central.share.location does not exist on the local file system: " + centralShareLocation);
-			}
 			if (utils.isFile(centralShareLocation)) {
 				throw new DirectoryCreatorException(
 						"central.share.location points to a file on the local file system, but should point to a directory.: "
 								+ centralShareLocation);
 			}
-            Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, timestamp);
-            if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
-                utils.ensureDirs(centralShareLocation);
+            if (utils.getURL(centralShareLocation).toString().contains("file:")) {
+                return utils.createDirResource(centralShareLocation, timestamp);
             }
-            return centralShareLocationPath;
+            return centralShareLocation.createRelative(timestamp);
         } catch (ResourceCollectionException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
+        } catch (IOException e) {
+            throw new DirectoryCreatorException("Cannot create the relative folder.", e);
         }
     }
 }
