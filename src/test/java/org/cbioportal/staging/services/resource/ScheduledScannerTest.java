@@ -30,6 +30,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+@SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = { "scan.cron.iterations=5", "scan.ignore.append=false" })
 @SpringBootTest(classes = ScheduledScanner.class)

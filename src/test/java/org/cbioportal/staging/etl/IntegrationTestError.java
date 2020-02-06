@@ -47,6 +47,8 @@ import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
+
+@SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties", properties = "scan.location=classpath:e2e_studies/es_3")

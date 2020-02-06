@@ -30,6 +30,7 @@ import org.springframework.core.io.WritableResource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+@SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { ResourceIgnoreSet.class,
         org.cbioportal.staging.services.resource.ResourceIgnoreSetTest.MyTestConfiguration.class })
