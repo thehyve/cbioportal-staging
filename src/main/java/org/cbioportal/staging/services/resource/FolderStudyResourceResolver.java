@@ -70,7 +70,7 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
 
     private String getStudyId(Resource[] resources, String studyPath) throws FileNotFoundException, IOException {
         // find study meta file and if found get the studyId from the meta file
-        Optional<Resource> studyMetaFile = Stream.of(resources).filter(e -> e.getFilename().matches(".*\\/meta_study.txt$")).findAny();
+        Optional<Resource> studyMetaFile = Stream.of(resources).filter(e -> e.getFilename().matches(".*meta_study.txt$")).findAny();
         if (studyMetaFile.isPresent()) {
             return utils.readMetaFile(studyMetaFile.get()).get("cancer_study_identifier");
         }
