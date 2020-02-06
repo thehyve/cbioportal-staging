@@ -60,6 +60,7 @@ class Extractor {
 
 	public Map<String, Resource> run(Map<String, Resource[]> resources, String timestamp) throws ExtractionException {
 
+		filesNotFound.clear();
 		Map<String, Resource> out = new HashMap<>();
 
 		try {
