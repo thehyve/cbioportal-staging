@@ -57,18 +57,16 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
     @Override
     public Resource createTransformedStudyDir(String timestamp, String studyId, Resource untransformedStudyDir) throws DirectoryCreatorException {
         try {
-            Resource transformedStudyDir;
-            if (transformationDir != null && ! transformationDir.exists()) {
-                transformedStudyDir = utils.createDirResource(untransformedStudyDir, "staging");
-                utils.ensureDirs(transformedStudyDir);
-            } else if (utils.isFile(transformationDir)) {
-                throw new DirectoryCreatorException(
-                        "transformation.directory points to a file on the local file system, but should point to a directory.: "
-                                + transformationDir);
+            if (transformationDir != null) {
+                if (utils.isFile(transformationDir)) {
+                    throw new DirectoryCreatorException(
+                            "transformation.directory points to a file on the local file system, but should point to a directory.: "
+                                    + transformationDir);
+                }
+                return utils.createDirResource(transformationDir, timestamp, studyId);
             } else {
-                transformedStudyDir = utils.createDirResource(transformationDir, timestamp, studyId);
-            }
-            return transformedStudyDir;
+                return utils.createDirResource(untransformedStudyDir, "staging");
+            } 
         } catch (ResourceCollectionException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
