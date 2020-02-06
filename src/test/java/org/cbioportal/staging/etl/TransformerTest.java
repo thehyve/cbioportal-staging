@@ -102,7 +102,7 @@ public class TransformerTest {
 
         verify(utils, times(1)).copyDirectory(any(Resource.class),any(Resource.class));
         verify(transformerService, never()).transform(any(Resource.class),any(Resource.class),any(Resource.class));
-        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.NOTRANSF);
+        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
         assert(transformer.getValidStudies().containsKey("dummy_study"));
     }
@@ -132,11 +132,11 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
         when(provider.list(any(Resource.class))).thenReturn(studyFiles);
 
-        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
+        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.WARNING);
 
         Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
-        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNINGS);
+        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
         assertFalse(transformer.getValidStudies().containsKey("dummy_study"));
     }

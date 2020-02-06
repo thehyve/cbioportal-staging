@@ -78,14 +78,14 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNING);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", null);
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
-        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNINGS);
+        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNING);
         assertEquals(expectedValidatedStudies, validatedStudies);
         assertEquals(new HashMap<>(), validator.getValidStudies());
 
@@ -97,14 +97,14 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", null);
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
-        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERRORS);
+        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
         assertEquals(new HashMap<>(), validator.getValidStudies());
 
@@ -135,14 +135,14 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNING);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", null);
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
-        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNINGS);
+        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNING);
         assertEquals(expectedValidatedStudies, validatedStudies);
         assertEquals(studies, validator.getValidStudies());
 
@@ -154,14 +154,14 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", null);
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
-        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERRORS);
+        expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
         Map<String, Resource> validStudies = validator.getValidStudies();
         Map<String, Resource> expectedValidStudies = new HashMap<>();
@@ -175,7 +175,7 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -185,8 +185,8 @@ public class ValidatorTest {
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedValidatedStudies.put("study1", ExitStatus.WARNINGS);
-        expectedValidatedStudies.put("study2", ExitStatus.ERRORS);
+        expectedValidatedStudies.put("study1", ExitStatus.WARNING);
+        expectedValidatedStudies.put("study2", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         Map<String, ExitStatus> expectedValidStudies = new HashMap<String, ExitStatus>();
@@ -205,7 +205,7 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);
+        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -215,8 +215,8 @@ public class ValidatorTest {
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedValidatedStudies.put("study1", ExitStatus.WARNINGS);
-        expectedValidatedStudies.put("study2", ExitStatus.ERRORS);
+        expectedValidatedStudies.put("study1", ExitStatus.WARNING);
+        expectedValidatedStudies.put("study2", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         Map<String, ExitStatus> expectedValidStudies = new HashMap<String, ExitStatus>();

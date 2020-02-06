@@ -23,27 +23,25 @@ public class ResourceUtilsTest {
 
     @Test
     public void trimDir_success() {
-        // TODO implement test
+        assertEquals("file:/dir", utils.trimDir("file:/dir"));
+        assertEquals("file:/dir", utils.trimDir("file:/dir/"));
+        assertEquals("file:/dir", utils.trimDir("file:/dir/*"));
+        assertEquals("file:/dir", utils.trimDir("file:/dir/**"));
+        assertEquals("file:/dir", utils.trimDir("file:/dir//"));
+        assertEquals("file:/dir", utils.trimDir("file:/dir//**"));
+    }
+
+    @Test
+    public void trimFile_success() {
+        assertEquals("file:/file.txt", utils.trimFile("file:/file.txt"));
+        assertEquals("file.txt", utils.trimFile("/file.txt"));
+        assertEquals("file.txt", utils.trimFile("//file.txt"));
     }
 
     @Test
     public void stripResourceTypePrefix_success() {
-        // TODO implement test
-    }
-
-    @Test
-    public void extractDirs_success() {
-        // TODO implement test
-    }
-
-    @Test
-    public void readMetaFile_success() {
-        // TODO implement test
-    }
-
-    @Test
-    public void copyResource_success() {
-        // TODO implement test
+        assertEquals("/file.txt", utils.stripResourceTypePrefix("file:/file.txt"));
+        assertEquals("/file.txt", utils.stripResourceTypePrefix("s3:/file.txt"));
     }
 
     @Test

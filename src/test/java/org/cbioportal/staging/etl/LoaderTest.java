@@ -77,13 +77,13 @@ public class LoaderTest {
     @Test
     public void studyNotLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(false, loader.areStudiesLoaded());
@@ -118,7 +118,7 @@ public class LoaderTest {
     @Test
     public void multipleStudiesLoadedWithErrors() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERRORS);
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
@@ -126,7 +126,7 @@ public class LoaderTest {
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedLoadingStatus.put("study_with_errors", ExitStatus.ERRORS);
+        expectedLoadingStatus.put("study_with_errors", ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(true, loader.areStudiesLoaded());
@@ -140,15 +140,15 @@ public class LoaderTest {
     @Test
     public void multipleStudiesAllErrors() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERRORS);
+        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
         studies.put("study_2", TestUtils.createMockResource("test/path2", 1));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERRORS);
-        expectedLoadingStatus.put("study_2", ExitStatus.ERRORS);
+        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
+        expectedLoadingStatus.put("study_2", ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(false, loader.areStudiesLoaded());

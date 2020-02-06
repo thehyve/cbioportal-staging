@@ -120,7 +120,7 @@ public class ScheduledScannerTest {
 
         Map<String, ExitStatus> exit = new HashMap<>();
         exit.put("dummy_study_success", ExitStatus.SUCCESS);
-        exit.put("dummy_study_failure", ExitStatus.ERRORS);
+        exit.put("dummy_study_failure", ExitStatus.ERROR);
         when(etlProcessRunner.getLoaderExitStatus()).thenReturn(exit);
 
         scheduledScanner.scan();

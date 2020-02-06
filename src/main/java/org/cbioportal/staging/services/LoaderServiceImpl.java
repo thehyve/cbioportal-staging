@@ -54,7 +54,7 @@ public class LoaderServiceImpl implements ILoaderService {
             if (loadProcess.exitValue() == 0) {
                 exitStatus = ExitStatus.SUCCESS;
             } else {
-                exitStatus = ExitStatus.ERRORS;
+                exitStatus = ExitStatus.ERROR;
             }
             return exitStatus;
         } catch (InterruptedException e) {

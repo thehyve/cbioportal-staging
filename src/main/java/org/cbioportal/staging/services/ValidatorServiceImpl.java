@@ -79,9 +79,9 @@ public class ValidatorServiceImpl implements IValidatorService {
 			if (validateProcess.exitValue() == 0) {
 				exitStatus = ExitStatus.SUCCESS;
 			} else if (validateProcess.exitValue() == 3) {
-				exitStatus = ExitStatus.WARNINGS;
+				exitStatus = ExitStatus.WARNING;
 			} else {
-				exitStatus = ExitStatus.ERRORS;
+				exitStatus = ExitStatus.ERROR;
 			}
 			return exitStatus;
 

@@ -51,11 +51,6 @@ public class Transformer {
     final private Map<String, Resource> logFiles = new HashMap<>();
     final private Map<String, Resource> dirsValidStudies = new HashMap<>();
 
-    private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
-        Resource[] studyFiles = provider.list(originPath);
-        return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
-    }
-
     public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
 
         logFiles.clear();
@@ -76,7 +71,7 @@ public class Transformer {
 
                 if (metaFileExists(untransformedFilesPath)) {
                     utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
-                    transformationStatus = ExitStatus.NOTRANSF;
+                    transformationStatus = ExitStatus.SKIPPED;
                 } else {
                     transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
                 }
@@ -90,9 +85,9 @@ public class Transformer {
             if (transformationStatus == ExitStatus.SUCCESS) {
                 dirsValidStudies.put(studyId, transformedFilesPath);
                 logger.info("Transformation of study "+studyId+" finished successfully.");
-            } else if (transformationStatus == ExitStatus.WARNINGS) {
+            } else if (transformationStatus == ExitStatus.WARNING) {
                 logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
-            } else if (transformationStatus == ExitStatus.NOTRANSF) {
+            } else if (transformationStatus == ExitStatus.SKIPPED) {
                 dirsValidStudies.put(studyId, transformedFilesPath);
                 logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
             } else {
@@ -103,6 +98,11 @@ public class Transformer {
 
         logger.info("Transformation step finished.");
         return statusStudies;
+    }
+
+    private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
+        Resource[] studyFiles = provider.list(originPath);
+        return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
     }
 
     public Map<String, Resource> getLogFiles() {

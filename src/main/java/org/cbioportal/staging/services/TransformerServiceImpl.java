@@ -96,9 +96,9 @@ public class TransformerServiceImpl implements ITransformerService {
             if (transformationProcess.exitValue() == 0) {
                 exitStatus = ExitStatus.SUCCESS;
             } else if (transformationProcess.exitValue() == 3) {
-                exitStatus = ExitStatus.WARNINGS;
+                exitStatus = ExitStatus.WARNING;
             } else {
-                exitStatus = ExitStatus.ERRORS;
+                exitStatus = ExitStatus.ERROR;
             }
             return exitStatus;
 

@@ -63,7 +63,7 @@ public class Loader {
                     areStudiesLoaded = true;
                     logger.info("Loading of study "+studyId+" finished successfully.");
                 } else {
-                    loadResults.put(studyId, ExitStatus.ERRORS);
+                    loadResults.put(studyId, ExitStatus.ERROR);
                     logger.error("Loading process of study "+studyId+" failed.");
                 }
             }

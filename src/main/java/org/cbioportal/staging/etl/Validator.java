@@ -53,7 +53,7 @@ public class Validator {
             }
             return false;
         } else if (validationLevel.equals("ERROR")) { // Load studies with only no errors
-            if (exitStatus == ExitStatus.SUCCESS || exitStatus == ExitStatus.WARNINGS) {
+            if (exitStatus == ExitStatus.SUCCESS || exitStatus == ExitStatus.WARNING) {
                 return true;
             }
             return false;

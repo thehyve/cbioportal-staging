@@ -195,14 +195,12 @@ public class EmailServiceImpl implements IEmailService {
 		for (String study : transformedStudies.keySet()) {
 			if (transformedStudies.get(study) == ExitStatus.SUCCESS) {
 				studies.put(study, "VALID");
-			}
-			else if (transformedStudies.get(study) == ExitStatus.WARNINGS) { //Study with warnings and no errors
+			} else if (transformedStudies.get(study) == ExitStatus.WARNING) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
-			} else if (transformedStudies.get(study) == ExitStatus.NOTRANSF) {
-				//Skip condition (study not transformed)
-			} else { //Study with errors
+			} else if (transformedStudies.get(study) == ExitStatus.ERROR) { //Study with errors
 				studies.put(study, "ERRORS");
 			}
+			// ExitStatus.SKIPPED not included in export (study not transformed)
 		}
 
 		Message msg = new MimeMessage(session);
@@ -243,7 +241,7 @@ public class EmailServiceImpl implements IEmailService {
 			if (validatedStudies.get(study) == ExitStatus.SUCCESS) {
 				studies.put(study, "VALID");
 			}
-			else if (validatedStudies.get(study) == ExitStatus.WARNINGS) { //Study with warnings and no errors
+			else if (validatedStudies.get(study) == ExitStatus.WARNING) { //Study with warnings and no errors
 				studies.put(study, "VALID with WARNINGS");
 			} else { //Study with errors
 				studies.put(study, "ERRORS");
