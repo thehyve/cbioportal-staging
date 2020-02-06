@@ -15,8 +15,11 @@
 */
 package org.cbioportal.staging.services;
 
-import java.util.HashMap;
+import static com.pivovarit.function.ThrowingFunction.sneaky;
+
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
@@ -35,45 +38,34 @@ public class PublisherServiceImpl implements PublisherService {
     @Value("${central.share.location}")
     private Resource centralShareLocation;
 
-    @Value("${central.share.location.web.address:}")
-    private Resource centralShareLocationWebAddress;
-
     @Autowired
     private ResourceUtils utils;
 
-    public Map<String, Resource> publish(String date, Map<String, Resource> initialLogFiles) throws PublisherException {
-        try {
-            Map<String, Resource> finalLogFiles = new HashMap<>();
-            for (String logName : initialLogFiles.keySet()) {
-                Resource initialLogFile = initialLogFiles.get(logName);
-                Resource finalLogFile;
-                finalLogFile = publish(initialLogFile, date);
-                finalLogFiles.put(logName, finalLogFile);
-            }
-            return finalLogFiles;
-        } catch (ResourceCollectionException e) {
-            throw new PublisherException("Could not publish log files");
-        }
-    }
+    public Map<String, Resource> publish(String date, Map<String, Resource> logFiles) throws PublisherException {
 
-    private Resource publish(Resource file, String date) throws ResourceCollectionException {
-
-        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-		if (centralShareLocationWebAddress == null) {
-			centralShareLocationWebAddress = centralShareLocation;
+        if (date == null) {
+            throw new PublisherException("Argument 'date' may not be null.");
         }
 
-        //Get Central Share Location Path and copy the file to the path
-        Resource centralShareLocationPath = getCentralShareLocationPath(centralShareLocation, date);
-        return utils.copyResource(centralShareLocationPath, file, file.getFilename());
+        if (logFiles == null) {
+            throw new PublisherException("Argument 'logFiles' may not be null.");
+        }
+
+        return logFiles.entrySet().stream()
+            .collect(Collectors
+                .toMap(Entry::getKey,
+                     sneaky(e -> publish(e.getValue(), date))
+                )
+            );
     }
 
-    private Resource getCentralShareLocationPath(Resource centralShareLocation, String date)
-            throws ResourceCollectionException {
+    private Resource publish(Resource logFile, String date) throws ResourceCollectionException {
         Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, date);
+        // TODO is this conditional really needed (does it throw an error if not)?
         if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
             utils.ensureDirs(centralShareLocation);
         }
-        return centralShareLocationPath;
+        return utils.copyResource(centralShareLocationPath, logFile, logFile.getFilename());
     }
+
 }

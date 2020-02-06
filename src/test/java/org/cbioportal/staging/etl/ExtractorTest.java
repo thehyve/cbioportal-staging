@@ -71,12 +71,12 @@ public class ExtractorTest {
 		extractor.run(in);
 	}
 
-	// test correct study/destination path
+	// TODO test correct study/destination path
 
-	// test correct remote base path
+	// TODO test correct remote base path
 
-	// test reaction after a number of attempts
+	// TODO test reaction after a number of attempts
 
-	// test handling of error files
+	// TODO test handling of error files
 
 }

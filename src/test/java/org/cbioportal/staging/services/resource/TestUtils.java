@@ -17,7 +17,7 @@ public class TestUtils {
         try {
             long modifiedDate = (long) number;
             URL url = new URL(fileName);
-            when(r.getFilename()).thenReturn(fileName);
+            when(r.getFilename()).thenReturn(fileName.substring(fileName.lastIndexOf("/")+1));
             when(r.getURL()).thenReturn(url);
             when(r.lastModified()).thenReturn(modifiedDate);
             when(r.exists()).thenReturn(true);

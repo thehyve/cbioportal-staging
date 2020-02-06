@@ -100,6 +100,15 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${debug.mode:false}")
 	private Boolean debugMode;
 
+	@Value("${central.share.location}")
+    private Resource centralShareLocation;
+
+    @Value("${central.share.location.web.address:}")
+	private Resource centralShareLocationWebAddress;
+
+	// TODO make sure that paths to files/logs are updated when central.share.location.web.address
+	// is specified
+
 	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
 	private Properties getProperties() {
