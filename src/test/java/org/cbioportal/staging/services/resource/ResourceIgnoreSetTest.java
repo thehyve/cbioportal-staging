@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;

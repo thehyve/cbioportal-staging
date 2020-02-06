@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
@@ -38,7 +39,6 @@ import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.resource.DefaultResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
-import org.cbioportal.staging.services.resource.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

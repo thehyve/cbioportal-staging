@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import com.pivovarit.function.ThrowingFunction;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Before;
 import org.junit.Test;

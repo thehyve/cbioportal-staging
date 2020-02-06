@@ -1,4 +1,4 @@
-package org.cbioportal.staging.services.resource;
+package org.cbioportal.staging;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

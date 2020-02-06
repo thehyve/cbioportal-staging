@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;

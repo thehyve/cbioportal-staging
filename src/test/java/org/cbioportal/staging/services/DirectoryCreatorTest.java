@@ -20,6 +20,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -33,7 +34,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { DirectoryCreatorByJob.class, org.cbioportal.staging.services.resource.ResourceUtils.class })
+@SpringBootTest(classes = { DirectoryCreatorByJob.class },
+	properties = {"etl.working.dir=", "transformation.directory="}
+)
 public class DirectoryCreatorTest {
 
 	@Autowired
@@ -45,7 +48,6 @@ public class DirectoryCreatorTest {
     private Resource etlDir = mock(Resource.class);
     private Resource transformDir = mock(Resource.class);
     private Resource untransformedDir = mock(Resource.class);
-
 
 	@Test(expected = DirectoryCreatorException.class)
 	public void etlWorkingDir_doesNotExist() throws DirectoryCreatorException {
@@ -68,28 +70,30 @@ public class DirectoryCreatorTest {
 		directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
     }
 
-    //@Test(expected = DirectoryCreatorException.class)
-	public void transformationDir_doesNotExist() throws DirectoryCreatorException, ResourceCollectionException {
+    @Test
+	public void transformationDir_transformationDirNull() throws DirectoryCreatorException, ResourceCollectionException {
 
         when(etlDir.exists()).thenReturn(false);
-        when(utils.createDirResource(untransformedDir, "staging")).thenReturn(utils.getResource("/staging"));
-        ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
-        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
+		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
+        ReflectionTestUtils.setField(directoryCreator, "transformationDir", null);
+
+		Resource transDir = TestUtils.createMockResource("/staging", 0);
+		when(utils.createDirResource(untransformedDir, "staging")).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
 
-        assertEquals(transformedDir, utils.getResource("/staging"));
+        assertEquals(transformedDir, transDir);
 	}
 
-	// //@Test(expected = DirectoryCreatorException.class)
-	// public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException {
+	@Test(expected = DirectoryCreatorException.class)
+	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException {
 
-	// 	when(etlDir.exists()).thenReturn(true);
-	// 	when(utils.isFile(any(Resource.class))).thenReturn(true);
-	// 	ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
-    //     ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
+		when(etlDir.exists()).thenReturn(true);
+		when(utils.isFile(any(Resource.class))).thenReturn(true);
+		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
+        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
-	// 	directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
-	// }
+		directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
+	}
 
 }

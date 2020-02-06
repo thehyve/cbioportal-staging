@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;

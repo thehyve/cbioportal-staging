@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
