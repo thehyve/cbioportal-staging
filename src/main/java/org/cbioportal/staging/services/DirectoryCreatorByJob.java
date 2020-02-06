@@ -58,7 +58,7 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
     public Resource createTransformedStudyDir(String timestamp, String studyId, Resource untransformedStudyDir) throws DirectoryCreatorException {
         try {
             Resource transformedStudyDir;
-            if (!transformationDir.exists()) {
+            if (transformationDir != null && ! transformationDir.exists()) {
                 transformedStudyDir = utils.createDirResource(untransformedStudyDir, "staging");
                 utils.ensureDirs(transformedStudyDir);
             } else if (utils.isFile(transformationDir)) {
@@ -87,6 +87,7 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
 								+ centralShareLocation);
 			}
             Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, timestamp);
+            // TODO is this condition really needed? Better be resource-type independent
             if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
                 utils.ensureDirs(centralShareLocation);
             }
