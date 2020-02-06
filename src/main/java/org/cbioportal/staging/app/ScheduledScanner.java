@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.ScheduledScannerService;
+import org.cbioportal.staging.services.IEmailService;
+import org.cbioportal.staging.services.IScheduledScannerService;
 import org.cbioportal.staging.services.resource.IResourceCollector;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.slf4j.Logger;
@@ -62,10 +62,10 @@ public class ScheduledScanner {
 	private IResourceCollector resourceCollector;
 
 	@Autowired
-	private ScheduledScannerService scheduledScannerService;
+	private IScheduledScannerService scheduledScannerService;
 
 	@Autowired
-	private EmailService emailService;
+	private IEmailService emailService;
 
 	@Autowired
 	private ETLProcessRunner etlProcessRunner;

@@ -25,7 +25,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.TestUtils;
 import org.junit.Before;
@@ -45,7 +45,7 @@ public class LoaderTest {
     private Loader loader;
 
     @MockBean
-    private LoaderService loaderService;
+    private ILoaderService loaderService;
 
     @MockBean
     private ResourceUtils utils;

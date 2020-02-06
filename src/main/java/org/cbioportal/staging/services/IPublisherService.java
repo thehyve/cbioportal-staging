@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 The Hyve B.V.
+* Copyright (c) 2020 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -15,12 +15,13 @@
 */
 package org.cbioportal.staging.services;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
-import org.cbioportal.staging.exceptions.ValidatorException;
+import java.util.Map;
+
+import org.cbioportal.staging.exceptions.PublisherException;
 import org.springframework.core.io.Resource;
 
-public interface ValidatorService {
+public interface IPublisherService {
 
-	public ExitStatus validate(Resource studyPath, Resource reportFile, Resource logFile) throws ValidatorException;
+    public Map<String, Resource> publish(String timestamp, Map<String, Resource> initialLogFiles) throws PublisherException;
 
 }

@@ -15,10 +15,15 @@
 */
 package org.cbioportal.staging.services;
 
-import java.util.Set;
+import java.io.IOException;
 
-public interface AuthorizerService {
-	
-	public void authorizeStudies(Set<String> studies) throws Exception;
+import org.cbioportal.staging.etl.Transformer.ExitStatus;
+import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.TransformerException;
+import org.springframework.core.io.Resource;
+
+public interface ITransformerService {
+
+	public ExitStatus transform(Resource originPath, Resource finalPath, Resource logFile) throws TransformerException, ConfigurationException, IOException;
 
 }

@@ -21,7 +21,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.services.LoaderService;
+import org.cbioportal.staging.services.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class Loader {
     private static final Logger logger = LoggerFactory.getLogger(Loader.class);
 
     @Autowired
-    private LoaderService loaderService;
+    private ILoaderService loaderService;
 
     @Autowired
     private ResourceUtils utils;

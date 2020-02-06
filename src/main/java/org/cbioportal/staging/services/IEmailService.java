@@ -27,7 +27,7 @@ import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-public interface EmailService {
+public interface IEmailService {
 
 	public void emailStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 

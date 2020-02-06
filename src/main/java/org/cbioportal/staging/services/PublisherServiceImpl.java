@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
     Calls a command when study loading is finished.
  */
 @Component
-public class PublisherServiceImpl implements PublisherService {
+public class PublisherServiceImpl implements IPublisherService {
 
     @Value("${central.share.location}")
     private Resource centralShareLocation;

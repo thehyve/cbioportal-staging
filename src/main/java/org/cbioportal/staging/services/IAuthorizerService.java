@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 The Hyve B.V.
+* Copyright (c) 2018 The Hyve B.V.
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as
 * published by the Free Software Foundation, either version 3 of the
@@ -15,13 +15,10 @@
 */
 package org.cbioportal.staging.services;
 
-import java.util.Map;
+import java.util.Set;
 
-import org.cbioportal.staging.exceptions.PublisherException;
-import org.springframework.core.io.Resource;
+public interface IAuthorizerService {
 
-public interface PublisherService {
-
-    public Map<String, Resource> publish(String timestamp, Map<String, Resource> initialLogFiles) throws PublisherException;
+	public void authorizeStudies(Set<String> studies) throws Exception;
 
 }

@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ScheduledScannerServiceImpl implements ScheduledScannerService {
+public class ScheduledScannerServiceImpl implements IScheduledScannerService {
 
 	@Override
 	public void stopApp() {

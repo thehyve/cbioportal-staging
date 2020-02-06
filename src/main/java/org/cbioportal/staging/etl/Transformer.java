@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.IDirectoryCreator;
-import org.cbioportal.staging.services.TransformerService;
+import org.cbioportal.staging.services.ITransformerService;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ public class Transformer {
     private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
     @Autowired
-    private TransformerService transformerService;
+    private ITransformerService transformerService;
 
     @Autowired
     private ResourceUtils utils;

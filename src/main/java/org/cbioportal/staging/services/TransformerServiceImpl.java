@@ -36,7 +36,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TransformerServiceImpl implements TransformerService {
+public class TransformerServiceImpl implements ITransformerService {
     private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
     @Value("${transformation.command.script:}")

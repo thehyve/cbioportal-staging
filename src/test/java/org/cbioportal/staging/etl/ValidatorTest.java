@@ -25,7 +25,7 @@ import java.util.Map;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.ValidatorService;
+import org.cbioportal.staging.services.IValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class ValidatorTest {
 	private Validator validator;
 
 	@MockBean
-    private ValidatorService validatorService;
+    private IValidatorService validatorService;
 
     @MockBean
 	private ResourceUtils utils;
@@ -172,7 +172,7 @@ public class ValidatorTest {
         logPaths.put("lgg_ucsf_2014 validation report", null);
         assertEquals(logPaths, validator.getLogAndReportFiles());
     }
-    
+
     @Test
 	public void multipleStudiesValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
         when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNINGS, ExitStatus.ERRORS);

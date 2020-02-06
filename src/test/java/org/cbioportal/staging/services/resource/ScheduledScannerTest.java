@@ -18,8 +18,8 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.ScheduledScannerService;
+import org.cbioportal.staging.services.IEmailService;
+import org.cbioportal.staging.services.IScheduledScannerService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,10 +42,10 @@ public class ScheduledScannerTest {
     private ETLProcessRunner etlProcessRunner;
 
     @MockBean
-    private EmailService emailService;
+    private IEmailService emailService;
 
     @MockBean
-    private ScheduledScannerService scheduledScannerService;
+    private IScheduledScannerService scheduledScannerService;
 
     @Autowired
     private ScheduledScanner scheduledScanner;

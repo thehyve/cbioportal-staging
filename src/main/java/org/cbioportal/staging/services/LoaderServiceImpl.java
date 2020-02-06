@@ -30,7 +30,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LoaderServiceImpl implements LoaderService {
+public class LoaderServiceImpl implements ILoaderService {
     private static final Logger logger = LoggerFactory.getLogger(LoaderServiceImpl.class);
 
     @Autowired

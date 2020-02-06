@@ -33,7 +33,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ValidatorServiceImpl implements ValidatorService {
+public class ValidatorServiceImpl implements IValidatorService {
     private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
     @Autowired

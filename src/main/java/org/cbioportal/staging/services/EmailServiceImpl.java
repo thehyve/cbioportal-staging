@@ -50,7 +50,7 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
 @Component
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements IEmailService {
 
 	@Autowired
 	private Configuration freemarkerConfig;
@@ -109,7 +109,7 @@ public class EmailServiceImpl implements EmailService {
 	// TODO make sure that paths to files/logs are updated when central.share.location.web.address
 	// is specified
 
-	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+	private static final Logger logger = LoggerFactory.getLogger(IEmailService.class);
 
 	private Properties getProperties() {
 		// Get system properties

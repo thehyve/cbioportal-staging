@@ -41,7 +41,6 @@ public class DockerCommandBuilder implements ICommandBuilder {
     @Value("${cbioportal.docker.properties}")
     private Resource cbioportalDockerPropertiesFile;
 
-
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
         try {

@@ -28,10 +28,10 @@ import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.AuthorizerService;
-import org.cbioportal.staging.services.EmailService;
+import org.cbioportal.staging.services.IAuthorizerService;
+import org.cbioportal.staging.services.IEmailService;
+import org.cbioportal.staging.services.IPublisherService;
 import org.cbioportal.staging.services.IRestarter;
-import org.cbioportal.staging.services.PublisherService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,13 +66,13 @@ public class ETLProcessRunner {
 	private IRestarter restarterService;
 
 	@Autowired
-    private AuthorizerService authorizer;
+    private IAuthorizerService authorizer;
 
     @Autowired
-    private PublisherService publisher;
+    private IPublisherService publisher;
 
     @Autowired
-	private EmailService emailService;
+	private IEmailService emailService;
 
 	@Autowired
 	private ResourceUtils utils;

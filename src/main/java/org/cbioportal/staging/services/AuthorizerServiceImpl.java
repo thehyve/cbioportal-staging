@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthorizerServiceImpl implements AuthorizerService {
+public class AuthorizerServiceImpl implements IAuthorizerService {
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthorizerServiceImpl.class);
 

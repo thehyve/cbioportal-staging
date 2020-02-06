@@ -15,12 +15,10 @@
 */
 package org.cbioportal.staging.services;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
-import org.cbioportal.staging.exceptions.LoaderException;
-import org.springframework.core.io.Resource;
+public interface IScheduledScannerService {
 
-public interface LoaderService {
+    public void stopApp();
 
-	public ExitStatus load(Resource studyPath, Resource logFile) throws LoaderException;
+    public void stopAppWithSuccess();
 
 }
