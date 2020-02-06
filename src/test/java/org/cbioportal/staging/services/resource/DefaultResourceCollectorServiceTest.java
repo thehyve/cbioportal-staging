@@ -41,7 +41,7 @@ public class DefaultResourceCollectorServiceTest {
     public void initMocks() throws ResourceCollectionException {
 
         List<Resource> providedResources = new ArrayList<>();
-        providedResources.add(TestUtils.createResource("dummy", "txt", 1));
+        providedResources.add(TestUtils.createMockResource("dummy", "txt", 1));
         Mockito.when(resourceProvider.list(any())).thenReturn(providedResources.toArray(new Resource[0]), new Resource[0]); // returns empty array the second time
 
         Mockito.when(resourceFilter.filterResources(any())).thenAnswer(i -> i.getArguments()[0]);
@@ -53,8 +53,8 @@ public class DefaultResourceCollectorServiceTest {
     public void testGetResources_success() throws ResourceCollectionException, ConfigurationException {
 
         List<Resource> strategyResources = new ArrayList<>();
-        strategyResources.add(TestUtils.createResource("dummy", "txt", 1));
-        strategyResources.add(TestUtils.createResource("dummy", "txt", 2));
+        strategyResources.add(TestUtils.createMockResource("dummy", "txt", 1));
+        strategyResources.add(TestUtils.createMockResource("dummy", "txt", 2));
         Map<String, Resource[]> studyFiles = new HashMap<>();
         studyFiles.put("study1", strategyResources.toArray(new Resource[0]));
         Mockito.when(studyResourceResolver.resolveResources(any())).thenReturn(studyFiles);

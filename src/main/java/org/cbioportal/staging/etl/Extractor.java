@@ -52,13 +52,21 @@ class Extractor {
 
 	@Autowired
     private ResourceUtils utils;
-    
+
     @Autowired
 	private IDirectoryCreator directoryCreator;
 
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
 	public Map<String, Resource> run(Map<String, Resource[]> resources, String timestamp) throws ExtractionException {
+
+		if (resources == null) {
+			throw new ExtractionException("Argument 'resources' is null.");
+		}
+
+		if (timestamp == null) {
+			throw new ExtractionException("Argument 'timestamp' is null.");
+		}
 
 		filesNotFound.clear();
 		Map<String, Resource> out = new HashMap<>();
@@ -67,14 +75,14 @@ class Extractor {
 			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
 
                 String studyId = studyResources.getKey();
-                Resource studyDir = directoryCreator.createInputStudyDir(timestamp, studyId);
+                Resource studyDir = directoryCreator.createStudyExtractDir(timestamp, studyId);
 
 				String remoteBasePath = getBasePathResources(studyResources.getValue());
 
 				List<String> errorFiles = new ArrayList<>();
 				for (Resource remoteResource : studyResources.getValue()) {
 
-					String fullOriginalFilePath = remoteResource.getURI().toString();
+					String fullOriginalFilePath = remoteResource.getURL().toString();
 					String remoteFilePath = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
 
 					Resource localResource = attemptCopyResource(studyDir, remoteResource, remoteFilePath);

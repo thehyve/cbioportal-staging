@@ -29,15 +29,15 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
 
     @Autowired
     private ResourceUtils utils;
-    
+
     @Value("${etl.working.dir:${java.io.tmpdir}}")
     private Resource etlWorkingDir;
 
     @Value("${transformation.directory:}")
     private Resource transformationDir;
-    
+
     @Override
-    public Resource createInputStudyDir(String timestamp, String studyId) throws DirectoryCreatorException {
+    public Resource createStudyExtractDir(String timestamp, String studyId) throws DirectoryCreatorException {
         try {
             if (!etlWorkingDir.exists()) {
 				throw new DirectoryCreatorException(

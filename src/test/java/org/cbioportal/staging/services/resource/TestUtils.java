@@ -27,7 +27,7 @@ public class TestUtils {
         return r;
     }
 
-    public static WritableResource createResource(String prefix, String extension, int number) {
+    public static WritableResource createMockResource(String prefix, String extension, int number) {
         return createMockResource("file:/"+prefix+"_"+String.valueOf(number)+"."+extension, number);
     }
 

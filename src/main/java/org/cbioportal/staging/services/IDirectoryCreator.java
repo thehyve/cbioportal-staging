@@ -20,10 +20,10 @@ import org.springframework.core.io.Resource;
 
 public interface IDirectoryCreator {
 
-    public Resource createInputStudyDir(String timestamp, String studyId) throws DirectoryCreatorException;
+    public Resource createStudyExtractDir(String timestamp, String studyId) throws DirectoryCreatorException;
 
     public Resource createTransformedStudyDir(String timestamp, String studyId, Resource untransformedStudyDir) throws DirectoryCreatorException;
 
     public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException;
-    
+
 }

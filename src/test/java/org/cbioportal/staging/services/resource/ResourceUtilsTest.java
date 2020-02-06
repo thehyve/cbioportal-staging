@@ -56,7 +56,7 @@ public class ResourceUtilsTest {
     @Test
     public void filterFiles() throws Exception {
         List<Resource> resources = createResources("prefix", "yaml");
-        Resource target = TestUtils.createResource("dummy", "txt", 0);
+        Resource target = TestUtils.createMockResource("dummy", "txt", 0);
         resources.add(target);
         Resource[] selectedResources = utils.filterFiles(resources.toArray(new Resource[0]), "dummy", "txt");
         assert (selectedResources.length == 1);
@@ -119,7 +119,7 @@ public class ResourceUtilsTest {
     private List<Resource> createResources(String prefix, String extension) {
         List<Resource> resources = new ArrayList<>();
         IntStream.range(0,4).forEach(i -> {
-            resources.add(TestUtils.createResource(prefix, extension, i));
+            resources.add(TestUtils.createMockResource(prefix, extension, i));
         });
         return resources;
     }

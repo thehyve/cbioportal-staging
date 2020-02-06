@@ -45,7 +45,7 @@ public class DirectoryCreatorTest {
     private Resource etlDir = mock(Resource.class);
     private Resource transformDir = mock(Resource.class);
     private Resource untransformedDir = mock(Resource.class);
-    
+
 
 	@Test(expected = DirectoryCreatorException.class)
 	public void etlWorkingDir_doesNotExist() throws DirectoryCreatorException {
@@ -54,7 +54,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
-		directoryCreator.createInputStudyDir("mock-timestamp", "mock-studyId");
+		directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
@@ -65,9 +65,9 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
-		directoryCreator.createInputStudyDir("mock-timestamp", "mock-studyId");
+		directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
     }
-    
+
     //@Test(expected = DirectoryCreatorException.class)
 	public void transformationDir_doesNotExist() throws DirectoryCreatorException, ResourceCollectionException {
 
@@ -77,7 +77,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
-        
+
         assertEquals(transformedDir, utils.getResource("/staging"));
 	}
 

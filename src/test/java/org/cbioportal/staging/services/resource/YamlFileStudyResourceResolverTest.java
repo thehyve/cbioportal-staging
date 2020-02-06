@@ -59,7 +59,7 @@ public class YamlFileStudyResourceResolverTest {
     @Test
     public void testResolveResources_success() throws ResourceCollectionException {
         Resource[] files = new Resource[1];
-        files[0] = TestUtils.createResource("list_of_studies", "yaml", 0);
+        files[0] = TestUtils.createMockResource("list_of_studies", "yaml", 0);
         Map<String,Resource[]> result = resourceResolver.resolveResources(files);
         assertEquals(2, result.entrySet().size());
         assertEquals(2, result.get("study1").length);
