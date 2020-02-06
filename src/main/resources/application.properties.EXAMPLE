@@ -53,6 +53,10 @@ central.share.location=file:///tmp
 # Full transformation command and path to execute it
 transformation.command.script=./umccr_wrapper_parser.py
 
+# Directory to save the transformed files. If it is not set, the transformed files will be saved in the working directory,
+# in a folder "staging" inside each study-specific folder.
+# transformation.directory=
+
 #Validation level
 validation.level = ERROR
 

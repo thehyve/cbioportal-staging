@@ -30,8 +30,11 @@ import java.util.Map;
 
 import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.DirectoryCreatorByJob;
+import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.resource.DefaultResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -46,7 +49,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {Transformer.class, TransformerServiceImpl.class, ResourceUtils.class, DefaultResourceProvider.class})
+@SpringBootTest(classes = {Transformer.class, TransformerServiceImpl.class, ResourceUtils.class, DefaultResourceProvider.class, DirectoryCreatorByJob.class})
 public class TransformerTest {
 
     @Autowired
@@ -61,8 +64,11 @@ public class TransformerTest {
     @MockBean
     private DefaultResourceProvider provider;
 
+    @MockBean
+    private IDirectoryCreator directoryCreator;
+
     @Before
-    public void init() throws ResourceCollectionException, IOException, TransformerException, ConfigurationException {
+    public void init() throws ResourceCollectionException, IOException, TransformerException, ConfigurationException, DirectoryCreatorException {
         // mock utils.ensuredirs -> do nothing
         doNothing().when(utils).ensureDirs(any(Resource.class));
 
@@ -75,10 +81,14 @@ public class TransformerTest {
         // mock transformerService.transform -> do nothing, check called
         when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
 
+        //TODO
+        when(directoryCreator.createTransformedStudyDir(any(String.class),any(String.class),any(Resource.class))).thenReturn(null);
+
         // mock utils.createLogFiles -> return Resource mock that has getFile()
         Resource logFile = TestUtils.createMockResource("file:/dummy_study_folder/log_file.txt", 0);
         when(logFile.getFile()).thenReturn(null);
         when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(logFile);
+
     }
 
     @Test
@@ -87,8 +97,8 @@ public class TransformerTest {
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         when(provider.list(any(Resource.class))).thenReturn(studyFiles);
-
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+ 
+        Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
         verify(utils, times(1)).copyDirectory(any(Resource.class),any(Resource.class));
         verify(transformerService, never()).transform(any(Resource.class),any(Resource.class),any(Resource.class));
@@ -105,7 +115,7 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
         when(provider.list(any(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+        Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
         verify(utils, never()).copyDirectory(any(Resource.class),any(Resource.class));
         verify(transformerService, times(1)).transform(any(Resource.class),any(Resource.class),any(Resource.class));
@@ -124,7 +134,7 @@ public class TransformerTest {
 
         when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.WARNINGS);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+        Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNINGS);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));

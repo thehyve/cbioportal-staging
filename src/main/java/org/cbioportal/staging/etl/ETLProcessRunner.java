@@ -99,13 +99,13 @@ public class ETLProcessRunner {
 	public void run(Map<String, Resource[]> remoteResources) throws Exception {
 		try  {
 
-			String date = utils.getTimeStamp("yyyyMMdd-HHmmss");
+			String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			startProcess();
 
 			utils.ensureDirs(etlWorkingDir);
 
             //E (Extract) step:
-			Map<String,Resource> localResources = extractor.run(remoteResources);
+			Map<String,Resource> localResources = extractor.run(remoteResources, timestamp);
 
 			if (! extractor.errorFiles().isEmpty()) {
 				emailService.emailStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
@@ -123,8 +123,8 @@ public class ETLProcessRunner {
 			if (skipTransformation) {
 				transformedStudiesPaths = localResources;
 			} else {
-    			transformerExitStatus = transformer.transform(localResources, "command");
-                Map<String, Resource> transformationLogFiles = publisher.publish(date, transformer.getLogFiles());
+    			transformerExitStatus = transformer.transform(timestamp, localResources, "command");
+                Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
 					emailService.emailTransformedStudies(transformerExitStatus, logPaths);
@@ -135,7 +135,7 @@ public class ETLProcessRunner {
 			//V (VALIDATE) STEP:
 			if (! transformedStudiesPaths.isEmpty()) {
                 validatorExitStatus = validator.validate(transformedStudiesPaths);
-                Map<String, Resource> validationAndReportFiles = publisher.publish(date, validator.getLogAndReportFiles());
+                Map<String, Resource> validationAndReportFiles = publisher.publish(timestamp, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
 				emailService.emailValidationReport(validatorExitStatus, validationLevel, logPaths);
 
@@ -144,7 +144,7 @@ public class ETLProcessRunner {
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.size() > 0) {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
-                    Map<String, Resource> loadingLogFiles = publisher.publish(date, loader.getLogFiles());
+                    Map<String, Resource> loadingLogFiles = publisher.publish(timestamp, loader.getLogFiles());
                     logPaths.putAll(loadingLogFiles);
 					emailService.emailStudiesLoaded(loaderExitStatus, logPaths);
 

@@ -13,15 +13,24 @@
 * You should have received a copy of the GNU Affero General Public License
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package org.cbioportal.staging.services;
+package org.cbioportal.staging.exceptions;
 
-import java.util.Map;
-
-import org.cbioportal.staging.exceptions.PublisherException;
-import org.springframework.core.io.Resource;
-
-public interface PublisherService {
-
-    public Map<String, Resource> publish(String timestamp, Map<String, Resource> initialLogFiles) throws PublisherException;
+public class DirectoryCreatorException extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5072243529310767969L;
+	
+	public DirectoryCreatorException()
+	{
+	}
+	public DirectoryCreatorException(String message, Exception e)
+	{
+		super(message);
+	}
+	public DirectoryCreatorException(String message)
+	{
+		super(message);
+	}
 
 }

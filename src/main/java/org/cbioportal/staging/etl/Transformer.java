@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.TransformerService;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -43,6 +44,9 @@ public class Transformer {
     @Autowired
     private IResourceProvider provider;
 
+    @Autowired
+	private IDirectoryCreator directoryCreator;
+
     public enum ExitStatus {
         SUCCESS, WARNINGS, ERRORS, NOTRANSF; // TODO - Remove "no transformation" option from this file and move it up
                                              // to ETLProcessRunner
@@ -58,13 +62,7 @@ public class Transformer {
         // return metaStudyFile != null && metaStudyFile.exists() && utils.isFile(metaStudyFile);
     }
 
-    private Resource getTransformedFilesPath(Resource untransformedFilesPath) throws ResourceCollectionException {
-        Resource transformedFilesPath = utils.createDirResource(untransformedFilesPath, "staging");
-        utils.ensureDirs(untransformedFilesPath);
-        return transformedFilesPath;
-    }
-
-    public Map<String, ExitStatus> transform(Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
+    public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
 
         logFiles.clear();
         dirsValidStudies.clear();
@@ -77,7 +75,7 @@ public class Transformer {
             Resource transformedFilesPath;
             try {
                 Resource untransformedFilesPath = studyPaths.get(studyId);
-                transformedFilesPath = getTransformedFilesPath(untransformedFilesPath);
+                transformedFilesPath = directoryCreator.createTransformedStudyDir(timestamp, studyId, untransformedFilesPath);
 
                 Resource logFile = utils.createFileResource(transformedFilesPath, studyId + "_transformation_log.txt");
                 logFiles.put(studyId+" loading log", logFile);

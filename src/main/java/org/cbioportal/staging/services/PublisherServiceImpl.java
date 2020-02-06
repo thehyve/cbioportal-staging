@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -41,6 +42,9 @@ public class PublisherServiceImpl implements PublisherService {
     @Autowired
     private ResourceUtils utils;
 
+    @Autowired
+    private IDirectoryCreator directoryCreator;
+
     public Map<String, Resource> publish(String date, Map<String, Resource> logFiles) throws PublisherException {
 
         if (date == null) {
@@ -59,13 +63,19 @@ public class PublisherServiceImpl implements PublisherService {
             );
     }
 
-    private Resource publish(Resource logFile, String date) throws ResourceCollectionException {
-        Resource centralShareLocationPath = utils.createDirResource(centralShareLocation, date);
-        // TODO is this conditional really needed (does it throw an error if not)?
-        if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
-            utils.ensureDirs(centralShareLocation);
+    private Resource publish(Resource logFile, String timestamp) throws PublisherException {
+        try {
+            Resource centralShareLocationPath = directoryCreator.getCentralShareLocationPath(centralShareLocation, timestamp);
+            // TODO is this conditional really needed (does it throw an error if not)?
+            if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
+                utils.ensureDirs(centralShareLocation);
+            }
+            return utils.copyResource(centralShareLocationPath, logFile, logFile.getFilename());
+        } catch (DirectoryCreatorException e) {
+            throw new PublisherException("There has been an error creating the Central Share Location", e);
+        } catch (ResourceCollectionException e) {
+            throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }
-        return utils.copyResource(centralShareLocationPath, logFile, logFile.getFilename());
     }
 
 }

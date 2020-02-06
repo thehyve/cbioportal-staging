@@ -50,7 +50,7 @@ public class ResourceUtils {
     }
 
     public String getTimeStamp(String pattern) {
-        return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+        return new SimpleDateFormat(pattern).format(new Date());
     }
 
     public Resource[] filterFiles(Resource[] resources, String prefixPattern, String extensionPattern) {

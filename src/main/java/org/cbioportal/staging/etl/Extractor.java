@@ -28,8 +28,10 @@ import java.util.stream.Stream;
 import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,40 +47,27 @@ import org.springframework.stereotype.Component;
 class Extractor {
 	private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
-	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private Resource etlWorkingDir;
-
 	@Value("${scan.retry.time:5}")
 	private Integer timeRetry;
 
 	@Autowired
-	private ResourceUtils utils;
+    private ResourceUtils utils;
+    
+    @Autowired
+	private IDirectoryCreator directoryCreator;
 
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
-	public Map<String, Resource> run(Map<String, Resource[]> resources) throws ExtractionException {
+	public Map<String, Resource> run(Map<String, Resource[]> resources, String timestamp) throws ExtractionException {
 
 		Map<String, Resource> out = new HashMap<>();
 
 		try {
-
-			if (!etlWorkingDir.exists()) {
-				throw new ExtractionException(
-						"etl.working.dir does not exist on the local file system: " + etlWorkingDir);
-			}
-			if (utils.isFile(etlWorkingDir)) {
-				throw new ExtractionException(
-						"etl.working.dir points to a file on the local file system, but should point to a directory.: "
-								+ etlWorkingDir);
-			}
-
-			// TODO make abstraction of organization of local working dir
-			Resource workingDir = utils.createDirResource(etlWorkingDir, utils.getTimeStamp("yyyyMMdd-HHmmss"));
-
 			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
 
-				String studyId = studyResources.getKey();
-				Resource studyDir = utils.createDirResource(workingDir, studyId);
+                String studyId = studyResources.getKey();
+                Resource studyDir = directoryCreator.createInputStudyDir(timestamp, studyId);
+
 				String remoteBasePath = getBasePathResources(studyResources.getValue());
 
 				List<String> errorFiles = new ArrayList<>();
@@ -109,7 +98,9 @@ class Extractor {
 			throw new ExtractionException("Timeout for resource downloads was interrupted.", e);
 		} catch (ResourceCollectionException e) {
 			throw new ExtractionException("Cannot copy Resource.", e);
-		}
+		} catch (DirectoryCreatorException e) {
+            throw new ExtractionException("Cannot create directory.", e);
+        }
 
 		logger.info("Extractor step finished");
 		return out;

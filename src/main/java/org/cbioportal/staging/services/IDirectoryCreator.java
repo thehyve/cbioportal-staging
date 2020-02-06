@@ -15,13 +15,15 @@
 */
 package org.cbioportal.staging.services;
 
-import java.util.Map;
-
-import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.springframework.core.io.Resource;
 
-public interface PublisherService {
+public interface IDirectoryCreator {
 
-    public Map<String, Resource> publish(String timestamp, Map<String, Resource> initialLogFiles) throws PublisherException;
+    public Resource createInputStudyDir(String timestamp, String studyId) throws DirectoryCreatorException;
 
+    public Resource createTransformedStudyDir(String timestamp, String studyId, Resource untransformedStudyDir) throws DirectoryCreatorException;
+
+    public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException;
+    
 }
