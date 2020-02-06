@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.services;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.springframework.core.io.Resource;
 

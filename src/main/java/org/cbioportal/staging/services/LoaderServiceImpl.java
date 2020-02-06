@@ -18,7 +18,6 @@ package org.cbioportal.staging.services;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;

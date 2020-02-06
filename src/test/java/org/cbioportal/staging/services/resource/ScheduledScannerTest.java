@@ -16,8 +16,8 @@ import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.ETLProcessRunner;
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IEmailService;
 import org.cbioportal.staging.services.IScheduledScannerService;
 import org.junit.Test;

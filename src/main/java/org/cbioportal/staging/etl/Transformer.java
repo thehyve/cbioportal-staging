@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.ITransformerService;
 import org.cbioportal.staging.services.resource.IResourceProvider;
@@ -47,19 +48,12 @@ public class Transformer {
     @Autowired
 	private IDirectoryCreator directoryCreator;
 
-    public enum ExitStatus {
-        SUCCESS, WARNINGS, ERRORS, NOTRANSF; // TODO - Remove "no transformation" option from this file and move it up
-                                             // to ETLProcessRunner
-    }
-
     final private Map<String, Resource> logFiles = new HashMap<>();
     final private Map<String, Resource> dirsValidStudies = new HashMap<>();
 
     private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
         Resource[] studyFiles = provider.list(originPath);
         return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
-        // Resource metaStudyFile = utils.getResource(originPath, "meta_study.txt");
-        // return metaStudyFile != null && metaStudyFile.exists() && utils.isFile(metaStudyFile);
     }
 
     public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {

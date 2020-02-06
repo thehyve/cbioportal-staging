@@ -28,12 +28,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.DirectoryCreatorByJob;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.resource.DefaultResourceProvider;
@@ -97,7 +97,7 @@ public class TransformerTest {
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         when(provider.list(any(Resource.class))).thenReturn(studyFiles);
- 
+
         Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
         verify(utils, times(1)).copyDirectory(any(Resource.class),any(Resource.class));

@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.TransformerException;

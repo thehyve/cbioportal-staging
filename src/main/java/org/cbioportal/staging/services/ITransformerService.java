@@ -17,7 +17,6 @@ package org.cbioportal.staging.services;
 
 import java.io.IOException;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.springframework.core.io.Resource;

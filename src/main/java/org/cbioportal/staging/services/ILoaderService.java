@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.services;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.springframework.core.io.Resource;
 

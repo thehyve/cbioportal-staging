@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.etl.Validator;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;

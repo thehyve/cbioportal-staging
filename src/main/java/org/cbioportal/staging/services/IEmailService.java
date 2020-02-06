@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.springframework.core.io.Resource;
 
 import freemarker.core.ParseException;

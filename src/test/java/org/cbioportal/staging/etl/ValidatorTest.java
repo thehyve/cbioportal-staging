@@ -22,9 +22,9 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Before;

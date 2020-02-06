@@ -24,10 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.etl.Transformer.ExitStatus;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IAuthorizerService;
 import org.cbioportal.staging.services.IEmailService;
 import org.cbioportal.staging.services.IPublisherService;
@@ -119,17 +119,16 @@ public class ETLProcessRunner {
 
 			//T (TRANSFORM) STEP:
 			Map<String, Resource> transformedStudiesPaths;
-			// TODO add this condition in the V (alidate) block
-			if (skipTransformation) {
-				transformedStudiesPaths = localResources;
-			} else {
-    			transformerExitStatus = transformer.transform(timestamp, localResources, "command");
+			if (! skipTransformation) {
+				transformerExitStatus = transformer.transform(timestamp, localResources, "command");
                 Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
 					emailService.emailTransformedStudies(transformerExitStatus, logPaths);
                 }
                 transformedStudiesPaths = transformer.getValidStudies();
+			} else {
+				transformedStudiesPaths = localResources;
 			}
 
 			//V (VALIDATE) STEP:
