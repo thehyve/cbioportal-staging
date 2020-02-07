@@ -27,14 +27,10 @@ scan.location=file:///home/pnp300/staging-scan-folder/
 # (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
 #etl.working.dir=/custom/working/dir
 
-# (optional) environment settings needed by S3 library. Set this when
-# running the tool outside EC2 environment:
+# (optional) environment settings needed by S3 library.
 #cloud.aws.region.static=eu-central-1
-# (optional) aws credentials for access to S3 bucket:
 #cloud.aws.credentials.accessKey=<aws-key>
 #cloud.aws.credentials.secretKey=<aws-secret-key>
-# Turn OFF any S3: leave this property enabled if *NOT* using S3, but disable it (and enable the ones above) otherwise:
-#spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration
 
 # properties for running cBioPortal in Docker (default):
 cbioportal.docker.image=<image-name>
