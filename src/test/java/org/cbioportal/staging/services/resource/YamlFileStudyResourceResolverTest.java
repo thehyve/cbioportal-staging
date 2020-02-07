@@ -77,9 +77,9 @@ public class YamlFileStudyResourceResolverTest {
         assert(filesStudy2.contains("file:/tmp/files/dummy4.txt"));
     }
 
-    @Test(expected = ResourceCollectionException.class)
+    @Test
     public void testResolveResources_emptyArg() throws ResourceCollectionException {
-        resourceResolver.resolveResources(new Resource[0]);
+        assert(resourceResolver.resolveResources(new Resource[0]).isEmpty());
     }
 
 }

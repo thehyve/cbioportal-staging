@@ -67,21 +67,20 @@ public class YamlFileStudyResourceResolver implements IStudyResourceResolver {
             Resource[] yamlFiles = utils.filterFiles(resources, yamlPrefix, "[yaml|yml]");
             Resource yamlFile = utils.getMostRecent(yamlFiles);
 
-            if (yamlFile == null) {
-                throw new ResourceCollectionException("No yaml files could be found at scan.location using prefix '" + yamlPrefix + "'");
-            }
+            if (yamlFile != null) {
 
-            logger.info("Most recent yaml file is: " + yamlFile.getFilename());
+                logger.info("Most recent yaml file is: " + yamlFile.getFilename());
 
-            Map<String, List<String>> parsedYaml = parseYaml(yamlFile);
+                Map<String, List<String>> parsedYaml = parseYaml(yamlFile);
 
-            for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
-                List<Resource> collectedResources = new ArrayList<>();
-                for (String filePath : entry.getValue() ) {
-                    String fullFilePath = filePath(filePath);
-                    collectedResources.add(resourcePatternResolver.getResource(fullFilePath));
+                for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
+                    List<Resource> collectedResources = new ArrayList<>();
+                    for (String filePath : entry.getValue() ) {
+                        String fullFilePath = filePath(filePath);
+                        collectedResources.add(resourcePatternResolver.getResource(fullFilePath));
+                    }
+                    out.put(entry.getKey(), collectedResources.toArray(new Resource[0]));
                 }
-                out.put(entry.getKey(), collectedResources.toArray(new Resource[0]));
             }
 
         } catch (IOException e) {
