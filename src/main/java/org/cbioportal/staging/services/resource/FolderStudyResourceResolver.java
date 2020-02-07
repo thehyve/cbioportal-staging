@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,11 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
 
     @Autowired
     private ResourceUtils utils;
+
+    @PostConstruct
+    public void init() {
+        logger.debug("Activated FolderStudyResourceResolver from spring profile.");
+    }
 
     @Override
     public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
