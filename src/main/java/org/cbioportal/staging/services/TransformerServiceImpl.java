@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.ReporterException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +49,10 @@ public class TransformerServiceImpl implements ITransformerService {
 
     @Override
     public ExitStatus transform(Resource untransformedFilesPath, Resource transformedFilesPath, Resource logFile)
-            throws TransformerException, ConfigurationException, IOException {
+            throws ReporterException, ConfigurationException, IOException {
 
         if (transformationCommandScript.equals("")) {
-            throw new TransformerException(
+            throw new ReporterException(
                     "No transformation command script has been specified in the application.properties.");
         }
 
@@ -106,9 +106,9 @@ public class TransformerServiceImpl implements ITransformerService {
             // throw new TransformerException("The following file path was not found:
             // "+utils.getFile(untransformedFilesPath).getAbsolutePath(), e);
         } catch (InterruptedException e) {
-            throw new TransformerException("The transformation process has been interrupted by another process.", e);
-        } catch (ResourceCollectionException e) {
-            throw new TransformerException("Could not read from Resource.", e);
+            throw new ReporterException("The transformation process has been interrupted by another process.", e);
+        } catch (ResourceUtilsException e) {
+            throw new ReporterException("Could not read from Resource.", e);
         }
 	}
 }

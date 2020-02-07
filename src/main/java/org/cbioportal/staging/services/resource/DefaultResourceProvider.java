@@ -1,11 +1,9 @@
 package org.cbioportal.staging.services.resource;
 
-import java.io.IOException;
-
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,9 +18,6 @@ import org.springframework.stereotype.Component;
 public class DefaultResourceProvider implements IResourceProvider {
 
     @Autowired
-    private ResourcePatternResolver resourcePatternResolver;
-
-    @Autowired
     private ResourceUtils utils;
 
     @Override
@@ -34,16 +29,16 @@ public class DefaultResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive) throws ResourceCollectionException {
 
         try {
-            String path = utils.trimDir(dir.getURL().toString());
+            String path = utils.trimDir(utils.getURL(dir).toString());
             String wildCardPath = path + "/*";
             if (recursive) {
                 wildCardPath += "*";
             }
-            if (dir.getFile().isFile()) {
+            if (utils.getFile(dir).isFile()) {
                 throw new ResourceCollectionException("Scan location points to a file (should be a directory): " + path);
             }
-            return resourcePatternResolver.getResources(wildCardPath);
-        } catch (IOException e) {
+            return utils.getResources(wildCardPath);
+        } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
         }
     }

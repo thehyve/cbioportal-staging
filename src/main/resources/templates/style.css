@@ -1,0 +1,14 @@
+.success {
+    color: #04B404;
+    font-weight: bold;
+}
+
+.warning {
+    color: navy;
+    font-weight: bold;
+}
+
+.error {
+    color: #FF0000;
+    font-weight: bold;
+}

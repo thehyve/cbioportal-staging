@@ -30,7 +30,7 @@ import com.pivovarit.function.ThrowingFunction;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -105,7 +105,7 @@ class Extractor {
 			throw new ExtractionException(e.getMessage(), e);
 		} catch (InterruptedException e) {
 			throw new ExtractionException("Timeout for resource downloads was interrupted.", e);
-		} catch (ResourceCollectionException e) {
+		} catch (ResourceUtilsException e) {
 			throw new ExtractionException("Cannot copy Resource.", e);
 		} catch (DirectoryCreatorException e) {
             throw new ExtractionException("Cannot create directory.", e);
@@ -116,7 +116,7 @@ class Extractor {
 	}
 
 	private Resource attemptCopyResource(Resource destination, Resource resource, String remoteFilePath)
-			throws InterruptedException, ResourceCollectionException {
+			throws InterruptedException, ResourceUtilsException {
 		int i = 1;
 		int times = 5;
 		Resource r = null;

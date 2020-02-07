@@ -18,11 +18,11 @@ package org.cbioportal.staging.services;
 import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.springframework.core.io.Resource;
 
 public interface ITransformerService {
 
-	public ExitStatus transform(Resource originPath, Resource finalPath, Resource logFile) throws TransformerException, ConfigurationException, IOException;
+	public ExitStatus transform(Resource originPath, Resource finalPath, Resource logFile) throws ReporterException, ConfigurationException, IOException;
 
 }

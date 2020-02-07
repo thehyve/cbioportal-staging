@@ -41,6 +41,7 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
     - [Reporting location settings](#reporting-location-settings)
     - [S3 file system settings](#s3-file-system-settings)
     - [Mail properties](#mail-properties)
+    - [Log setttings](#log-setttings)
     - [Debug settings](#debug-settings)
     - [Update cbioportal version used for integration tests](#update-cbioportal-version-used-for-integration-tests)
     - [Other](#other)
@@ -320,23 +321,41 @@ If any of the `*.location` attributes above points to an S3 bucket, you will hav
 
 The app sends emails to keep the user informed about the status of the tasks performed by the app. In order to do that, we need the following parameters to be set:
 
+- `mail.enable`: when _true_ will activate progress reports sent via email.
 - `mail.to`: comma-separated addresses where the app will send the emails to.
 - `mail.from`: email address to be used as sender/"from"
 - `mail.smtp.user`: smtp user name.
-- `mail.smtp.password`: (optional) respective credentials of the app email (corresponding to `mail.smtp.user`). This **can be empty** if a local email service (e.g. local postfix) is used.
+- `mail.smtp.password`: (optional) respective credentials of the app email
+(corresponding to `mail.smtp.user`). This **can be empty** if a local email
+service (e.g. local postfix) is used.
 - `mail.smtp.host`: email host, in Gmail is `smtp.gmail.com`.
 - `mail.debug`: boolean, if set to `true` prints debugging logs in the screen.
 - `mail.transport.protocol`: email transport protocol, usually `smtp`.
-- `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is usually `25`
-- `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail app email before sending messages. In general is set to `true`.
+- `mail.smtp.port`: smtp port, in Gmail is `465`, for local (e.g. postfix) it is
+usually `25`
+- `mail.smtp.auth`: boolean, if set to `true` requires to log in for the mail
+app email before sending messages. In general is set to `true`.
 - `mail.smtp.ssl.enable`: enable SSL if set to `true`. In general is set to `true`.
 - `mail.smtp.starttls.enable` enable TLS if set to `true`. In general is set to `true`.
-- `study.curator.emails`: comma-separated emails of the users which will get automatic access to studies loaded, and also will receive a copy of all emails sent by the staging app.
+- `study.curator.emails`: comma-separated emails of the users which will get
+automatic access to studies loaded, and also will receive a copy of all emails
+sent by the staging app.
+
+### Log setttings
+
+- `log.enable`: when _true_ will activate progress reports added to a log file.
+- `log.file`: file that is used to capture log messages.
+- `log.format`: format of the log file; can be 'text' or 'html'.
+- `log.html.prepend`: when _true_ will add new log messages at the top of the
+log file instead of appending it to the bottom. This option is only available
+for a 'html' formatted log file.
 
 ### Debug settings
 
-- `logging.level.root`: default log level / you can use this to debug and troubleshoot issues (default `INFO`)
-- `debug.mode`: if debug mode is set to `true`, emails will only be sent to the `study.curator.emails` (and not to the `mail.smtp.user`)
+- `logging.level.root`: default log level / you can use this to debug and
+troubleshoot issues (default `INFO`)
+- `debug.mode`: if debug mode is set to `true`, emails will only be sent to the
+`study.curator.emails` (and not to the `mail.smtp.user`)
 
 ### Update cbioportal version used for integration tests
 
@@ -348,5 +367,7 @@ Update to the same Dockerhub image reference (e.g., _cbioportal/cbioportal-3.1.4
 
 ### Other
 
-* `study.authorize.command_prefix`:  add a command for the study authorizer layer, otherwise leave it empty (or comment it out). The staging app will append the `study id` and the `study.curator.emails` to this command.
-* `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
+- `study.authorize.command_prefix`:  add a command for the study authorizer layer,
+otherwise leave it empty (or comment it out). The staging app will append the
+`study id` and the `study.curator.emails` to this command.
+- `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.

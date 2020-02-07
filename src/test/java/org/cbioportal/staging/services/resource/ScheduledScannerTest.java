@@ -19,8 +19,8 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.IEmailService;
 import org.cbioportal.staging.services.IScheduledScannerService;
+import org.cbioportal.staging.services.reporting.IReportingService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,7 @@ public class ScheduledScannerTest {
     private ETLProcessRunner etlProcessRunner;
 
     @MockBean
-    private IEmailService emailService;
+    private IReportingService reportingService;
 
     @MockBean
     private IScheduledScannerService scheduledScannerService;
@@ -66,7 +66,7 @@ public class ScheduledScannerTest {
 
         scheduledScanner.scan();
 
-        verify(emailService, never()).emailGenericError(anyString(), any());
+        verify(reportingService, never()).reportGenericError(anyString(), any());
         verify(scheduledScannerService, never()).stopAppWithSuccess();
     }
 
@@ -77,7 +77,7 @@ public class ScheduledScannerTest {
 
         scheduledScanner.scan();
 
-        verify(emailService, times(1)).emailGenericError(anyString(), any());
+        verify(reportingService, times(1)).reportGenericError(anyString(), any());
         verify(scheduledScannerService, times(1)).stopApp();
     }
 
@@ -92,7 +92,7 @@ public class ScheduledScannerTest {
 
         scheduledScanner.scan();
 
-        verify(emailService, times(1)).emailGenericError(anyString(), any());
+        verify(reportingService, times(1)).reportGenericError(anyString(), any());
         verify(scheduledScannerService, times(1)).stopApp();
     }
 
@@ -104,7 +104,7 @@ public class ScheduledScannerTest {
 
         boolean exitStatus = scheduledScanner.scan();
 
-        verify(emailService, never()).emailGenericError(anyString(), any());
+        verify(reportingService, never()).reportGenericError(anyString(), any());
         assertFalse(exitStatus);
     }
 

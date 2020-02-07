@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.IEmailService;
 import org.cbioportal.staging.services.IScheduledScannerService;
+import org.cbioportal.staging.services.reporting.IReportingService;
 import org.cbioportal.staging.services.resource.IResourceCollector;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public class ScheduledScanner {
 	private IScheduledScannerService scheduledScannerService;
 
 	@Autowired
-	private IEmailService emailService;
+	private IReportingService reporingService;
 
 	@Autowired
 	private ETLProcessRunner etlProcessRunner;
@@ -101,7 +101,7 @@ public class ScheduledScanner {
 		} catch (Exception e) {
 			try {
 				logger.error("An error not expected occurred. Stopping process... Error found: " + e.getMessage());
-				emailService.emailGenericError("An error not expected occurred. Stopping process... \n\nError found: \n" + e.getMessage(), e);
+				reporingService.reportGenericError("An error not expected occurred. Stopping process... \n\nError found: \n" + e.getMessage(), e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();

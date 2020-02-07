@@ -25,13 +25,13 @@ import java.util.Map;
 
 import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IAuthorizerService;
-import org.cbioportal.staging.services.IEmailService;
 import org.cbioportal.staging.services.IPublisherService;
 import org.cbioportal.staging.services.IRestarter;
+import org.cbioportal.staging.services.reporting.IReportingService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ public class ETLProcessRunner {
     private IPublisherService publisher;
 
     @Autowired
-	private IEmailService emailService;
+	private IReportingService reportingService;
 
 	@Autowired
 	private ResourceUtils utils;
@@ -108,7 +108,7 @@ public class ETLProcessRunner {
 			Map<String,Resource> localResources = extractor.run(remoteResources, timestamp);
 
 			if (! extractor.errorFiles().isEmpty()) {
-				emailService.emailStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
+				reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
 			}
 
 			Map<String, Resource> logPaths = new HashMap<>();
@@ -124,7 +124,7 @@ public class ETLProcessRunner {
                 Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
-					emailService.emailTransformedStudies(transformerExitStatus, logPaths);
+					reportingService.reportTransformedStudies(transformerExitStatus, logPaths);
                 }
                 transformedStudiesPaths = transformer.getValidStudies();
 			} else {
@@ -136,7 +136,7 @@ public class ETLProcessRunner {
                 validatorExitStatus = validator.validate(transformedStudiesPaths);
                 Map<String, Resource> validationAndReportFiles = publisher.publish(timestamp, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
-				emailService.emailValidationReport(validatorExitStatus, validationLevel, logPaths);
+				reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
 
 				Map <String, Resource> studiesThatPassedValidation = validator.getValidStudies();
 
@@ -145,7 +145,7 @@ public class ETLProcessRunner {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
                     Map<String, Resource> loadingLogFiles = publisher.publish(timestamp, loader.getLogFiles());
                     logPaths.putAll(loadingLogFiles);
-					emailService.emailStudiesLoaded(loaderExitStatus, logPaths);
+					reportingService.reportStudiesLoaded(loaderExitStatus, logPaths);
 
 					if (loader.areStudiesLoaded()) {
 						restarterService.restart();
@@ -155,10 +155,10 @@ public class ETLProcessRunner {
 					}
 				}
 			}
-		} catch (TransformerException e) {
+		} catch (ReporterException e) {
 			try {
 				logger.error("An error occurred during the transformation step. Error found: "+ e);
-				emailService.emailGenericError("An error occurred during the transformation step. Error found: ", e);
+				reportingService.reportGenericError("An error occurred during the transformation step. Error found: ", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
@@ -166,7 +166,7 @@ public class ETLProcessRunner {
 		} catch (ValidatorException e) {
 			try {
 				logger.error("An error occurred during the validation step. Error found: "+ e);
-				emailService.emailGenericError("An error occurred during the validation step. Error found: ", e);
+				reportingService.reportGenericError("An error occurred during the validation step. Error found: ", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
@@ -174,7 +174,7 @@ public class ETLProcessRunner {
 		} catch (LoaderException e) {
 			try {
 				logger.error("An error occurred during the loading step. Error found: "+ e);
-				emailService.emailGenericError("An error occurred during the loading step. Error found: ", e);
+				reportingService.reportGenericError("An error occurred during the loading step. Error found: ", e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();

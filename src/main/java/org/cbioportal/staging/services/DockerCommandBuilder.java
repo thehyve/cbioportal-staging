@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +54,7 @@ public class DockerCommandBuilder implements ICommandBuilder {
             cbioportalDockerImage, "./dumpPortalInfo.pl", "/portalinfo");
 
             return portalInfoCmd;
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new CommandBuilderException("File IO problem during the build of the Portal Info command", e);
         }
 
@@ -83,7 +83,7 @@ public class DockerCommandBuilder implements ICommandBuilder {
             return validationCmd;
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new CommandBuilderException("File IO problem during the build of the validator command", e);
         }
     }
@@ -104,7 +104,7 @@ public class DockerCommandBuilder implements ICommandBuilder {
                 throw new CommandBuilderException("No Docker image or network has been specified in the application.properties.");
             }
             return loaderCmd;
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new CommandBuilderException("CommandBuilder experiences File IO problems.", e);
         }
     }

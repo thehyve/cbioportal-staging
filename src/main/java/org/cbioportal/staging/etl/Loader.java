@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -67,7 +67,7 @@ public class Loader {
                     logger.error("Loading process of study "+studyId+" failed.");
                 }
             }
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new LoaderException("The Loader could not create a log file", e);
         }
         return loadResults;

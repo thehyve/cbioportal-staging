@@ -31,7 +31,9 @@ import java.util.Map;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.DirectoryCreatorByJob;
 import org.cbioportal.staging.services.ExitStatus;
@@ -49,7 +51,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {Transformer.class, TransformerServiceImpl.class, ResourceUtils.class, DefaultResourceProvider.class, DirectoryCreatorByJob.class})
+@SpringBootTest(classes = { Transformer.class, TransformerServiceImpl.class, ResourceUtils.class,
+        DefaultResourceProvider.class, DirectoryCreatorByJob.class })
 public class TransformerTest {
 
     @Autowired
@@ -68,7 +71,8 @@ public class TransformerTest {
     private IDirectoryCreator directoryCreator;
 
     @Before
-    public void init() throws ResourceCollectionException, IOException, TransformerException, ConfigurationException, DirectoryCreatorException {
+    public void init() throws ResourceCollectionException, IOException, TransformerException, ReporterException,
+            ConfigurationException, DirectoryCreatorException, ResourceUtilsException {
         // mock utils.ensuredirs -> do nothing
         doNothing().when(utils).ensureDirs(any(Resource.class));
 
@@ -92,7 +96,7 @@ public class TransformerTest {
     }
 
     @Test
-    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
+    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException {
 
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
@@ -108,8 +112,7 @@ public class TransformerTest {
     }
 
     @Test
-    public void testTransform_studyThatNeedsTransformation()
-            throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
+    public void testTransform_studyThatNeedsTransformation() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
@@ -126,7 +129,7 @@ public class TransformerTest {
 
     @Test
     public void testTransform_studyWithWarnings()
-            throws ResourceCollectionException, TransformerException, ConfigurationException, IOException {
+            throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};

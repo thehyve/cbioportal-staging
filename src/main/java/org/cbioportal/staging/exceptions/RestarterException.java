@@ -17,16 +17,16 @@ package org.cbioportal.staging.exceptions;
 
 public class RestarterException extends Exception {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -5072243529310767969L;
-	
+
 	public RestarterException()
 	{
 	}
 	public RestarterException(String message, Exception e)
 	{
-		super(message);
+		super(message, e);
 	}
 	public RestarterException(String message)
 	{

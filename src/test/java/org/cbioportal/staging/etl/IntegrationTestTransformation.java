@@ -18,17 +18,17 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
-import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.AuthorizerServiceImpl;
-import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
 import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
+import org.cbioportal.staging.services.reporting.EmailReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -57,7 +57,7 @@ import freemarker.template.TemplateNotFoundException;
 public class IntegrationTestTransformation {
 
     @MockBean
-    private EmailServiceImpl emailServiceImpl;
+    private EmailReportingService emailServiceImpl;
 
     @MockBean
     private IRestarter restarterService;
@@ -97,7 +97,7 @@ public class IntegrationTestTransformation {
     @Test
     public void transformSuccessful_es0()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
-            TemplateException, InterruptedException, ConfigurationException, TransformerException, ValidatorException,
+            TemplateException, InterruptedException, ConfigurationException, ReporterException, ValidatorException,
             LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         doNothing().when(restarterService).restart();
@@ -114,16 +114,16 @@ public class IntegrationTestTransformation {
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).emailGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
+        verify(emailServiceImpl, times(1)).reportTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(emailServiceImpl, times(1)).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).reportGenericError(any(),any());
     }
 
     @Test
     public void transformFailure_es0() throws  TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-    IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
+    IOException, TemplateException, InterruptedException, ConfigurationException, ReporterException,
     ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         // wire in a failing transformation script
@@ -144,11 +144,11 @@ public class IntegrationTestTransformation {
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, times(1)).emailTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).emailStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).emailGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
+        verify(emailServiceImpl, times(1)).reportTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).reportValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).reportGenericError(any(),any());
     }
 
 }

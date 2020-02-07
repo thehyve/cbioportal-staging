@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import java.io.File;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +46,7 @@ public class LocalCommandBuilder implements ICommandBuilder {
             ProcessBuilder portalInfoCmd = new ProcessBuilder("./dumpPortalInfo.pl", portalInfoPath);
             portalInfoCmd.directory(new File(portalSource+"/core/src/main/scripts"));
             return portalInfoCmd;
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new CommandBuilderException("File IO problem during the build of the Portal Info command", e);
         }
     }
@@ -62,7 +62,7 @@ public class LocalCommandBuilder implements ICommandBuilder {
             portalInfoPath, "-html", reportFilePath, "-v");
             validationCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
             return validationCmd;
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new CommandBuilderException("File IO problem during the build of the validator command", e);
         }
     }
@@ -74,7 +74,7 @@ public class LocalCommandBuilder implements ICommandBuilder {
             ProcessBuilder loaderCmd = new ProcessBuilder("./cbioportalImporter.py", "-s", studyDirPath);
             loaderCmd.directory(new File(portalSource+"/core/src/main/scripts/importer"));
             return loaderCmd;
-		} catch (ResourceCollectionException e) {
+		} catch (ResourceUtilsException e) {
 			throw new CommandBuilderException("File IO problem for 'studyPath' in command builder.", e);
 		}
 	}

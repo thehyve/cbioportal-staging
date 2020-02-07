@@ -25,6 +25,7 @@ import java.util.Map;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -51,7 +52,7 @@ public class LoaderTest {
     private ResourceUtils utils;
 
     @Before
-    public void init() throws ResourceCollectionException {
+    public void init() throws ResourceCollectionException, ResourceUtilsException {
         when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
     }
 

@@ -16,6 +16,7 @@ import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,23 +28,22 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {PublisherServiceImpl.class, DirectoryCreatorByJob.class},
-properties = {
-    "central.share.location=file:/fake-share/"
-})
+@SpringBootTest(classes = { PublisherServiceImpl.class, DirectoryCreatorByJob.class }, properties = {
+        "central.share.location=file:/fake-share/" })
 public class PublisherServiceImplTest {
 
     @Autowired
     private PublisherServiceImpl publisherService;
 
     @MockBean
-	private IDirectoryCreator directoryCreator;
+    private IDirectoryCreator directoryCreator;
 
     @SpyBean
     private ResourceUtils utils;
 
     @Test
-    public void testPublish_success() throws ResourceCollectionException, PublisherException, DirectoryCreatorException {
+    public void testPublish_success()
+            throws ResourceCollectionException, PublisherException, DirectoryCreatorException, ResourceUtilsException {
 
         Resource fakeShareLocation = TestUtils.createMockResource("file:/fake-share/", 0);
         doReturn(fakeShareLocation).when(utils).createDirResource(any(Resource.class), eq("dummy-date"));

@@ -26,12 +26,12 @@ ENV STAGING_HOME=/cbioportal-staging
 COPY . $STAGING_HOME
 WORKDIR $STAGING_HOME
 
-# prepare application.properties, so that this is take by default by spring framework
-RUN cp $STAGING_HOME/src/main/resources/application.properties.EXAMPLE /application.properties
+# # prepare application.properties, so that this is take by default by spring framework
+RUN cp $STAGING_HOME/src/main/resources/application.properties.EXAMPLE $STAGING_HOME/src/main/resources/application.properties
 
-# run tests on code
-RUN mvn test
+RUN mvn clean install -Dcbioportal-staging.test.excludes="**/Integration*.java" && \
+	mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
 
 # service to be started with default properties (can be overridden in docker run),
 # taking also custom properties, if given at default -v location
-ENTRYPOINT ["mvn", "spring-boot:run", "-Dspring.config.location=file:///application.properties"]
+ENTRYPOINT ["/cbioportal-staging/target/cbioportal-staging.jar", "--spring.config.location=file:///custom/custom.properties"]

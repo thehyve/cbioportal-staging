@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,22 +52,23 @@ public class FolderStudyResourceResolverTest {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/not_a_study_meta_file.txt", 0));
-        when(resourceProvider.list(any(),anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
+        when(resourceProvider.list(any(), anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
 
-        Resource[] studyDirs = new Resource[] {TestUtils.createMockResource("file:/study_folder/", 1)};
-        Map<String,String> metaFileContents = new HashMap<>();
+        Resource[] studyDirs = new Resource[] { TestUtils.createMockResource("file:/study_folder/", 1) };
+        Map<String, String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String,Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
+        Map<String, Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
 
         assertEquals(1, resources.size());
-        assert(resources.containsKey("study_folder"));
+        assert (resources.containsKey("study_folder"));
     }
 
     @Test
-    public void testDetectStudyIdFromMetaFile() throws ResourceCollectionException, FileNotFoundException, IOException {
+    public void testDetectStudyIdFromMetaFile()
+            throws ResourceCollectionException, FileNotFoundException, IOException, ResourceUtilsException {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/meta_study.txt", 0));

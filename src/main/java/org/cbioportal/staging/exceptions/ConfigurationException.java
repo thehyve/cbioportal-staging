@@ -16,18 +16,15 @@
 package org.cbioportal.staging.exceptions;
 
 public class ConfigurationException extends Exception {
-	
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = -20480534356703321L;
-	
+
 	public ConfigurationException()
 	{
 	}
 	public ConfigurationException(String message, Exception e)
 	{
-		super(message);
+		super(message, e);
 	}
 	public ConfigurationException(String message)
 	{

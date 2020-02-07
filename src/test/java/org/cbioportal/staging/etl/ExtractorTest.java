@@ -31,6 +31,7 @@ import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
@@ -56,8 +57,8 @@ public class ExtractorTest {
 	private IDirectoryCreator directoryCreator;
 
 	@Test
-	public void testRun_success()
-			throws DirectoryCreatorException, ResourceCollectionException, IOException, ExtractionException {
+	public void testRun_success() throws DirectoryCreatorException, ResourceCollectionException, IOException,
+			ExtractionException, ResourceUtilsException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
 		when(directoryCreator.createStudyExtractDir(eq("dummy-time"), eq("dummy-study"))).thenReturn(targetDir);
@@ -83,7 +84,8 @@ public class ExtractorTest {
 
 	@Test
 	public void testRun_fileFail()
-			throws DirectoryCreatorException, ResourceCollectionException, IOException, ExtractionException {
+			throws DirectoryCreatorException, ResourceCollectionException, IOException, ExtractionException,
+			ResourceUtilsException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
 		when(directoryCreator.createStudyExtractDir(eq("dummy-time"), eq("dummy-study"))).thenReturn(targetDir);

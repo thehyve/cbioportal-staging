@@ -17,22 +17,11 @@ package org.cbioportal.staging.exceptions;
 
 public class TransformerException extends Exception
 {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8901822768870101717L;
+	private static final long serialVersionUID = -2926858148489247426L;
 
-	public TransformerException()
-	{
-	}
-	public TransformerException(String message, Exception e)
-	{
-		super(message, e);
-	}
-	public TransformerException(String message) {
-		super(message);
-	}
-	public TransformerException(Exception e) {
-		super(e);
-	}
+	public TransformerException() {super();}
+	public TransformerException(String message, Exception e) {super(message, e);}
+	public TransformerException(String message) {super(message);}
+	public TransformerException(Exception e) {super(e);}
+
 }

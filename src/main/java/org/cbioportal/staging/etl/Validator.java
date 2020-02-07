@@ -18,7 +18,7 @@ package org.cbioportal.staging.etl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IValidatorService;
@@ -92,7 +92,7 @@ public class Validator {
                     logger.info("Study "+studyId+" has failed validation.");
                 }
             }
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new ValidatorException("Error occured while validating studies.", e);
         }
 		return validatedStudies;

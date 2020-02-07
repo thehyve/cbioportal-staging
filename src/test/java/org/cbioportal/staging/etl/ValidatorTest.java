@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IValidatorService;
@@ -43,17 +44,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 @SpringBootTest(classes = org.cbioportal.staging.etl.Validator.class)
 public class ValidatorTest {
 
-	@Autowired
-	private Validator validator;
+    @Autowired
+    private Validator validator;
 
-	@MockBean
+    @MockBean
     private IValidatorService validatorService;
 
     @MockBean
-	private ResourceUtils utils;
+    private ResourceUtils utils;
 
-	@Before
-	public void init() throws ResourceCollectionException {
+    @Before
+    public void init() throws ResourceCollectionException, ResourceUtilsException {
         when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
 	}
 

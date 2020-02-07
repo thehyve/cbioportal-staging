@@ -17,6 +17,7 @@ import java.util.Collection;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -78,7 +79,7 @@ public class ResourceIgnoreSetTest {
     }
 
     @Test
-    public void testAppendResources_success() throws IOException, ResourceCollectionException {
+    public void testAppendResources_success() throws IOException, ResourceCollectionException, ResourceUtilsException {
 
         WritableResource ignoreFile = TestUtils.createMockResource("file:/mock_ignore_file.txt", 0);
         ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", ignoreFile);
@@ -93,7 +94,7 @@ public class ResourceIgnoreSetTest {
     }
 
     @Test
-    public void testAppendResources_noIgnoreFileSpecified() throws IOException, ResourceCollectionException {
+    public void testAppendResources_noIgnoreFileSpecified() throws IOException, ResourceCollectionException, ResourceUtilsException {
 
         ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", null);
 

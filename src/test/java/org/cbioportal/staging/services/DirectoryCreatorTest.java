@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,9 +35,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { DirectoryCreatorByJob.class },
-	properties = {"etl.working.dir=", "transformation.directory="}
-)
+@SpringBootTest(classes = { DirectoryCreatorByJob.class }, properties = { "etl.working.dir=",
+		"transformation.directory=" })
 public class DirectoryCreatorTest {
 
 	@Autowired
@@ -45,22 +45,23 @@ public class DirectoryCreatorTest {
 	@MockBean
 	private ResourceUtils utils;
 
-    private Resource etlDir = mock(Resource.class);
-    private Resource transformDir = mock(Resource.class);
-    private Resource untransformedDir = mock(Resource.class);
+	private Resource etlDir = mock(Resource.class);
+	private Resource transformDir = mock(Resource.class);
+	private Resource untransformedDir = mock(Resource.class);
 
 	@Test(expected = DirectoryCreatorException.class)
 	public void etlWorkingDir_doesNotExist() throws DirectoryCreatorException {
 
 		when(etlDir.exists()).thenReturn(false);
-        ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
-        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
+		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
+		ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
-	public void etlWorkingDir_isFile() throws DirectoryCreatorException, ResourceCollectionException {
+	public void etlWorkingDir_isFile()
+			throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(any(Resource.class))).thenReturn(true);
@@ -71,7 +72,7 @@ public class DirectoryCreatorTest {
     }
 
     @Test
-	public void etlWorkingDir_isCorrect() throws DirectoryCreatorException, ResourceCollectionException {
+	public void etlWorkingDir_isCorrect() throws DirectoryCreatorException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(any(Resource.class))).thenReturn(false);
@@ -82,12 +83,12 @@ public class DirectoryCreatorTest {
 		when(utils.createDirResource(any(Resource.class), any(String.class), any(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
-        
+
         assertEquals(generatedStudyDir, expectedStudyDir);
     }
 
     @Test
-	public void transformationDir_transformationDirNull() throws DirectoryCreatorException, ResourceCollectionException {
+	public void transformationDir_transformationDirNull() throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
         when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
@@ -102,7 +103,7 @@ public class DirectoryCreatorTest {
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
-	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException {
+	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(any(Resource.class))).thenReturn(true);
@@ -111,9 +112,9 @@ public class DirectoryCreatorTest {
 
 		directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
     }
-    
+
     @Test
-	public void transformationDir_isCorrect() throws DirectoryCreatorException, ResourceCollectionException {
+	public void transformationDir_isCorrect() throws DirectoryCreatorException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
@@ -128,7 +129,7 @@ public class DirectoryCreatorTest {
     }
 
 	@Test(expected = DirectoryCreatorException.class)
-	public void centralShareLocation_isFile() throws DirectoryCreatorException, ResourceCollectionException {
+	public void centralShareLocation_isFile() throws DirectoryCreatorException, ResourceUtilsException {
 
         Resource csl = mock(Resource.class);
 		when(utils.isFile(any(Resource.class))).thenReturn(true);

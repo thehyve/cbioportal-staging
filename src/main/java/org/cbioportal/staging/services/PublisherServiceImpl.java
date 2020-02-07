@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,8 +57,7 @@ public class PublisherServiceImpl implements IPublisherService {
 
         return logFiles.entrySet().stream()
             .collect(Collectors
-                .toMap(Entry::getKey,
-                     sneaky(e -> publish(e.getValue(), date))
+                .toMap(Entry::getKey, sneaky(e -> publish(e.getValue(), date))
                 )
             );
     }
@@ -73,7 +72,7 @@ public class PublisherServiceImpl implements IPublisherService {
             return utils.copyResource(centralShareLocationPath, logFile, logFile.getFilename());
         } catch (DirectoryCreatorException e) {
             throw new PublisherException("There has been an error creating the Central Share Location", e);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }
     }

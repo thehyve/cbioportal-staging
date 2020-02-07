@@ -22,7 +22,7 @@ import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.etl.Validator;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -90,7 +90,7 @@ public class ValidatorServiceImpl implements IValidatorService {
 					+ " user has sufficient rights to run Docker, and if the configured working directory is accessible to Docker.", e);
 		} catch (InterruptedException e) {
             throw new ValidatorException("The validation process has been interrupted by another process.", e);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new ValidatorException();
         } catch (CommandBuilderException e) {
             throw new ValidatorException();

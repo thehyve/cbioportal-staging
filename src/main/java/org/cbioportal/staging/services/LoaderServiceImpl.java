@@ -20,7 +20,7 @@ import java.lang.ProcessBuilder.Redirect;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ public class LoaderServiceImpl implements ILoaderService {
                 "or you do not have permissions to execute the loading command.", e);
         } catch (CommandBuilderException e) {
             throw new LoaderException("A problem has occurred when building the loading command", e);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new LoaderException("File IO problem during running of the Loader", e);
         }
 

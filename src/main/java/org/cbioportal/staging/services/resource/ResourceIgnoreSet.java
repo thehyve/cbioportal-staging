@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,8 @@ public class ResourceIgnoreSet extends HashSet<String> {
     public static class MyConfiguration {
 
         @Bean
-        public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") File ignoreFile) throws FileNotFoundException {
+        public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") File ignoreFile)
+                throws FileNotFoundException {
             if (ignoreFile != null && ignoreFile.exists()) {
                 return new BufferedReader(new FileReader(ignoreFile));
             }
@@ -67,7 +69,7 @@ public class ResourceIgnoreSet extends HashSet<String> {
     private BufferedReader bufferedReader;
 
     @PostConstruct
-    private void postConstruct() {
+    private void postConstruct() throws ResourceCollectionException {
         if (bufferedReader != null) {
             try {
                 String line = bufferedReader.readLine();
@@ -76,32 +78,35 @@ public class ResourceIgnoreSet extends HashSet<String> {
                     line = bufferedReader.readLine();
                 }
             } catch (IOException e) {
-                // will never happen ...
-                throw new RuntimeException("Cannot read URL from Resource.");
+                throw new ResourceCollectionException("Cannot read URL from Resource.", e);
             } finally {
                 try {
                     bufferedReader.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new ResourceCollectionException("Cannot read URL from Resource.", e);
                 }
-                logger.debug("Read " + String.valueOf(this.size()) + " files from the ignore file: " + String.join(",", this));
+                logger.debug("Read " + String.valueOf(this.size()) + " files from the ignore file: "
+                    + String.join(",", this));
             }
         }
     }
 
     public void appendResources(Resource[] resources) throws ResourceCollectionException {
-        List<String> urls = Stream.of(resources)
-            .map(ThrowingFunction.sneaky(r -> r.getURL().toString()))
+        try {
+            List<String> urls = Stream.of(resources).map(ThrowingFunction.sneaky(r -> r.getURL().toString()))
             .collect(Collectors.toList());
 
-        urls.stream().forEach(url -> add(url));
+            urls.stream().forEach(url -> add(url));
 
-        if (ignoreFile != null && ! ignoreFile.exists()) {
-            ignoreFile = utils.createFileResource(ignoreFile, "");
-        }
+            if (ignoreFile != null && !ignoreFile.exists()) {
+                ignoreFile = utils.createFileResource(ignoreFile, "");
+            }
 
-        if (ignoreFile != null && ignoreFile.exists()) {
-            utils.writeToFile(utils.getWritableResource(ignoreFile), urls, true);
+            if (ignoreFile != null && ignoreFile.exists()) {
+                utils.writeToFile(utils.getWritableResource(ignoreFile), urls, true);
+            }
+        } catch (ResourceUtilsException e) {
+            throw new ResourceCollectionException("Error adding resources to ignore file.", e);
         }
     }
 

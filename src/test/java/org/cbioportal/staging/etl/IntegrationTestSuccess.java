@@ -18,17 +18,17 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
-import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.AuthorizerServiceImpl;
-import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
 import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
+import org.cbioportal.staging.services.reporting.EmailReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class IntegrationTestSuccess {
     private ScheduledScanner scheduledScanner;
 
     @MockBean
-    private EmailServiceImpl emailServiceImpl;
+    private EmailReportingService emailServiceImpl;
 
     @MockBean
     private IRestarter restarterService;
@@ -90,7 +90,7 @@ public class IntegrationTestSuccess {
 
     @Test
     public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
-            IOException, TemplateException, InterruptedException, ConfigurationException, TransformerException,
+            IOException, TemplateException, InterruptedException, ConfigurationException, ReporterException,
             ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         doNothing().when(restarterService).restart();
@@ -108,11 +108,11 @@ public class IntegrationTestSuccess {
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 
         verify(restarterService, times(1)).restart();
-        verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class), anyInt());
-        verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class), any(Map.class));
-        verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class), anyString(), any(Map.class));
-        verify(emailServiceImpl, times(1)).emailStudiesLoaded(any(Map.class), any(Map.class));
-        verify(emailServiceImpl, never()).emailGenericError(any(), any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class), anyInt());
+        verify(emailServiceImpl, never()).reportTransformedStudies(any(Map.class), any(Map.class));
+        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class), anyString(), any(Map.class));
+        verify(emailServiceImpl, times(1)).reportStudiesLoaded(any(Map.class), any(Map.class));
+        verify(emailServiceImpl, never()).reportGenericError(any(), any());
     }
 
 }

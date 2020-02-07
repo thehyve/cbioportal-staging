@@ -18,17 +18,18 @@ import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.RestarterException;
-import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.AuthorizerServiceImpl;
-import org.cbioportal.staging.services.EmailServiceImpl;
 import org.cbioportal.staging.services.IRestarter;
 import org.cbioportal.staging.services.LoaderServiceImpl;
 import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
+import org.cbioportal.staging.services.reporting.EmailReportingService;
+import org.cbioportal.staging.services.reporting.LogReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -54,9 +55,6 @@ import freemarker.template.TemplateNotFoundException;
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties", properties = "scan.location=classpath:e2e_studies/es_3")
 public class IntegrationTestError {
 
-    @MockBean
-    private EmailServiceImpl emailServiceImpl;
-
     @Autowired
     private ScheduledScanner scheduledScanner;
 
@@ -79,6 +77,12 @@ public class IntegrationTestError {
     private ResourceIgnoreSet ignoreSet;
 
     @MockBean
+    private EmailReportingService emailServiceImpl;
+
+    @MockBean
+    private LogReportingService logServiceImpl;
+
+    @SpyBean
     private AuthorizerServiceImpl authorizerService;
 
     @Value("${scan.ignore.file:}")
@@ -92,7 +96,7 @@ public class IntegrationTestError {
     @Test
     public void throwValidationError_es3()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
-            TemplateException, InterruptedException, ConfigurationException, TransformerException, ValidatorException,
+            TemplateException, InterruptedException, ConfigurationException, ReporterException, ValidatorException,
             LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
         doNothing().when(restarterService).restart();
@@ -109,11 +113,17 @@ public class IntegrationTestError {
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).emailStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).emailTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).emailValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).emailStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).emailGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
+        verify(emailServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, never()).reportGenericError(any(),any());
+
+        verify(logServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
+        verify(logServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
+        verify(logServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
+        verify(logServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(logServiceImpl, never()).reportGenericError(any(),any());
     }
 
 }

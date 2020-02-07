@@ -18,7 +18,7 @@ package org.cbioportal.staging.services;
 import java.io.IOException;
 
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,7 +55,7 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
 								+ etlWorkingDir);
 			}
             return utils.createDirResource(etlWorkingDir, studyId, timestamp);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
 			throw new DirectoryCreatorException("Cannot create Resource.", e);
 		}
     }
@@ -72,8 +72,8 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
                 return utils.createDirResource(transformationDir, studyId, timestamp);
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
-            } 
-        } catch (ResourceCollectionException e) {
+            }
+        } catch (ResourceUtilsException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
     }
@@ -90,7 +90,7 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
                 return utils.createDirResource(centralShareLocation, timestamp);
             }
             return centralShareLocation.createRelative(timestamp);
-        } catch (ResourceCollectionException e) {
+        } catch (ResourceUtilsException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         } catch (IOException e) {
             throw new DirectoryCreatorException("Cannot create the relative folder.", e);

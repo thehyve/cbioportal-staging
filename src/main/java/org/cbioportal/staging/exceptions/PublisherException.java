@@ -25,7 +25,7 @@ public class PublisherException extends Exception {
 	}
 
 	public PublisherException(String message, Exception e) {
-		super(message);
+		super(message, e);
 	}
 
 	public PublisherException(String message)

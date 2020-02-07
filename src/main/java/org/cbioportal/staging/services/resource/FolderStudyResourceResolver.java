@@ -1,7 +1,5 @@
 package org.cbioportal.staging.services.resource;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +9,7 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +48,7 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
     @Override
     public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
 
-        Map<String,Resource[]> out = new HashMap<String,Resource[]>();
+        Map<String,Resource[]> out = new HashMap<>();
         String studyPath = "";
         try {
 
@@ -68,14 +67,14 @@ public class FolderStudyResourceResolver implements IStudyResourceResolver {
                 out.put(studyId, studyResources);
             }
 
-        } catch (IOException e) {
+        } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + studyPath);
         }
 
         return out;
     }
 
-    private String getStudyId(Resource[] resources, String studyPath) throws FileNotFoundException, IOException {
+    private String getStudyId(Resource[] resources, String studyPath) throws ResourceUtilsException {
         // find study meta file and if found get the studyId from the meta file
         Optional<Resource> studyMetaFile = Stream.of(resources).filter(e -> e.getFilename().matches(".*meta_study.txt$")).findAny();
         if (studyMetaFile.isPresent()) {

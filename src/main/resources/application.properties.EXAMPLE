@@ -25,7 +25,7 @@ scan.location=file:///home/pnp300/staging-scan-folder/
 
 
 # (optional) local working directory (if not set, intermediate files will be stored in temporary folder, like /tmp):
-#etl.working.dir=/custom/working/dir
+#etl.working.dir=file:/custom/working/dir
 
 # (optional) environment settings needed by S3 library.
 #cloud.aws.region.static=eu-central-1
@@ -56,7 +56,8 @@ transformation.command.script=./umccr_wrapper_parser.py
 #Validation level
 validation.level = ERROR
 
-#Mail properties
+# (optional) mail properties
+mail.enable=false
 mail.to=<email>
 mail.from=noreply@test.com
 mail.smtp.user=noreply@test.com
@@ -69,6 +70,13 @@ mail.smtp.auth=<boolean>
 mail.smtp.ssl.enable=<boolean>
 mail.smtp.starttls.enable=<boolean>
 
+# (optional) log file properties
+#log.enable=false
+#log.file=file:/tmp/cbioportal_etl.log
+# (format can be 'text' or 'html')
+#log.format=text
+# (for html log files new entries can be added to the top of the document)
+#log.html.prepend=true
 
 # default log level / you can use this to debug and troubleshoot issues
 logging.level.root=INFO

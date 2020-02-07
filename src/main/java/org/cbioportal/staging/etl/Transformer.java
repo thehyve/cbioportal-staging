@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.IDirectoryCreator;
 import org.cbioportal.staging.services.ITransformerService;
@@ -51,7 +51,7 @@ public class Transformer {
     final private Map<String, Resource> logFiles = new HashMap<>();
     final private Map<String, Resource> dirsValidStudies = new HashMap<>();
 
-    public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws TransformerException {
+    public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws ReporterException {
 
         logFiles.clear();
         dirsValidStudies.clear();
@@ -77,7 +77,7 @@ public class Transformer {
                 }
 
             } catch (Exception e) {
-                throw new TransformerException(e);
+                throw new ReporterException(e);
             }
 
             //Add status of the validation for the study
