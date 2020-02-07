@@ -52,7 +52,7 @@ import freemarker.template.TemplateNotFoundException;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
 @TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
-@ActiveProfiles("studydir")
+@ActiveProfiles("scan.studydir")
 public class IntegrationTestStudyFolderSuccess {
 
     @MockBean

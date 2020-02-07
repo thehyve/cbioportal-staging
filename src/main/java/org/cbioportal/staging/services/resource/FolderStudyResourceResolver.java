@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * of the study folder.
  *
  */
-@Profile("studydir")
+@Profile("scan.studydir")
 @Component
 @Primary
 public class FolderStudyResourceResolver implements IStudyResourceResolver {
