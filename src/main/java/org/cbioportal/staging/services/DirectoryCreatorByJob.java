@@ -66,7 +66,7 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
                 return utils.createDirResource(transformationDir, timestamp, studyId);
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
-            } 
+            }
         } catch (ResourceCollectionException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
@@ -75,10 +75,6 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
     @Override
     public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException {
         try {
-            if (!centralShareLocation.exists()) {
-				throw new DirectoryCreatorException(
-						"central.share.location does not exist on the local file system: " + centralShareLocation);
-			}
 			if (utils.isFile(centralShareLocation)) {
 				throw new DirectoryCreatorException(
 						"central.share.location points to a file on the local file system, but should point to a directory.: "
