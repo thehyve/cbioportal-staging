@@ -12,23 +12,41 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
 
 ## Table of contents
 
-- [Setup](#Setup)
-- [Docker usage (recommended)](#docker-usage-recommended)
-  - [Build](#build)
-  - [Run](#run)
-- [Local usage](#Local-usage)
-  - [Build](#build-1)
-  - [Run](#run-1)
-- [Yaml file format and location of study files](#yaml-file-format-and-location-of-study-files)
-- [Application properties](#Application-properties)
-  - [Extractor settings](#extractor-settings)
-  - [Transformer settings](#transformer-settings)
-  - [Validation and Loader settings](#validation-and-loader-settings)
-  - [Reporting location settings](#reporting-location-settings)
-  - [S3 vs local file system settings](#s3-vs-local-file-system-settings)
-  - [Mail properties](#mail-properties)
-  - [Debug settings](#debug-settings)
-  - [Other](#other)
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [cBioPortal Staging Application Usage Guide](#cbioportal-staging-application-usage-guide)
+  - [Table of contents](#table-of-contents)
+  - [Setup](#setup)
+  - [Docker usage (recommended)](#docker-usage-recommended)
+    - [Build](#build)
+    - [Run](#run)
+  - [Local usage](#local-usage)
+    - [Build](#build-1)
+    - [Run](#run-1)
+  - [Application profiles](#application-profiles)
+    - [Docker vs Local deployment](#docker-vs-local-deployment)
+    - [Strategy for discovering study files](#strategy-for-discovering-study-files)
+      - [Yaml file format and location of study files](#yaml-file-format-and-location-of-study-files)
+      - [Study-specific directories for location of study files](#study-specific-directories-for-location-of-study-files)
+  - [Running with AWS remote file system](#running-with-aws-remote-file-system)
+  - [Application properties](#application-properties)
+    - [Extractor settings](#extractor-settings)
+    - [Transformer settings](#transformer-settings)
+    - [Validation and Loader settings](#validation-and-loader-settings)
+    - [Properties for 'docker' application profile](#properties-for-docker-application-profile)
+    - [Properties for 'local' application profile](#properties-for-local-application-profile)
+    - [Reporting location settings](#reporting-location-settings)
+    - [S3 file system settings](#s3-file-system-settings)
+    - [Mail properties](#mail-properties)
+    - [Debug settings](#debug-settings)
+    - [Update cbioportal version used for integration tests](#update-cbioportal-version-used-for-integration-tests)
+    - [Other](#other)
+
+<!-- /code_chunk_output -->
+
 
 ## Setup
 
@@ -58,14 +76,14 @@ docker run -d --restart=always \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
-    -v $PWD/custom.properties:/custom/custom.properties \
+    -v $PWD/custom.properties:/application.properties \
     cbio-staging
 ```
 
 So, in the last `-v` parameter you can bind your own custom properties file.
 This can be used to overlay the default parameters with your own parameters
 (spring will merge both files, so your custom file can contain only the subset of
-properties that you want to overrid).
+properties that you want to override).
 Furthermore, you can still override individual parameters on top of that by
 adding them directly to the end of the docker command, e.g.:
 
@@ -74,7 +92,7 @@ docker run -d --restart=always \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
-    -v $PWD/custom.properties:/custom/custom.properties \
+    -v $PWD/custom.properties:/application.properties \
     cbio-staging --scan.cron="* * * * * *"
 ```
 
@@ -88,16 +106,29 @@ To build and run unit tests execute:
 mvn clean install
 ```
 
-You can skip tests with extra argument `-DskipTests`:
+You can skip unit tests with extra argument `-DskipUnitTests`:
 
 ```sh
-mvn clean install -DskipTests
+mvn clean install -DskipUnitTests
 ```
 
-To build and run unit tetst __and__ integration tests execute:
+To build and run unit tests __and__ integration tests execute:
 
 ```sh
 mvn clean install -P integration-test
+```
+
+To build and run only integration tests execute:
+
+```sh
+mvn clean install -P integration-test -DskipUnitTests
+```
+
+:warning: When running integration tests the cBioPortal database
+should be initialized and running. For this execute:
+
+```sh
+./src/test/resources/local_database/setup.sh
 ```
 
 ### Run
@@ -105,24 +136,66 @@ mvn clean install -P integration-test
 To run use:
 
 ```sh
-./target/cbioportal-staging-*.jar
+mvn spring-boot:run
 ```
 
-You can override application properties at runtime by adding them as parameters, for example:
+You can override application properties at runtime by adding them as parameters,
+for example:
 
 ```sh
-./target/cbioportal-staging-*.jar --scan.cron="* * * * * *"
+mvn spring-boot:run --scan.cron="* * * * * *"
 ```
 
 or link your own custom properties file, for example:
 
 ```sh
-./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
+mvn spring-boot:run --spring.config.location=file:/custom/custom.properties
 ```
 
-## Yaml file format and location of study files
+## Application profiles
 
-The app expects a yaml file in the working directory (path specified in `scan.location` of the `application.properties`) with the prefix `list_of_studies` in its name (for example, `list_of_studies_1.yaml`). This file contains all the file names, grouped by study, that will be required for the application to transform them into staging files suitable to be loaded into cBioPortal. The structure of the yaml file must be as follows:
+The behavior of the staging application can be changed to suit different production
+environments via specification of spring profile parameters. The active spring
+profile can be passed to the application via the `--spring-boot.run.profiles=` parameter
+like so:
+
+```sh
+mvn spring-boot:run --spring-boot.run.profiles=<profile-name,profile-name,..>
+```
+
+or, when running in docker:
+
+```sh
+docker run -d --restart=always \
+    --name=cbio-staging-container \
+    ...
+    cbio-staging --spring-boot.run.profiles=<profile-name,profile-name,..>
+```
+
+### Docker vs Local deployment
+
+The application supports Dockerized cBioPortal services that run in
+containers (default) and cBioPortal services that are installed directly on the
+host system. To use local cBioPortal installation pass the `local` profile
+to the application.
+
+Make sure to configure [docker profile (default)](#properties-for-docker-application-profile) or [local profile](#properties-for-local-application-profile) in the properties file.
+
+### Strategy for discovering study files
+
+The application supports different modes of discovery of study resources
+on at the scanned location. The default method is via a yaml-file that lists
+resources per study. An alternative are study-specific directories; this strategy
+can be activated by passing the `scan.studydir` profile to the application.
+
+#### Yaml file format and location of study files
+
+The app expects a yaml file in the working directory (path specified in `scan.location`
+of the `application.properties`) with the prefix `list_of_studies` in its name
+(for example, `list_of_studies_1.yaml`). This file contains all the file names,
+grouped by study, that will be required for the application to transform them
+into staging files suitableto be loaded into cBioPortal. The structure of the
+yaml file must be as follows:
 
 ```yaml
 study1:
@@ -133,7 +206,8 @@ study2:
     - path/to/fileC.txt
 ```
 
-Files in the same "study" should be in the same relative paths. For example, this is *not* allowed:
+Files in the same "study" should be in the same relative paths. For example, this
+is *not* allowed:
 
 ```yaml
 study1:
@@ -144,7 +218,50 @@ study1:
 
 To correct it, change `/path_2/to/file3.txt` to `/path/to/file3.txt` in this case.
 
-The path to files should be *relative to* the `scan.location`. For example, if `file1.txt` is located in folder `files` inside `scan.location`, the file path in the yaml should be: `files/file1.txt`.
+The path to files should be *relative to* the `scan.location`. For example, if
+`file1.txt` is located in folder `files` inside `scan.location`, the file path
+in the yaml should be: `files/file1.txt`.
+
+#### Study-specific directories for location of study files
+
+When using the `scan.studydir` profile, the application will look in the working
+directory (path specified in scan.location of the application.properties) for
+folders that each contain files beloning to a single study. The name of the
+folder is used as the study identifier.
+
+```sh
+working directory
+└───study1
+    | file1.txt
+    | file2.txt
+    | ...
+└───study2
+    | file1.txt
+    | file2.txt
+    | ...
+```
+
+In the example above the study identifiers will be _study1_ and _study2_.
+
+## Running with AWS remote file system
+
+Start the staging application with the `aws` maven profile, like so:
+
+<pre>
+mvn spring-boot:run <b>-P aws</b>
+</pre>
+
+or, when running in docker:
+
+<pre>
+docker run -d --restart=always \
+    --name=cbio-staging-container \
+    ...
+    cbio-staging <b>-P aws</b>
+</pre>
+
+Make sure to add the AWS credentials to the custom properties file (see
+[S3 file system settings](#s3-file-system-settings)).
 
 ## Application properties
 
@@ -158,38 +275,46 @@ We can configure the app to run as a cron job by using these parameters:
 - `scan.retry.time`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
 - `scan.extract.folders`: if used, it will only run the staging app for the specific folders (studies) placed inside the `scan.location` place. For example, to only load `study2` and `study3`, contained in `study2_dir` and `study3_dir` folders, set the property like this: `scan.extract.folders=study2_dir,study3_dir`. If the property is commented out, the app will load all folders contained in `scan.location`.
 - `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
+- `scan.ignore.file`: when specified, all files listed in this file will be excluded
+from the scan. Each file should be represented on a single line. Only exact matched will
+be excluded. Wildcards are not supported.
+- `scan.ignore.appendonsuccess`: when set to true, all study files of succesfully loaded
+studies are appended to the `scan.ignore.file`. This prevents ETL to be triggered when
+files are not removed from the `scan.location`.
 
 ### Transformer settings
 
 - `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
 - `skip.transformation`: set this parameter to `true` if you want to skip the transformation step.
+- `transformation.directory`: resource path to directory where transformed study files are placed after transformation. When not set, transformed files are placed in the 'staging' subdirectory of study folders in the `etl.working.dir`.
 
 ### Validation and Loader settings
 
 - `validation.level`: sets the threshold for loading studies after validation. It has two options: `WARNING` (to already abort loading step if one or more WARNINGs is found during validation step), and `ERROR` (to only abort loading if one or more ERRORs is found during validation step).
-- `cbioportal.mode`: must be `local` or `docker`,  depending whether the app will run with a local cBioPortal or a dockerized cBioPortal.
-- `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal. These parameters are only required if the `cbioportal.mode` is `docker`.
+
+### Properties for 'docker' application profile
+
+- `cbioportal.docker.image`, `cbioportal.docker.network`: Docker image and network names for the dockerized cBioPortal.
 - `cbioportal.docker.cbio.container`: name of the running cBioPortal container (e.g. to be restarted after studies are loaded).
 - `cbioportal.docker.network`: docker network where cBioPortal is placed.
 - `cbioportal.docker.properties`: path to the `portal.properties` of the cBioPortal container.
-- `portal.source`: path to portal source, only required when `cbioportal.mode`* s `local`.
+
+### Properties for 'local' application profile
+
+- `portal.source`: path to portal source
 
 ### Reporting location settings
 
 - `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
-- `central.share.location.portal`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to
+- `central.share.location.web.address`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
 
-### S3 vs local file system settings
+### S3 file system settings
 
 If any of the `*.location` attributes above points to an S3 bucket, you will have to configure the following:
 
 - `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
 - `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
-
-If **none** of the `*.location` attributes points to an S3 bucket, you will have to configure the following:
-
-- `spring.autoconfigure.exclude`: set this to the list of AWS classes to skip in autoconfigure step when starting up the app. Set it to this: `spring.autoconfigure.exclude=org.springframework.cloud.aws.autoconfigure.context.ContextInstanceDataAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration,org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration`
 
 ### Mail properties
 
