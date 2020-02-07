@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.springframework.core.io.Resource;
 
 import freemarker.core.ParseException;
@@ -30,11 +31,11 @@ public interface IEmailService {
 
 	public void emailStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 
-    public void emailTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,Resource> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+    public void emailTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,Resource> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException;
 
-	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> studyPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException;
 
-	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
+	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException;
 
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException;
 

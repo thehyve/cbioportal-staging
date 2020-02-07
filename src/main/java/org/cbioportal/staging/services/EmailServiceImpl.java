@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -33,6 +34,10 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.pivovarit.function.ThrowingFunction;
+
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +57,10 @@ import freemarker.template.TemplateNotFoundException;
 public class EmailServiceImpl implements IEmailService {
 
 	@Autowired
-	private Configuration freemarkerConfig;
+    private Configuration freemarkerConfig;
+    
+    @Autowired
+    private ResourceUtils utils;
 
 	@Value("${mail.to}")
 	private String mailTo;
@@ -105,9 +113,6 @@ public class EmailServiceImpl implements IEmailService {
     @Value("${central.share.location.web.address:}")
 	private Resource centralShareLocationWebAddress;
 
-	// TODO make sure that paths to files/logs are updated when central.share.location.web.address
-	// is specified
-
 	private static final Logger logger = LoggerFactory.getLogger(IEmailService.class);
 
 	private Properties getProperties() {
@@ -133,7 +138,33 @@ public class EmailServiceImpl implements IEmailService {
 				return new PasswordAuthentication(mailSmtpUser, mailSmtpPassword);
 			}
 		});
-	}
+    }
+
+    private Map<String,Resource> replaceLogPaths(Map<String,Resource> filesPaths) {
+        return filesPaths.entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    e -> e.getKey(),
+                    ThrowingFunction.sneaky( e -> {
+                        String cslUrl = centralShareLocation.getURL().toString();
+                        String cslWebUrl = centralShareLocationWebAddress.getURL().toString();
+                        String logUrl = e.getValue().getURL().toString();
+                        logUrl.replaceFirst(cslUrl,cslWebUrl);
+                        return utils.getResource(logUrl);
+                    })
+                )
+            );
+    } 
+    
+    private Map<String,Resource> getLogPaths(Map<String,Resource> filesPaths) throws ResourceCollectionException, IOException {
+        Map<String, Resource> logPaths = new HashMap<String, Resource>();
+        if (centralShareLocationWebAddress != null) {
+            logPaths = replaceLogPaths(filesPaths); 
+        } else {
+            logPaths = filesPaths;
+        }
+        return logPaths;
+    }
 
 	public void emailStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
 		StringBuilder allFailedStudies = new StringBuilder();
@@ -187,8 +218,11 @@ public class EmailServiceImpl implements IEmailService {
 		return stackTrace.replace(System.getProperty("line.separator"), "<br/>\n");
 	}
 
-	public void emailTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		Properties properties = getProperties();
+    public void emailTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) 
+        throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException {
+        
+        Map<String, Resource> logPaths = getLogPaths(filesPaths);
+        Properties properties = getProperties();
 		Session session = getSession(properties);
 
 		Map<String, String> studies = new HashMap<String, String>();
@@ -200,7 +234,7 @@ public class EmailServiceImpl implements IEmailService {
 			} else if (transformedStudies.get(study) == ExitStatus.ERROR) { //Study with errors
 				studies.put(study, "ERRORS");
 			}
-			// ExitStatus.SKIPPED not included in export (study not transformed)
+			// ExitStatus.NOTRANSF not included in export (study not transformed)
 		}
 
 		Message msg = new MimeMessage(session);
@@ -222,7 +256,7 @@ public class EmailServiceImpl implements IEmailService {
 			Template t = freemarkerConfig.getTemplate("transformedStudies.ftl");
 			Map<String, Object> messageParams = new HashMap<String, Object>();
 			messageParams.put("studies", studies);
-			messageParams.put("files", filesPaths);
+			messageParams.put("files", logPaths);
 			String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 			msg.setContent(message, "text/html; charset=utf-8");
 			msg.setSentDate(new Date());
@@ -232,7 +266,10 @@ public class EmailServiceImpl implements IEmailService {
 		}
 	}
 
-	public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+    public void emailValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPaths) 
+        throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException {
+        
+        Map<String, Resource> logPaths = getLogPaths(filesPaths);
 		Properties properties = getProperties();
 		Session session = getSession(properties);
 
@@ -268,7 +305,7 @@ public class EmailServiceImpl implements IEmailService {
 			Map<String, Object> messageParams = new HashMap<String, Object>();
 			messageParams.put("scanLocation", scanLocation);
 			messageParams.put("studies", studies);
-			messageParams.put("files", filesPath);
+			messageParams.put("files", logPaths);
 			messageParams.put("level", level);
 			String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 			msg.setContent(message, "text/html; charset=utf-8");
@@ -279,47 +316,50 @@ public class EmailServiceImpl implements IEmailService {
 		}
 	}
 
-	public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
-		Properties properties = getProperties();
-		Session session = getSession(properties);
-		Map<String, String> studies = new HashMap<String, String>();
-		String status = "SUCCESS";
-		for (String study : studiesLoaded.keySet()) {
-			if (studiesLoaded.get(study) == ExitStatus.SUCCESS) {
-				studies.put(study, "VALID");
-			} else {
-				studies.put(study, "ERRORS");
-				status = "ERROR";
-			}
-		}
+    public void emailStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPaths) 
+        throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException, ResourceCollectionException {
+        
+        Map<String, Resource> logPaths = getLogPaths(filesPaths);
+        Properties properties = getProperties();
+        Session session = getSession(properties);
+        Map<String, String> studies = new HashMap<String, String>();
+        String status = "SUCCESS";
+        for (String study : studiesLoaded.keySet()) {
+            if (studiesLoaded.get(study) == ExitStatus.SUCCESS) {
+                studies.put(study, "VALID");
+            } else {
+                studies.put(study, "ERRORS");
+                status = "ERROR";
+            }
+        }
 
-		Message msg = new MimeMessage(session);
-		try {
-			msg.setSubject(status+" - cBioPortal study loading report. Server: "+serverAlias+". Studies: "+studies);
-			if (debugMode) {
-				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-				}
-			} else {
-				for (String mailToEmail : mailTo.split(",")) {
-					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
-				}
-				for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
-					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
-				}
-			}
-			msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
-			Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
-			Map<String, Object> messageParams = new HashMap<String, Object>();
-			messageParams.put("studies", studiesLoaded);
-			messageParams.put("files", filesPath);
-			String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
-			msg.setContent(message, "text/html; charset=utf-8");
-			msg.setSentDate(new Date());
-			Transport.send(msg);
-		} catch(MessagingException me) {
-			logger.error(me.getMessage(), me);
-		}
+        Message msg = new MimeMessage(session);
+        try {
+            msg.setSubject(status+" - cBioPortal study loading report. Server: "+serverAlias+". Studies: "+studies);
+            if (debugMode) {
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
+            } else {
+                for (String mailToEmail : mailTo.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(mailToEmail, false));
+                }
+                for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
+                    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
+                }
+            }
+            msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
+            Template t = freemarkerConfig.getTemplate("studiesLoaded.ftl");
+            Map<String, Object> messageParams = new HashMap<String, Object>();
+            messageParams.put("studies", studiesLoaded);
+            messageParams.put("files", logPaths);
+            String message = FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
+            msg.setContent(message, "text/html; charset=utf-8");
+            msg.setSentDate(new Date());
+            Transport.send(msg);
+        } catch(MessagingException me) {
+            logger.error(me.getMessage(), me);
+        }
 	}
 
 	public void emailGenericError(String errorMessage, Exception e) throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
