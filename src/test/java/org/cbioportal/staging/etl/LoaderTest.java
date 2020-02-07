@@ -61,7 +61,7 @@ public class LoaderTest {
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
 
         Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -80,7 +80,7 @@ public class LoaderTest {
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
@@ -99,8 +99,8 @@ public class LoaderTest {
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
 
         Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
-        studies.put("study_2", TestUtils.createMockResource("test/path2", 1));
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
+        studies.put("study_2", TestUtils.createMockResource("file:/test/path2", 1));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -121,8 +121,8 @@ public class LoaderTest {
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
-        studies.put("study_with_errors", TestUtils.createMockResource("test/path2", 1));
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
+        studies.put("study_with_errors", TestUtils.createMockResource("file:/test/path2", 1));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -143,8 +143,8 @@ public class LoaderTest {
         when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("test/path", 0));
-        studies.put("study_2", TestUtils.createMockResource("test/path2", 1));
+        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
+        studies.put("study_2", TestUtils.createMockResource("file:/test/path2", 1));
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);

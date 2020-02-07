@@ -77,7 +77,7 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", null);
 
-		Resource transDir = TestUtils.createMockResource("/staging", 0);
+		Resource transDir = TestUtils.createMockResource("file:/staging/", 0);
 		when(utils.createDirResource(untransformedDir, "staging")).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
