@@ -6,8 +6,8 @@
 
 FROM openjdk:8
 LABEL maintainers=" \
- Pieter Lukasse (The Hyve) <pieter@thehyve.nl>, \
- Oleguer Plantalech Casals (The Hyve) <oleguer@thehyve.nl> \
+ Oleguer Plantalech Casals (The Hyve) <oleguer@thehyve.nl>, \
+ Pim van Nierop (The Hyve) <pim@thehyve.nl> \
 "
 
 # install build and runtime dependencies
@@ -27,13 +27,11 @@ COPY . $STAGING_HOME
 WORKDIR $STAGING_HOME
 
 # prepare application.properties, so that this is take by default by spring framework
-RUN cp $STAGING_HOME/src/main/resources/application.properties.EXAMPLE $STAGING_HOME/src/main/resources/application.properties
+RUN cp $STAGING_HOME/src/main/resources/application.properties.EXAMPLE /application.properties
 
-# maven build and rename .jar (excluding full integration test here as this executes docker commands and 
-# is meant to run on CI environment only)
-RUN mvn clean install -Dcbioportal-staging.test.excludes="**/*FullIntegration*.java" && \
-	mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
+# run tests on code
+RUN mvn test
 
 # service to be started with default properties (can be overridden in docker run),
 # taking also custom properties, if given at default -v location
-ENTRYPOINT ["/cbioportal-staging/target/cbioportal-staging.jar", "--spring.config.location=file:///custom/custom.properties"]
+ENTRYPOINT ["mvn", "spring-boot:run", "-Dspring.config.location=file:///application.properties"]
