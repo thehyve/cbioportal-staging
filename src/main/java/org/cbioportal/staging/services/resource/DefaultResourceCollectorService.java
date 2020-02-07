@@ -2,8 +2,6 @@ package org.cbioportal.staging.services.resource;
 
 import java.util.Map;
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.slf4j.Logger;
@@ -55,8 +53,6 @@ public class DefaultResourceCollectorService implements IResourceCollector {
 
         } catch (ResourceCollectionException e) {
             throw e;
-        } catch (AmazonS3Exception e) {
-            throw new ResourceCollectionException("Cannot reach Amazon S3 resource at scan.location: " + scanLocation.getFilename());
         } catch (Exception e) {
             throw new ResourceCollectionException("Error while retrieving resources from scan.location: " + scanLocation.getFilename());
         }
