@@ -123,9 +123,9 @@ public class LogReportingService implements IReportingService {
 
 	@Override
 	public void reportGenericError(String errorMessage, Exception e) throws ReporterException {
-		String template = "genericErrorUser_log_html.ftl";
+		String template = "genericError_log_html.ftl";
 		if (logFormat.equals("text")) {
-			template = "genericErrorUser_log_txt.ftl";
+			template = "genericError_log_txt.ftl";
 		}
 		appender.addToLog(
 			writableLog, messageUtils.messageGenericError(template, errorMessage, e)
