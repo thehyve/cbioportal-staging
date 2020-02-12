@@ -15,11 +15,13 @@
 */
 package org.cbioportal.staging.services.reporting;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
@@ -28,9 +30,13 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.pivovarit.function.ThrowingFunction;
+
 import org.cbioportal.staging.exceptions.ReporterException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.LogMessageUtils;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +104,9 @@ public class EmailReportingService implements IReportingService {
 	@Autowired
 	private LogMessageUtils messageUtils;
 
+	@Autowired
+    private ResourceUtils utils;
+
 	public void reportStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws ReporterException {
 
 		Properties properties = getProperties();
@@ -123,7 +132,6 @@ public class EmailReportingService implements IReportingService {
 			String message = messageUtils.messageStudyFileNotFound("studyFileNotFound_email.ftl", failedStudies, timeRetry);
 			msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
 			msg.setContent(message, "text/html; charset=utf-8");
-			// msg.setSentDate(new Date());
 			Transport.send(msg);
 		} catch(Exception me) {
 			logger.error(me.getMessage(), me);
@@ -134,6 +142,8 @@ public class EmailReportingService implements IReportingService {
 
 	public void reportTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
+
+			Map<String, Resource> logPaths = getLogPaths(filesPaths);
 
 			Properties properties = getProperties();
 			Session session = getSession(properties);
@@ -152,7 +162,7 @@ public class EmailReportingService implements IReportingService {
 					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
 				}
 			}
-			String message = messageUtils.messageTransformedStudies("transformedStudies_email.ftl", transformedStudies, filesPaths);
+			String message = messageUtils.messageTransformedStudies("transformedStudies_email.ftl", transformedStudies, logPaths);
 			msg.setContent(message, "text/html; charset=utf-8");
 			msg.setSentDate(new Date());
 			Transport.send(msg);
@@ -162,8 +172,11 @@ public class EmailReportingService implements IReportingService {
 		}
 	}
 
-	public void reportValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPath) throws ReporterException {
+	public void reportValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
+
+			Map<String, Resource> logPaths = getLogPaths(filesPaths);
+
 			Properties properties = getProperties();
 			Session session = getSession(properties);
 
@@ -182,7 +195,7 @@ public class EmailReportingService implements IReportingService {
 				}
 			}
 			msg.setFrom(new InternetAddress(mailFrom, "cBioPortal staging app"));
-			String message = messageUtils.messageValidationReport("validationReport_email.ftl", validatedStudies, level, filesPath);
+			String message = messageUtils.messageValidationReport("validationReport_email.ftl", validatedStudies, level, logPaths);
 			msg.setContent(message, "text/html; charset=utf-8");
 			msg.setSentDate(new Date());
 			Transport.send(msg);
@@ -192,10 +205,14 @@ public class EmailReportingService implements IReportingService {
 		}
 	}
 
-	public void reportStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws ReporterException {
+	public void reportStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
+
+			Map<String, Resource> logPaths = getLogPaths(filesPaths);
+
 			Properties properties = getProperties();
 			Session session = getSession(properties);
+
 			Map<String, String> studies = new HashMap<String, String>();
 			String status = "SUCCESS";
 			for (String study : studiesLoaded.keySet()) {
@@ -221,7 +238,7 @@ public class EmailReportingService implements IReportingService {
 					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(studyCuratorEmail, false));
 				}
 			}
-			String message = messageUtils.messageStudiesLoaded("studiesLoaded_email.ftl", studiesLoaded, filesPath);
+			String message = messageUtils.messageStudiesLoaded("studiesLoaded_email.ftl", studiesLoaded, logPaths);
 			msg.setContent(message, "text/html; charset=utf-8");
 			msg.setSentDate(new Date());
 			Transport.send(msg);
@@ -274,6 +291,32 @@ public class EmailReportingService implements IReportingService {
 			logger.error(me.getMessage(), me);
 			throw new ReporterException("Error while sending email.", me);
 		}
+	}
+
+    private Map<String,Resource> getLogPaths(Map<String,Resource> filesPaths) throws ResourceCollectionException, IOException {
+		Map<String, Resource> logPaths = new HashMap<String, Resource>();
+        if (centralShareLocationWebAddress != null) {
+			logPaths = replaceLogPaths(filesPaths);
+        } else {
+			logPaths = filesPaths;
+        }
+        return logPaths;
+    }
+
+	private Map<String,Resource> replaceLogPaths(Map<String,Resource> filesPaths) {
+		return filesPaths.entrySet().stream()
+			.collect(
+				Collectors.toMap(
+					e -> e.getKey(),
+					ThrowingFunction.sneaky( e -> {
+						String cslUrl = centralShareLocation.getURL().toString();
+						String cslWebUrl = centralShareLocationWebAddress.getURL().toString();
+						String logUrl = e.getValue().getURL().toString();
+						logUrl.replaceFirst(cslUrl,cslWebUrl);
+						return utils.getResource(logUrl);
+					})
+				)
+			);
 	}
 
 	private Properties getProperties() {
