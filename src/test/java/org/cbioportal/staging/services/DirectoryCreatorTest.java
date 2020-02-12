@@ -16,7 +16,8 @@
 package org.cbioportal.staging.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -64,7 +65,7 @@ public class DirectoryCreatorTest {
 			throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(any(Resource.class))).thenReturn(true);
+		when(utils.isFile(isA(Resource.class))).thenReturn(true);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
@@ -75,12 +76,12 @@ public class DirectoryCreatorTest {
 	public void etlWorkingDir_isCorrect() throws DirectoryCreatorException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(any(Resource.class))).thenReturn(false);
+		when(utils.isFile(isA(Resource.class))).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("/studyId", 0);
-		when(utils.createDirResource(any(Resource.class), any(String.class), any(String.class))).thenReturn(expectedStudyDir);
+		when(utils.createDirResource(isA(Resource.class), any(String.class), any(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
 
@@ -106,7 +107,7 @@ public class DirectoryCreatorTest {
 	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(any(Resource.class))).thenReturn(true);
+		when(utils.isFile(isA(Resource.class))).thenReturn(true);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
@@ -121,7 +122,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("/transf", 0);
-		when(utils.createDirResource(any(Resource.class), any(String.class), any(String.class))).thenReturn(transDir);
+		when(utils.createDirResource(isA(Resource.class), any(String.class), any(String.class))).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
 
@@ -132,7 +133,7 @@ public class DirectoryCreatorTest {
 	public void centralShareLocation_isFile() throws DirectoryCreatorException, ResourceUtilsException {
 
         Resource csl = mock(Resource.class);
-		when(utils.isFile(any(Resource.class))).thenReturn(true);
+		when(utils.isFile(isA(Resource.class))).thenReturn(true);
 
 		directoryCreator.getCentralShareLocationPath(csl, "mock-timestamp");
     }

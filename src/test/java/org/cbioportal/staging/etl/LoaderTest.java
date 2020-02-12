@@ -16,7 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -53,13 +54,13 @@ public class LoaderTest {
 
     @Before
     public void init() throws ResourceCollectionException, ResourceUtilsException {
-        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
+        when(utils.createFileResource(isA(Resource.class), any(String.class))).thenReturn(null);
     }
 
     @Test
     public void studySuccessfullyLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
@@ -78,7 +79,7 @@ public class LoaderTest {
     @Test
     public void studyNotLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
+        when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
@@ -97,7 +98,7 @@ public class LoaderTest {
     @Test
     public void multipleStudiesAllLoaded() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
@@ -119,7 +120,7 @@ public class LoaderTest {
     @Test
     public void multipleStudiesLoadedWithErrors() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
+        when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
@@ -141,7 +142,7 @@ public class LoaderTest {
     @Test
     public void multipleStudiesAllErrors() throws LoaderException, ResourceCollectionException {
 
-        when(loaderService.load(any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
+        when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
         Map<String, Resource> studies = new HashMap<>();
         studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));

@@ -16,8 +16,9 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -74,24 +75,24 @@ public class TransformerTest {
     public void init() throws ResourceCollectionException, IOException, TransformerException, ReporterException,
             ConfigurationException, DirectoryCreatorException, ResourceUtilsException {
         // mock utils.ensuredirs -> do nothing
-        doNothing().when(utils).ensureDirs(any(Resource.class));
+        doNothing().when(utils).ensureDirs(isA(Resource.class));
 
         // mock utils.getResource() -> return input
-        when(utils.createDirResource(any(Resource.class),anyString())).thenAnswer(i -> i.getArguments()[0]);
+        when(utils.createDirResource(isA(Resource.class),anyString())).thenAnswer(i -> i.getArguments()[0]);
 
         // mock utils.copyDirectory -> do nothing, check called
-        doNothing().when(utils).copyDirectory(any(Resource.class),any(Resource.class));
+        doNothing().when(utils).copyDirectory(isA(Resource.class),isA(Resource.class));
 
         // mock transformerService.transform -> do nothing, check called
-        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(transformerService.transform(any(),any(),any())).thenReturn(ExitStatus.SUCCESS);
 
-        //TODO
-        when(directoryCreator.createTransformedStudyDir(any(String.class),any(String.class),any(Resource.class))).thenReturn(null);
+        // TODO
+        when(directoryCreator.createTransformedStudyDir(anyString(), anyString(),isA(Resource.class))).thenReturn(null);
 
         // mock utils.createLogFiles -> return Resource mock that has getFile()
         Resource logFile = TestUtils.createMockResource("file:/dummy_study_folder/log_file.txt", 0);
         when(logFile.getFile()).thenReturn(null);
-        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(logFile);
+        when(utils.createFileResource(isA(Resource.class), anyString())).thenReturn(logFile);
 
     }
 
@@ -100,12 +101,12 @@ public class TransformerTest {
 
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
-        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
+        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
         Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
-        verify(utils, times(1)).copyDirectory(any(Resource.class),any(Resource.class));
-        verify(transformerService, never()).transform(any(Resource.class),any(Resource.class),any(Resource.class));
+        verify(utils, times(1)).copyDirectory(any(),any());
+        verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
         assert(transformer.getValidStudies().containsKey("dummy_study"));
@@ -116,12 +117,12 @@ public class TransformerTest {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
-        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
+        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
         Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 
-        verify(utils, never()).copyDirectory(any(Resource.class),any(Resource.class));
-        verify(transformerService, times(1)).transform(any(Resource.class),any(Resource.class),any(Resource.class));
+        verify(utils, never()).copyDirectory(any(),any());
+        verify(transformerService, times(1)).transform(any(),any(),any());
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
         assert(transformer.getValidStudies().containsKey("dummy_study"));
@@ -133,9 +134,9 @@ public class TransformerTest {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
-        when(provider.list(any(Resource.class))).thenReturn(studyFiles);
+        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
-        when(transformerService.transform(any(Resource.class),any(Resource.class),any(Resource.class))).thenReturn(ExitStatus.WARNING);
+        when(transformerService.transform(any(),any(),any())).thenReturn(ExitStatus.WARNING);
 
         Map<String, ExitStatus> exitStatus = transformer.transform("dummy-timestamp", dummyStudyInput(), "");
 

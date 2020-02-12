@@ -2,7 +2,7 @@ package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class DefaultResourceFilterTest {
     @Before
     public void init() {
         doAnswer(invocation -> {
-            String fileName = invocation.getArgumentAt(0, String.class);
+            String fileName = invocation.getArgument(0, String.class);
             if (fileName.contains("dummy1")) {
                 return true;
             }

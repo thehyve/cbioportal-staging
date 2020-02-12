@@ -1,9 +1,9 @@
 package org.cbioportal.staging.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,12 +46,11 @@ public class PublisherServiceImplTest {
             throws ResourceCollectionException, PublisherException, DirectoryCreatorException, ResourceUtilsException {
 
         Resource fakeShareLocation = TestUtils.createMockResource("file:/fake-share/", 0);
-        doReturn(fakeShareLocation).when(utils).createDirResource(any(Resource.class), eq("dummy-date"));
-        when(directoryCreator.getCentralShareLocationPath(any(Resource.class), anyString())).thenReturn(fakeShareLocation);
+        doReturn(fakeShareLocation).when(utils).createDirResource(isA(Resource.class), eq("dummy-date"));
+        when(directoryCreator.getCentralShareLocationPath(isA(Resource.class), anyString())).thenReturn(fakeShareLocation);
 
         Resource fakePublishedLogFile = TestUtils.createMockResource("file:/fake-share/log1.txt", 0);
-        doReturn(fakePublishedLogFile).when(utils).copyResource(any(Resource.class), any(Resource.class), anyString());
-        when(utils.copyResource(any(Resource.class), any(Resource.class), anyString())).thenReturn(fakePublishedLogFile);
+        doReturn(fakePublishedLogFile).when(utils).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
         Map<String,Resource> logFiles = new HashMap<>();
         Resource fakeLogFile = TestUtils.createMockResource("file:/logdir/log1.txt", 0);

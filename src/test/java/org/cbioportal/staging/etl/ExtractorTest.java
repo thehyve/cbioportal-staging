@@ -15,9 +15,9 @@
 */
 package org.cbioportal.staging.etl;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,15 +70,15 @@ public class ExtractorTest {
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource localFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
-		doReturn(localFile1).when(utils).copyResource(any(Resource.class), any(Resource.class), eq("/file1.txt"));
-		doReturn(localFile2).when(utils).copyResource(any(Resource.class), any(Resource.class), eq("/file2.txt"));
+		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
+		doReturn(localFile2).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
 
 		Map<String, Resource> extractedResources = extractor.run(remoteResources, "dummy-time");
 
 		assert(extractor.errorFiles().isEmpty());
 		assert(extractedResources.containsKey("dummy-study"));
 		assert(extractedResources.get("dummy-study").getURL().toString().equals("file:/extract-dir/dummy-study"));
-		verify(utils, times(2)).copyResource(any(Resource.class), any(Resource.class), anyString());
+		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
 	}
 
@@ -96,15 +96,15 @@ public class ExtractorTest {
 		remoteResources.put("dummy-study", new Resource[] {remoteFile1, remoteFile2} );
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
-		doReturn(localFile1).when(utils).copyResource(any(Resource.class), any(Resource.class), eq("/file1.txt"));
-		doReturn(null).when(utils).copyResource(any(Resource.class), any(Resource.class), eq("/file2.txt"));
+		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
+		doReturn(null).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
 
 		Map<String, Resource> extractedResources = extractor.run(remoteResources, "dummy-time");
 
 		assert(extractor.errorFiles().containsKey("dummy-study"));
 		assert(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
 		assert(extractedResources.isEmpty());
-		verify(utils, times(2)).copyResource(any(Resource.class), any(Resource.class), anyString());
+		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
 	}
 

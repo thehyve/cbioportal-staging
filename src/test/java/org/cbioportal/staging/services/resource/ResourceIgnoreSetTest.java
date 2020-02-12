@@ -2,9 +2,10 @@ package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -35,7 +36,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { ResourceIgnoreSet.class,
-        org.cbioportal.staging.services.resource.ResourceIgnoreSetTest.MyTestConfiguration.class })
+        org.cbioportal.staging.services.resource.ResourceIgnoreSetTest.MyTestConfiguration.class },
+        properties = {"spring.main.allow-bean-definition-overriding=true"})
 public class ResourceIgnoreSetTest {
 
     @TestConfiguration
@@ -83,7 +85,7 @@ public class ResourceIgnoreSetTest {
 
         WritableResource ignoreFile = TestUtils.createMockResource("file:/mock_ignore_file.txt", 0);
         ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", ignoreFile);
-        when(utils.getWritableResource(any(Resource.class))).thenReturn(ignoreFile);
+        when(utils.getWritableResource(isA(Resource.class))).thenReturn(ignoreFile);
 
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});

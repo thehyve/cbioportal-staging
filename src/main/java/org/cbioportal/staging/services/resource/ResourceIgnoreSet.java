@@ -1,8 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
@@ -46,16 +44,15 @@ public class ResourceIgnoreSet extends HashSet<String> {
     @Autowired
     private ResourceUtils utils;
 
-    // defined bufferedreader here so that
-    // it can be mocked in the test.
     @Configuration
     public static class MyConfiguration {
 
         @Bean
-        public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") File ignoreFile)
-                throws FileNotFoundException {
-            if (ignoreFile != null && ignoreFile.exists()) {
-                return new BufferedReader(new FileReader(ignoreFile));
+        public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") Resource ignoreFile)
+                throws IOException {
+            if (ignoreFile != null) {
+                ignoreFile.getFile().createNewFile();
+                return new BufferedReader(new FileReader(ignoreFile.getFile()));
             }
             return null;
         }
@@ -65,7 +62,7 @@ public class ResourceIgnoreSet extends HashSet<String> {
     @Autowired
     private ResourcePatternResolver resourcePatternResolver;
 
-    @Autowired
+    @Autowired(required = false)
     private BufferedReader bufferedReader;
 
     @PostConstruct

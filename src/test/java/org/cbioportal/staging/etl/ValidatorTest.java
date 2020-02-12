@@ -16,7 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -55,12 +56,12 @@ public class ValidatorTest {
 
     @Before
     public void init() throws ResourceCollectionException, ResourceUtilsException {
-        when(utils.createFileResource(any(Resource.class), any(String.class))).thenReturn(null);
+        when(utils.createFileResource(isA(Resource.class), any(String.class))).thenReturn(null);
 	}
 
 	@Test
 	public void studySuccessValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -79,7 +80,7 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNING);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.WARNING);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -98,7 +99,7 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -117,7 +118,7 @@ public class ValidatorTest {
 
     @Test
 	public void studySuccessValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -136,7 +137,7 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.WARNING);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.WARNING);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -155,7 +156,7 @@ public class ValidatorTest {
 
     @Test
     public void studyErrorValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.ERROR);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -176,7 +177,7 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
         Map<String, Resource> studies = new HashMap<>();
@@ -206,7 +207,7 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
         Map<String, Resource> studies = new HashMap<>();

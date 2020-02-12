@@ -1,9 +1,9 @@
 package org.cbioportal.staging.etl;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -52,7 +52,13 @@ import freemarker.template.TemplateNotFoundException;
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties", properties = "scan.location=classpath:e2e_studies/es_3")
+@TestPropertySource(
+    locations = "classpath:e2e_studies/e2e_integration_test.properties",
+    properties = {
+        "scan.location=classpath:e2e_studies/es_3",
+        "spring.main.allow-bean-definition-overriding=true"
+    }
+)
 public class IntegrationTestError {
 
     @Autowired

@@ -1,7 +1,8 @@
 package org.cbioportal.staging.services.reporting;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,7 +52,7 @@ public class LogReportingServiceTest {
     @Before
     public void init() throws ResourceUtilsException, ReporterException, IOException {
         when(messageUtils.messageStudyFileNotFound(eq("template"), any(Map.class), eq(2))).thenReturn("");
-        when(resourceUtils.getWritableResource(any(Resource.class))).thenReturn(null);
+        when(resourceUtils.getWritableResource(isA(Resource.class))).thenReturn(null);
     }
 
     @Test

@@ -1,9 +1,10 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -60,7 +61,7 @@ public class ScheduledScannerTest {
 
         Map<String, Resource[]> res = new HashMap<>();
         res.put("dummy", new Resource[0]);
-        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
+        when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
         doNothing().when(etlProcessRunner).run(any(Map.class));
 
@@ -73,7 +74,7 @@ public class ScheduledScannerTest {
     @Test
     public void testScan_resourceCollectionFails() throws Exception {
 
-        doThrow(ResourceCollectionException.class).when(resourceCollector).getResources(any(Resource.class));
+        doThrow(ResourceCollectionException.class).when(resourceCollector).getResources(isA(Resource.class));
 
         scheduledScanner.scan();
 
@@ -86,7 +87,7 @@ public class ScheduledScannerTest {
 
         Map<String, Resource[]> res = new HashMap<>();
         res.put("dummy", new Resource[0]);
-        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
+        when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
         doThrow(ResourceCollectionException.class).when(etlProcessRunner).run(any(Map.class));
 
@@ -100,7 +101,7 @@ public class ScheduledScannerTest {
     public void testScan_gracefulExitAfterIneffectiveScans() throws Exception {
 
         Map<String, Resource[]> emptyRes = new HashMap<>();
-        when(resourceCollector.getResources(any(Resource.class))).thenReturn(emptyRes);
+        when(resourceCollector.getResources(isA(Resource.class))).thenReturn(emptyRes);
 
         boolean exitStatus = scheduledScanner.scan();
 
@@ -118,7 +119,7 @@ public class ScheduledScannerTest {
         Resource[] resNotToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/failure_resource.txt", 0)};
         res.put("dummy_study_success", resToBeIgnored);
         res.put("dummy_study_failure", resNotToBeIgnored);
-        when(resourceCollector.getResources(any(Resource.class))).thenReturn(res);
+        when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
         Map<String, ExitStatus> exit = new HashMap<>();
         exit.put("dummy_study_success", ExitStatus.SUCCESS);
