@@ -2,7 +2,7 @@ package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class DefaultResourceCollectorServiceTest {
     public DefaultResourceProvider resourceProvider;
 
     @MockBean
-    public YamlFileStudyResourceResolver studyResourceResolver;
+    public YamlFileStudyResourceStrategy studyResourceStrategy;
 
     @MockBean
     private DefaultResourceFilter resourceFilter;
@@ -58,7 +58,7 @@ public class DefaultResourceCollectorServiceTest {
         strategyResources.add(TestUtils.createMockResource("dummy", "txt", 2));
         Map<String, Resource[]> studyFiles = new HashMap<>();
         studyFiles.put("study1", strategyResources.toArray(new Resource[0]));
-        Mockito.when(studyResourceResolver.resolveResources(any())).thenReturn(studyFiles);
+        Mockito.when(studyResourceStrategy.resolveResources(any())).thenReturn(studyFiles);
 
         Map<String,Resource[]> resources = defaultResourceCollectorService.getResources(fakeScanLocation);
         assertEquals(resources.entrySet().size(), 1);

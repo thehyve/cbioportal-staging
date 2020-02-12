@@ -31,14 +31,14 @@ import org.yaml.snakeyaml.Yaml;
 @TestPropertySource(properties = {
     "scan.location=file:/tmp"
 })
-@SpringBootTest(classes = {YamlFileStudyResourceResolver.class, ResourceUtils.class})
+@SpringBootTest(classes = {YamlFileStudyResourceStrategy.class, ResourceUtils.class})
 public class YamlFileStudyResourceResolverTest {
 
     @MockBean
     private Yaml yamlParser;
 
     @Autowired
-    private YamlFileStudyResourceResolver resourceResolver;
+    private YamlFileStudyResourceStrategy resourceStrategy;
 
     @Before
     public void init() {
@@ -61,7 +61,7 @@ public class YamlFileStudyResourceResolverTest {
     public void testResolveResources_success() throws ResourceCollectionException {
         Resource[] files = new Resource[1];
         files[0] = TestUtils.createMockResource("list_of_studies", "yaml", 0);
-        Map<String,Resource[]> result = resourceResolver.resolveResources(files);
+        Map<String,Resource[]> result = resourceStrategy.resolveResources(files);
         assertEquals(2, result.entrySet().size());
         assertEquals(2, result.get("study1").length);
         assertEquals(2, result.get("study2").length);
@@ -79,7 +79,7 @@ public class YamlFileStudyResourceResolverTest {
 
     @Test
     public void testResolveResources_emptyArg() throws ResourceCollectionException {
-        assert(resourceResolver.resolveResources(new Resource[0]).isEmpty());
+        assert(resourceStrategy.resolveResources(new Resource[0]).isEmpty());
     }
 
 }

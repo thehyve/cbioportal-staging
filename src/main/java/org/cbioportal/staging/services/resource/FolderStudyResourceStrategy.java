@@ -30,9 +30,9 @@ import org.springframework.stereotype.Component;
 @Profile("scan.studydir")
 @Component
 @Primary
-public class FolderStudyResourceResolver implements IStudyResourceResolver {
+public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(FolderStudyResourceResolver.class);
+    private static final Logger logger = LoggerFactory.getLogger(FolderStudyResourceStrategy.class);
 
     @Autowired
     private IResourceProvider resourceProvider;

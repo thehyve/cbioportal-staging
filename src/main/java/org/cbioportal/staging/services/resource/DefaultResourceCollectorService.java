@@ -26,7 +26,7 @@ public class DefaultResourceCollectorService implements IResourceCollector {
     private IResourceProvider resourceProvider;
 
     @Autowired
-    private IStudyResourceResolver resourceStrategy;
+    private IStudyResourceStrategy resourceStrategy;
 
     @Autowired
     private IResourceFilter resourceFilter;

@@ -1,9 +1,9 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
@@ -33,13 +33,13 @@ public class FolderStudyResourceResolverTest {
     @TestConfiguration
     public static class MyTestConfiguration {
         @Bean
-        public FolderStudyResourceResolver folderStudyResourceResolver() {
-            return new FolderStudyResourceResolver();
+        public FolderStudyResourceStrategy folderStudyResourceStrategy() {
+            return new FolderStudyResourceStrategy();
         }
     }
 
     @Autowired
-    private FolderStudyResourceResolver folderStudyResourceResolver;
+    private FolderStudyResourceStrategy folderStudyResourceStrategy;
 
     @MockBean
     private DefaultResourceProvider resourceProvider;
@@ -60,7 +60,7 @@ public class FolderStudyResourceResolverTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String, Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
+        Map<String, Resource[]> resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.size());
         assert (resources.containsKey("study_folder"));
@@ -81,7 +81,7 @@ public class FolderStudyResourceResolverTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String,Resource[]> resources = folderStudyResourceResolver.resolveResources(studyDirs);
+        Map<String,Resource[]> resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.size());
         assert(resources.containsKey("dummy_study_id_1"));

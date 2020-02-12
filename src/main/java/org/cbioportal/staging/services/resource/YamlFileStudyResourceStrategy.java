@@ -27,9 +27,9 @@ import org.yaml.snakeyaml.Yaml;
  * list of resources per study.
  */
 @Component
-public class YamlFileStudyResourceResolver implements IStudyResourceResolver {
+public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(YamlFileStudyResourceResolver.class);
+    private static final Logger logger = LoggerFactory.getLogger(YamlFileStudyResourceStrategy.class);
 
     @Configuration
     static class MyConfiguration {
