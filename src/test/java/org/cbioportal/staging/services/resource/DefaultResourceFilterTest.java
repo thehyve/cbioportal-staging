@@ -21,9 +21,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {DefaultResourceFilter.class})
+@SpringBootTest(classes = {DefaultResourceFilter.class, ResourceUtils.class})
 public class DefaultResourceFilterTest {
 
     @MockBean
@@ -64,6 +65,31 @@ public class DefaultResourceFilterTest {
         assertNotNull(filteredResources.entrySet().iterator().next().getKey());
         assertEquals("study1", filteredResources.entrySet().iterator().next().getKey());
         assertEquals(2, filteredResources.entrySet().iterator().next().getValue().length);
+    }
+
+    @Test
+    public void testFilterResources_scanExtractFolder() throws ResourceCollectionException {
+
+        List<String> includeDirs = new ArrayList<>();
+        includeDirs.add("included_dir");
+        ReflectionTestUtils.setField(defaultResourceFilter, "includedDirs", includeDirs);
+
+        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///included_dir/dummy5.txt", "file:///included_dir/dummy6.txt");
+        Map<String, Resource[]> studyFiles2 = createResourceMap("study2", "file:///excluded_dir/dummy7.txt", "file:///excluded_dir/dummy8.txt");
+        studyFiles.put("study2", studyFiles2.get("study2"));
+
+        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(studyFiles);
+
+        assertEquals(1, filteredResources.entrySet().size());
+        assertNotNull(filteredResources.entrySet().iterator().next().getKey());
+        assertEquals("study1", filteredResources.entrySet().iterator().next().getKey());
+        assertEquals(2, filteredResources.entrySet().iterator().next().getValue().length);
+    }
+
+    @Test
+    public void testFilterResources_nullArgument() throws ResourceCollectionException {
+        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(null);
+        assertEquals(0, filteredResources.entrySet().size());
     }
 
     private Map<String, Resource[]> createResourceMap(String studyId, String ... fileNames) {
