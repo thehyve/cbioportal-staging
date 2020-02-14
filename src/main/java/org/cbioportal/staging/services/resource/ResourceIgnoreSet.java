@@ -107,4 +107,9 @@ public class ResourceIgnoreSet extends HashSet<String> {
         }
     }
 
+    public void resetAndDeleteFile() throws ResourceUtilsException {
+        super.clear();
+        utils.deleteResource(ignoreFile);
+    }
+
 }

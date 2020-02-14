@@ -29,7 +29,6 @@ import org.cbioportal.staging.services.PublisherServiceImpl;
 import org.cbioportal.staging.services.TransformerServiceImpl;
 import org.cbioportal.staging.services.ValidatorServiceImpl;
 import org.cbioportal.staging.services.reporting.EmailReportingService;
-import org.cbioportal.staging.services.reporting.LogReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -47,24 +46,23 @@ import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = App.class)
-@TestPropertySource(
-    locations = "classpath:e2e_studies/e2e_integration_test.properties",
-    properties = {
-        "scan.location=classpath:e2e_studies/es_3",
-        "spring.main.allow-bean-definition-overriding=true"
-    }
+@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
+@SpringBootTest(
+    classes = App.class,
+    properties = {"scan.location=classpath:e2e_studies/es_1", "validation.level=ERROR"}
 )
-public class IntegrationTestError {
+public class IntegrationTestWarningAndImport {
 
-    @Autowired
-    private ScheduledScanner scheduledScanner;
+    @MockBean
+    private EmailReportingService emailServiceImpl;
 
     @MockBean
     private IRestarter restarterService;
+
+    @Autowired
+    private ScheduledScanner scheduledScanner;
 
     @SpyBean
     private PublisherServiceImpl publisherService;
@@ -82,12 +80,6 @@ public class IntegrationTestError {
     private ResourceIgnoreSet ignoreSet;
 
     @MockBean
-    private EmailReportingService emailServiceImpl;
-
-    @MockBean
-    private LogReportingService logServiceImpl;
-
-    @SpyBean
     private AuthorizerServiceImpl authorizerService;
 
     @After
@@ -96,7 +88,7 @@ public class IntegrationTestError {
     }
 
     @Test
-    public void throwValidationError_es3()
+    public void throwValidationWarningsButLoad_es1()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
             TemplateException, InterruptedException, ConfigurationException, ReporterException, ValidatorException,
             LoaderException, RestarterException, PublisherException, ResourceCollectionException {
@@ -109,23 +101,17 @@ public class IntegrationTestError {
 
         verify(transformationService, never()).transform(any(), any(), any());
         verify(validatorService, times(1)).validate(any(), any(), any());
-        verify(loaderService, never()).load(any(), any());
-        verify(restarterService, never()).restart();
-        verify(publisherService, times(1)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
-        verify(ignoreSet, never()).appendResources(any(Resource[].class));
-        verify(authorizerService, never()).authorizeStudies(anySet());
+        verify(loaderService, times(1)).load(any(), any());
+        verify(restarterService, times(1)).restart();
+        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, publish() not called
+        verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
+        verify(authorizerService, times(1)).authorizeStudies(anySet());
 
         verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
         verify(emailServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
         verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).reportStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).reportGenericError(any(),any());
-
-        verify(logServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(logServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(logServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(logServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
-        verify(logServiceImpl, never()).reportGenericError(any(),any());
     }
 
 }

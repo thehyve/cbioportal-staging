@@ -238,6 +238,16 @@ public class ResourceUtils {
         return createDirResource(dir, "");
     }
 
+    public void deleteResource(Resource res) throws ResourceUtilsException {
+        if (res.exists()) {
+            try {
+                res.getFile().delete();
+            } catch (IOException e) {
+                throw new ResourceUtilsException("Error deleting resource.");
+            }
+        }
+    }
+
     public boolean isFile(Resource resource) throws ResourceUtilsException {
         try {
             return resource.getFile().isFile();

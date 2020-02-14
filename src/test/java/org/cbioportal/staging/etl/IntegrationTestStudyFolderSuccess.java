@@ -1,15 +1,14 @@
 package org.cbioportal.staging.etl;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -20,6 +19,7 @@ import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.AuthorizerServiceImpl;
@@ -34,7 +34,6 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -82,12 +81,9 @@ public class IntegrationTestStudyFolderSuccess {
     @MockBean
     private AuthorizerServiceImpl authorizerService;
 
-    @Value("${scan.ignore.file:}")
-    private File ignoreFile;
-
     @After
-    public void cleanUp() {
-        ignoreFile.delete();
+    public void cleanUp() throws ResourceUtilsException {
+        ignoreSet.resetAndDeleteFile();
     }
 
     @Test
