@@ -19,24 +19,15 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@ActiveProfiles("scan.studydir")
-public class FolderStudyResourceResolverTest {
-
-    @TestConfiguration
-    public static class MyTestConfiguration {
-        @Bean
-        public FolderStudyResourceStrategy folderStudyResourceStrategy() {
-            return new FolderStudyResourceStrategy();
-        }
-    }
+@SpringBootTest(classes = { FolderStudyResourceStrategy.class },
+    properties = {"scan.studyfiles.strategy=studydir"})
+public class FolderStudyResourceStrategyTest {
 
     @Autowired
     private FolderStudyResourceStrategy folderStudyResourceStrategy;

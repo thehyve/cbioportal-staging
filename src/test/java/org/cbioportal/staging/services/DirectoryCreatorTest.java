@@ -82,7 +82,7 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
-        Resource expectedStudyDir = TestUtils.createMockResource("/studyId", 0);
+        Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
 		when(utils.createDirResource(isA(Resource.class), any(String.class), any(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir("mock-timestamp", "mock-studyId");
@@ -123,7 +123,7 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
-		Resource transDir = TestUtils.createMockResource("/transf", 0);
+		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
 		when(utils.createDirResource(isA(Resource.class), any(String.class), any(String.class))).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir("mock-timestamp", "mock-studyId", untransformedDir);
