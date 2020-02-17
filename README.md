@@ -73,11 +73,11 @@ docker build -t cbio-staging .
 To run in Docker, use:
 
 ```sh
-docker run -d --restart=always \
+docker run -d --rm \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
-    -v $PWD/custom.properties:/application.properties \
+    -v $PWD/custom.properties:/custom/custom.properties \
     cbio-staging
 ```
 
@@ -89,11 +89,11 @@ Furthermore, you can still override individual parameters on top of that by
 adding them directly to the end of the docker command, e.g.:
 
 ```sh
-docker run -d --restart=always \
+docker run -d --rm \
     --name=cbio-staging-container \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
-    -v $PWD/custom.properties:/application.properties \
+    -v $PWD/custom.properties:/custom/custom.properties \
     cbio-staging --scan.cron="* * * * * *"
 ```
 
@@ -137,20 +137,20 @@ should be initialized and running. For this execute:
 To run use:
 
 ```sh
-mvn spring-boot:run
+./target/cbioportal-staging-*.jar
 ```
 
 You can override application properties at runtime by adding them as parameters,
 for example:
 
 ```sh
-mvn spring-boot:run --scan.cron="* * * * * *"
+./target/cbioportal-staging-*.jar --scan.cron="* * * * * *"
 ```
 
 or link your own custom properties file, for example:
 
 ```sh
-mvn spring-boot:run --spring.config.location=file:/custom/custom.properties
+./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
 ```
 
 ## Application profiles

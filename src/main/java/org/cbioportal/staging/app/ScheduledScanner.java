@@ -48,6 +48,9 @@ public class ScheduledScanner {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+	@Value("${scan.cron:* * * * * *}")
+	private String scanCron;
+
 	@Value("${scan.location}")
 	private String scanLocation;
 
@@ -76,7 +79,7 @@ public class ScheduledScanner {
 	@Autowired
 	private ResourceIgnoreSet resourceIgnoreSet;
 
-	@Scheduled(cron = "${scan.cron}")
+	@Scheduled(cron = "${scan.cron:* * * * * *}")
 	public boolean scan() {
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()));
@@ -87,8 +90,7 @@ public class ScheduledScanner {
 			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanDir);
 
 			if (resourcesPerStudy.keySet().size() == 0) {
-				checkIfShouldExit(nrIterations, scanIterations);
-				return false;
+				return shouldStopTrying(nrIterations, scanIterations);
 			}
 
 			logger.info("Started ETL process for studies: ", String.join(", ", resourcesPerStudy.keySet()));
@@ -111,8 +113,7 @@ public class ScheduledScanner {
 			}
 		}
 
-		//return true when an ETL process was triggered
-		return true;
+		return shouldStopApp();
 	}
 
 	private void addToIgnoreFile(Map<String,ExitStatus> loaderStatus, Map<String, Resource[]> resourcesPerStudy) {
@@ -142,11 +143,23 @@ public class ScheduledScanner {
 	 * @param nrIterations
 	 * @param max
 	 */
-	private void checkIfShouldExit(int nrIterations, int max) {
+	private boolean shouldStopTrying(int nrIterations, int max) {
 		if (max != -1 && nrIterations >= max) {
 			logger.info("==>>>>> Reached configured number of iterations (" + max + "). Exiting... <<<<<==");
+			return shouldStopApp();
+		}
+		return false;
+	}
+
+	private boolean shouldStopApp() {
+		// When scanning every second, we assume that the scanner should run only once.
+		// The appl is closed when the patter is '* * * * * *'
+		if (scanCron.equals("* * * * * *")) {
+			logger.info("Closing the app after running one time. When scheduled scanning " +
+			"is needed set the scan.cron property to a value different from '* * * * * *'");
 			scheduledScannerService.stopAppWithSuccess();
 		}
+		return true;
 	}
 
 }
