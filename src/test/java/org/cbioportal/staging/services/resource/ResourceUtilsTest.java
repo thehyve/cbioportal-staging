@@ -99,6 +99,15 @@ public class ResourceUtilsTest {
     }
 
     @Test
+    public void getBasePath_resolveNestedDirs() throws ConfigurationException {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/def/xz/file.txt");
+        paths.add("file:/def/file.txt");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/def", common);
+    }
+
+    @Test
     public void getBasePath_includesNullArgument() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add(null);
