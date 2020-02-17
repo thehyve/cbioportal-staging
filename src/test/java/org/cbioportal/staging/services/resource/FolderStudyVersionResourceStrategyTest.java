@@ -1,0 +1,125 @@
+package org.cbioportal.staging.services.resource;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.cbioportal.staging.TestUtils;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.Resource;
+import org.springframework.test.context.junit4.SpringRunner;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = { FolderStudyVersionResourceStrategy.class },
+    properties = {"scan.studyfiles.strategy=versiondir"})
+public class FolderStudyVersionResourceStrategyTest {
+
+    @Autowired
+    private FolderStudyVersionResourceStrategy folderStudyVersionResourceStrategy;
+
+    @MockBean
+    private DefaultResourceProvider resourceProvider;
+
+    @SpyBean
+    private ResourceUtils utils;
+
+    @Test
+    public void mapOneStudyWithoutMetaFile() throws ResourceCollectionException {
+
+        Resource r = TestUtils.createMockResource("file:/study_folder/study1", 0);
+        Resource[] providedResources = new Resource[] {r};
+        doReturn(providedResources).when(utils).extractDirs(eq(providedResources));
+
+        Resource mostRecentDir = TestUtils.createMockResource("file:/study_folder/study1/version1", 1);
+        Resource[] listedDirectories = new Resource[] {TestUtils.createMockResource("file:/study_folder/study1/version1", 0), 
+            mostRecentDir};
+        when(resourceProvider.list(eq(r))).thenReturn(listedDirectories);
+        doReturn(listedDirectories).when(utils).extractDirs(eq(listedDirectories));
+            
+        
+        Resource[] listedFiles = new Resource[] {TestUtils.createMockResource("file:/study_folder/study1/version1/meta_expression.txt", 0), 
+            TestUtils.createMockResource("file:/study_folder/study1/version1/data_expression.txt", 1)};
+        when(resourceProvider.list(eq(mostRecentDir),anyBoolean(),anyBoolean())).thenReturn(listedFiles);    
+
+        Map<String, Resource[]> outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
+
+        assert(outResult.containsKey("study1"));
+        assertEquals(2, outResult.get("study1").length);
+
+    }
+
+    @Test
+    public void mapOneStudyWithMetaFile() throws ResourceCollectionException, ResourceUtilsException {
+
+        Resource r = TestUtils.createMockResource("file:/study_folder/study1", 0);
+        Resource[] providedResources = new Resource[] {r};
+        doReturn(providedResources).when(utils).extractDirs(eq(providedResources));
+
+        Resource mostRecentDir = TestUtils.createMockResource("file:/study_folder/study1/version1", 1);
+        Resource[] listedDirectories = new Resource[] {TestUtils.createMockResource("file:/study_folder/study1/version1", 0), 
+            mostRecentDir};
+        when(resourceProvider.list(eq(r))).thenReturn(listedDirectories);
+        doReturn(listedDirectories).when(utils).extractDirs(eq(listedDirectories));
+        
+        Map<String, String> study_id = new HashMap<String, String>();
+        study_id.put("cancer_study_identifier", "study_1_meta_study_id");
+        doReturn(study_id).when(utils).readMetaFile(any((Resource.class)));
+
+        Resource[] listedFiles = new Resource[] {TestUtils.createMockResource("file:/study_folder/study1/version1/meta_study.txt", 0), 
+            TestUtils.createMockResource("file:/study_folder/study1/version1/data_expression.txt", 1)};
+        when(resourceProvider.list(eq(mostRecentDir),anyBoolean(),anyBoolean())).thenReturn(listedFiles);
+
+        Map<String, Resource[]> outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
+
+        assert(outResult.containsKey("study_1_meta_study_id"));
+        assertEquals(2, outResult.get("study_1_meta_study_id").length);
+
+    }
+
+    @Test
+    public void studyWithNoVersions() throws ResourceCollectionException {
+
+        Resource r = TestUtils.createMockResource("file:/study_folder/study1", 0);
+        Resource[] providedResources = new Resource[] {r};
+        doReturn(providedResources).when(utils).extractDirs(eq(providedResources));
+
+        Resource mostRecentDir = TestUtils.createMockResource("file:/study_folder/study1", 1);
+        Resource[] listedFiles = new Resource[] {TestUtils.createMockResource("file:/study_folder/study1", 0), 
+            mostRecentDir};
+        when(resourceProvider.list(eq(r))).thenReturn(listedFiles);
+
+        Resource[] listedDirectories = new Resource[] {};
+        doReturn(listedDirectories).when(utils).extractDirs(eq(listedFiles));    
+
+        Map<String, Resource[]> outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
+
+        assert(outResult.isEmpty());
+
+    }
+
+    @Test
+    public void noResources() throws ResourceCollectionException {
+
+        Resource[] providedResources = new Resource[] {};
+        doReturn(providedResources).when(utils).extractDirs(eq(providedResources));    
+
+        Map<String, Resource[]> outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
+
+        assert(outResult.isEmpty());
+
+    }
+
+}

@@ -32,7 +32,7 @@ import com.pivovarit.function.ThrowingFunction;
     "scan.location=file:/tmp"
 })
 @SpringBootTest(classes = {YamlFileStudyResourceStrategy.class, ResourceUtils.class})
-public class YamlFileStudyResourceResolverTest {
+public class YamlFileStudyResourceStrategyTest {
 
     @MockBean
     private Yaml yamlParser;

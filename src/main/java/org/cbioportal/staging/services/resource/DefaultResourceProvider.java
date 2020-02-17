@@ -41,7 +41,7 @@ public class DefaultResourceProvider implements IResourceProvider {
             String path = utils.trimDir(utils.getURL(dir).toString());
             String wildCardPath = path + "/*";
             if (recursive) {
-                wildCardPath += "*";
+                wildCardPath += "*/*";
             }
             if (utils.getFile(dir).isFile()) {
                 throw new ResourceCollectionException("Scan location points to a file (should be a directory): " + path);

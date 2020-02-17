@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -19,7 +20,6 @@ import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.authorize.AuthorizerServiceImpl;
@@ -34,11 +34,11 @@ import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -50,9 +50,14 @@ import freemarker.template.TemplateNotFoundException;
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
-@ActiveProfiles("versiondir")
-public class IntegrationTestStudyFolderSuccess {
+@TestPropertySource(
+    locations = "classpath:e2e_studies/e2e_integration_test.properties",
+    properties = {
+        "scan.location=classpath:e2e_studies/es_0_version/",
+        "scan.studyfiles.strategy=versiondir"
+    }
+)
+public class IntegrationTestStudyVersionFolderSuccess {
 
     @MockBean
     private EmailReportingService emailServiceImpl;
@@ -81,13 +86,16 @@ public class IntegrationTestStudyFolderSuccess {
     @MockBean
     private AuthorizerServiceImpl authorizerService;
 
+    @Value("${scan.ignore.file:}")
+    private File ignoreFile;
+
     @After
-    public void cleanUp() throws ResourceUtilsException {
-        ignoreSet.resetAndDeleteFile();
+    public void cleanUp() {
+        ignoreFile.delete();
     }
 
     @Test
-    public void loadSuccessful_es0() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
+    public void loadSuccessful_es0_version() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
             IOException, TemplateException, InterruptedException, ConfigurationException, ReporterException,
             ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException {
 
