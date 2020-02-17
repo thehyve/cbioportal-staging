@@ -43,7 +43,7 @@ public class DefaultResourceCollectorService implements IResourceCollector {
 
         try {
 
-            logger.info("Scanning for files at: " + scanLocation.getFilename());
+            logger.info("Scanning for files at: " + scanLocation.getURI().toString());
             Resource[] scannedResources = resourceProvider.list(scanLocation);
             logger.info("Found " + scannedResources.length + " files");
 
