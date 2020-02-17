@@ -34,10 +34,15 @@ public class AuthorizerServiceImpl implements IAuthorizerService {
 	@Value("${study.authorize.command_prefix:null}")
 	private String studyAuthorizeCommandPrefix;
 
-	@Value("${study.curator.emails}")
+	@Value("${study.curator.emails:}")
 	private String studyCuratorEmails;
 
 	public void authorizeStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
+
+        if (studyCuratorEmails.equals("")) {
+            logger.info("No curator emails defined with study.curator.emails property. Skipping Authorization of studies ...");
+            return;
+        }
 
 		if (!studyAuthorizeCommandPrefix.equals("null")) {
 			for (String studyId : studyIds) {

@@ -4,12 +4,12 @@
 # use --property="value" in command, e.g. --scan.cron="* * * * * *".
 # For more information about the properties listed below, read: https://github.com/thehyve/cbioportal-staging/blob/master/README.md
 
-# A cron-like expression (UN*X definition)
-scan.cron=0 0 0 * * *
-# (optional) number of times to repeat the cron (default is 1; set to -1 to repeat indefinitely):
+# (optional) A cron-like expression (UN*X definition). When undefined, the app runs a single scan and then stops.
+# scan.cron=0 0 0 * * *
+# (optional) number of times to repeat the scan at the interval set by the scan.cron property (default is 1; set to -1 to repeat indefinitely):
 #scan.cron.iterations=1
 # location to scan (local file system, e.g. file:///tmp or S3 location, e.g. s3://bucket/staging_dir):
-scan.location=file:///home/pnp300/staging-scan-folder/
+scan.location=file:///tmp
 # (optional) Minutes before trying to find a file specified by the yaml file that has not been found (default is 5 minutes; enable this prop to configure to something else)
 #scan.retry.time=5
 # (optional, only for non-s3 scan locations for now) comma-separated list of folders to
@@ -32,46 +32,60 @@ scan.location=file:///home/pnp300/staging-scan-folder/
 #cloud.aws.credentials.accessKey=<aws-key>
 #cloud.aws.credentials.secretKey=<aws-secret-key>
 
-# properties for running cBioPortal in Docker (default):
-cbioportal.docker.image=<image-name>
-cbioportal.docker.network=<network-name>
-cbioportal.docker.cbio.container=<cbio-container>
-cbioportal.docker.properties=<path-to-portal.properties>
+# can be compose, docker, or local
+cbioportal.mode=compose
 
-#properties for running cBioPortal locally:
+# properties for running cBioPortal in Docker compose (scan.mode=compose)
+cbioportal.compose.service=cbioportal-container
+
+# properties for running cBioPortal in Docker (scan.mode=docker)
+#cbioportal.docker.image=cbioportal/cbioportal:latest
+#cbioportal.docker.network=cbio-net
+#cbioportal.docker.cbio.container=cbioportal-container
+#cbioportal.docker.cbio.container=cbioportal-container
+#cbioportal.docker.properties=file:/tmp/not_existing.properties
+
+#properties for running cBioPortal locally (scan.mode=local)
 # portal.source=<path-to-source-code>
 
-# Central share location (for validation reports and log files, can also be a S3 location).
-central.share.location=file:///tmp
+# (optionals) Central share location (for validation reports and log files, can also be a S3 location).
+#central.share.location=file:///tmp/share
 # (optional) Central share location web-portal
 #central.share.location.web.address=https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder
 
-# Full transformation command and path to execute it
-transformation.command.script=./umccr_wrapper_parser.py
 
-# Directory to save the transformed files. If it is not set, the transformed files will be saved in the working directory,
+# (optional) set to false to enable the transformation step
+skip.transformation=true
+# (optional) Full transformation command and path to execute it. Must be set when skip.transformation=false
+#transformation.command.script=./umccr_wrapper_parser.py
+# (optional) Directory to save the transformed files. If it is not set, the transformed files will be saved in the working directory,
 # in a folder "staging" inside each study-specific folder.
-# transformation.directory=
+#transformation.directory=
 
 #Validation level
 validation.level = ERROR
 
 # (optional) mail properties
 mail.enable=false
-mail.to=<email>
-mail.from=noreply@test.com
-mail.smtp.user=noreply@test.com
-mail.smtp.password=
-mail.smtp.host=<smtp-host>
-mail.debug=<boolean>
-mail.transport.protocol=<transport-protocol>
-mail.smtp.port=<smtp-port>
-mail.smtp.auth=<boolean>
-mail.smtp.ssl.enable=<boolean>
-mail.smtp.starttls.enable=<boolean>
+#mail.to=<email>
+#mail.from=noreply@test.com
+#mail.smtp.user=noreply@test.com
+#mail.smtp.password=
+#mail.smtp.host=<smtp-host>
+#mail.debug=<boolean>
+#mail.transport.protocol=<transport-protocol>
+#mail.smtp.port=<smtp-port>
+#mail.smtp.auth=<boolean>
+#mail.smtp.ssl.enable=<boolean>
+#mail.smtp.starttls.enable=<boolean>
+# (optional) email of the users, comma-separated, which will get automatic access to studies loaded, and also will receive a copy
+# of all emails sent by the staging app.
+#study.curator.emails=
+# Recognizable name for the server, appears in the emails
+#server.alias=DEV
 
 # (optional) log file properties
-#log.enable=false
+log.enable=false
 #log.file=file:/tmp/cbioportal_etl.log
 # (format can be 'text' or 'html')
 #log.format=text
@@ -84,16 +98,6 @@ logging.level.root=INFO
 # add a command for the study authorizer layer, otherwise leave it empty (or comment it out)
 # the staging app will append the study id and the study.curator.emails to this command.
 #study.authorize.command_prefix=
-
-# email of the users, comma-separated, which will get automatic access to studies loaded, and also will receive a copy
-# of all emails sent by the staging app.
-study.curator.emails=
-
-# uncomment this property if you want to skip the transformation step
-# skip.transformation=true
-
-# Recognizable name for the server, appears in the emails
-server.alias=DEV
 
 # If debug mode is set true, emails will only be sent to the study.curator.emails (and not to the mail.smtp.user)
 debug.mode=true

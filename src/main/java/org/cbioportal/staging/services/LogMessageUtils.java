@@ -25,7 +25,7 @@ public class LogMessageUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(LogMessageUtils.class);
 
-	@Value("${study.curator.emails}")
+	@Value("${study.curator.emails:}")
     private String studyCuratorEmails;
 
 	@Value("${scan.location}")
@@ -123,6 +123,11 @@ public class LogMessageUtils {
     }
 
     public String messageGenericError(String template, String errorMessage, Exception e) throws ReporterException {
+
+		if (studyCuratorEmails.equals("")) {
+			throw new ReporterException("No curators emails defined with study.curator.emails property.");
+		}
+
         try {
 			Template t = freemarkerConfig.getTemplate(template);
 			Map<String, Object> messageParams = new HashMap<>();

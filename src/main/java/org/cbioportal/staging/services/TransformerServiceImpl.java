@@ -41,6 +41,9 @@ public class TransformerServiceImpl implements ITransformerService {
     @Value("${transformation.command.script:}")
     private String transformationCommandScript;
 
+    @Value("${skip.transformation:false}")
+    private boolean skipTransformation;
+
     @Autowired
     private ResourcePatternResolver resourceResolver;
 
@@ -51,9 +54,9 @@ public class TransformerServiceImpl implements ITransformerService {
     public ExitStatus transform(Resource untransformedFilesPath, Resource transformedFilesPath, Resource logFile)
             throws ReporterException, ConfigurationException, IOException {
 
-        if (transformationCommandScript.equals("")) {
+        if (transformationCommandScript.equals("") && ! skipTransformation) {
             throw new ReporterException(
-                    "No transformation command script has been specified in the application.properties.");
+                "No transformation command script has been specified in the application.properties.");
         }
 
         List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());

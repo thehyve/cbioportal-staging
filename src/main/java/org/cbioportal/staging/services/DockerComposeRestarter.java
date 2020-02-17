@@ -24,21 +24,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+@Primary
 @Component
-@ConditionalOnProperty(value="cbioportal.mode", havingValue = "docker")
-public class DockerRestarter implements IRestarter {
+@ConditionalOnProperty(value="cbioportal.mode", havingValue = "compose")
+public class DockerComposeRestarter implements IRestarter {
 
-	private static final Logger logger = LoggerFactory.getLogger(DockerRestarter.class);
+	private static final Logger logger = LoggerFactory.getLogger(DockerComposeRestarter.class);
 
-	@Value("${cbioportal.docker.cbio.container}")
-	private String cbioContainer;
+	@Value("${cbioportal.compose.service}")
+	private String cbioService;
 
 	public void restart() throws RestarterException {
         try {
             logger.info("Restarting cBioPortal...");
-            ProcessBuilder restarterCmd = new ProcessBuilder ("docker", "restart", cbioContainer);
+            ProcessBuilder restarterCmd = new ProcessBuilder ("docker-compose", cbioService, "restart");
             logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
             Process restartProcess = restarterCmd.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
