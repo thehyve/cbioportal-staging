@@ -29,6 +29,9 @@ public class DefaultResourceFilter implements IResourceFilter {
     @Value("${scan.extract.folders:}")
     private String scanExtractFolders;
 
+    @Value("${scan.location}")
+    private Resource scanLocation;
+
     @Autowired
     private ResourceIgnoreSet resourceIgnoreSet;
 
@@ -67,13 +70,13 @@ public class DefaultResourceFilter implements IResourceFilter {
             resource -> {
                 try {
 
-                    String path = utils.trimFile(utils.getURL(resource).toString());
-                    String pathTypeRemoved = utils.trimFile(utils.stripResourceTypePrefix(path));
+                    String path = utils.getURL(resource).toString();
+                    String pathMinusScanLocation = utils.trimFile(path.replace(utils.getURL(scanLocation).toString(), ""));
 
                     boolean inIgnoreFile = ! resourceIgnoreSet.isEmpty()
                                             && (resourceIgnoreSet.contains(path)
-                                                || resourceIgnoreSet.contains(pathTypeRemoved));
-                    boolean inIncludeDir = includedDirs.stream().anyMatch(dir -> path.startsWith(dir) || pathTypeRemoved.startsWith(dir) );
+                                                || resourceIgnoreSet.contains(pathMinusScanLocation));
+                    boolean inIncludeDir = includedDirs.stream().anyMatch(dir -> path.startsWith(dir) || pathMinusScanLocation.startsWith(dir) );
 
                     return inIncludeDir && ! inIgnoreFile;
                 } catch (ResourceUtilsException e) {

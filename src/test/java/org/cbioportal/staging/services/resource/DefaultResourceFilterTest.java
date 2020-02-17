@@ -24,7 +24,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {DefaultResourceFilter.class, ResourceUtils.class})
+@SpringBootTest(classes = {DefaultResourceFilter.class, ResourceUtils.class},
+    properties = "scan.location=file:/scan_location"
+)
 public class DefaultResourceFilterTest {
 
     @MockBean
@@ -74,8 +76,8 @@ public class DefaultResourceFilterTest {
         includeDirs.add("included_dir");
         ReflectionTestUtils.setField(defaultResourceFilter, "includedDirs", includeDirs);
 
-        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///included_dir/dummy5.txt", "file:///included_dir/dummy6.txt");
-        Map<String, Resource[]> studyFiles2 = createResourceMap("study2", "file:///excluded_dir/dummy7.txt", "file:///excluded_dir/dummy8.txt");
+        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///scan_location/included_dir/dummy5.txt", "file:///scan_location/included_dir/dummy6.txt");
+        Map<String, Resource[]> studyFiles2 = createResourceMap("study2", "file:///scan_location/excluded_dir/dummy7.txt", "file:///scan_location/excluded_dir/dummy8.txt");
         studyFiles.put("study2", studyFiles2.get("study2"));
 
         Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(studyFiles);
