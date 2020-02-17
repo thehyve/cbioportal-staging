@@ -1,5 +1,9 @@
 package org.cbioportal.staging.services.resource;
 
+import java.util.stream.Stream;
+
+import com.pivovarit.function.ThrowingPredicate;
+
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +31,11 @@ public class DefaultResourceProvider implements IResourceProvider {
 
     @Override
     public Resource[] list(Resource dir, boolean recursive) throws ResourceCollectionException {
+        return list(dir, recursive, false);
+    }
+
+    @Override
+    public Resource[] list(Resource dir, boolean recursive, boolean filterDirs) throws ResourceCollectionException {
 
         try {
             String path = utils.trimDir(utils.getURL(dir).toString());
@@ -37,7 +46,10 @@ public class DefaultResourceProvider implements IResourceProvider {
             if (utils.getFile(dir).isFile()) {
                 throw new ResourceCollectionException("Scan location points to a file (should be a directory): " + path);
             }
-            return utils.getResources(wildCardPath);
+            Resource[] res = utils.getResources(wildCardPath);
+            if (! filterDirs)
+                return res;
+            return Stream.of(res).filter(ThrowingPredicate.sneaky(e -> e.getFile().isFile())).toArray(Resource[]::new);
         } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
         }

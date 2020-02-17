@@ -9,5 +9,6 @@ public interface IResourceProvider {
 
     public Resource[] list(Resource dir) throws ResourceCollectionException;
     public Resource[] list(Resource dir, boolean recursive) throws ResourceCollectionException;
+    public Resource[] list(Resource dir, boolean recursive, boolean filterDirs) throws ResourceCollectionException;
 
 }
