@@ -23,7 +23,6 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cbioportal.staging.app.ScheduledScanner;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ValidatorException;
@@ -48,7 +47,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ETLProcessRunner {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+
+	private static final Logger logger = LoggerFactory.getLogger(ETLProcessRunner.class);
 
 	@Autowired
 	private Extractor extractor;
@@ -79,9 +79,6 @@ public class ETLProcessRunner {
 
 	@Value("${study.authorize.command_prefix:}")
     private String studyAuthorizeCommandPrefix;
-
-    @Value("${central.share.location}")
-    private String centralShareLocation;
 
     @Value("${etl.working.dir:}")
     private File etlWorkingDir;

@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -51,8 +50,8 @@ public class ScheduledScanner {
 	@Value("${scan.cron:* * * * * *}")
 	private String scanCron;
 
-	@Value("${scan.location}")
-	private String scanLocation;
+	@Value("${scan.location:}")
+	private Resource scanLocation;
 
 	@Value("${scan.cron.iterations:-1}")
 	private Integer scanIterations;
@@ -74,20 +73,22 @@ public class ScheduledScanner {
 	private ETLProcessRunner etlProcessRunner;
 
 	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
-
-	@Autowired
 	private ResourceIgnoreSet resourceIgnoreSet;
 
 	@Scheduled(cron = "${scan.cron:* * * * * *}")
 	public boolean scan() {
+
+		if (scanLocation == null) {
+			logger.info("No scan.location property is defined. Exiting...");
+			scheduledScannerService.stopApp();
+		}
+
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()));
 			nrIterations++;
 
 			logger.info("Started fetching of resources.");
-			Resource scanDir = resourcePatternResolver.getResource(scanLocation);
-			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanDir);
+			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanLocation);
 
 			if (resourcesPerStudy.keySet().size() == 0) {
 				return shouldStopApp();
@@ -137,8 +138,8 @@ public class ScheduledScanner {
 	}
 
 	private boolean shouldStopApp() {
-		// When scanning every second, we assume that the scanner should run only once.
-		// The appl is closed when the patter is '* * * * * *'
+		// When scanning every second, we assume that the scanner should run
+		// only once. The appl is closed when the patter is '* * * * * *'.
 		if (scanCron.equals("* * * * * *")) {
 			logger.info("Closing the app after running one time. When scheduled scanning " +
 			"is needed set the scan.cron property to a value different from '* * * * * *'");

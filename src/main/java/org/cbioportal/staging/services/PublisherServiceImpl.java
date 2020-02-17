@@ -25,6 +25,8 @@ import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -36,7 +38,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class PublisherServiceImpl implements IPublisherService {
 
-    @Value("${central.share.location}")
+    private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
+
+    @Value("${central.share.location:}")
     private Resource centralShareLocation;
 
     @Autowired
@@ -46,6 +50,10 @@ public class PublisherServiceImpl implements IPublisherService {
     private IDirectoryCreator directoryCreator;
 
     public Map<String, Resource> publish(String date, Map<String, Resource> logFiles) throws PublisherException {
+
+        if (centralShareLocation == null) {
+            logger.info("No central.share.location was defined. Skipping publishing of log files.");
+        }
 
         if (date == null) {
             throw new PublisherException("Argument 'date' may not be null.");

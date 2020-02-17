@@ -95,7 +95,7 @@ public class EmailReportingService implements IReportingService {
 	@Value("${debug.mode:false}")
 	private Boolean debugMode;
 
-	@Value("${central.share.location}")
+	@Value("${central.share.location:}")
     private Resource centralShareLocation;
 
     @Value("${central.share.location.web.address:}")
@@ -295,7 +295,7 @@ public class EmailReportingService implements IReportingService {
 
     private Map<String,Resource> getLogPaths(Map<String,Resource> filesPaths) throws ResourceCollectionException, IOException {
 		Map<String, Resource> logPaths = new HashMap<String, Resource>();
-        if (centralShareLocationWebAddress != null) {
+        if (centralShareLocation != null && centralShareLocationWebAddress != null) {
 			logPaths = replaceLogPaths(filesPaths);
         } else {
 			logPaths = filesPaths;
