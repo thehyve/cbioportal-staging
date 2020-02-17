@@ -90,7 +90,7 @@ public class ScheduledScanner {
 			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanDir);
 
 			if (resourcesPerStudy.keySet().size() == 0) {
-				return shouldStopTrying(nrIterations, scanIterations);
+				return shouldStopApp();
 			}
 
 			logger.info("Started ETL process for studies: ", String.join(", ", resourcesPerStudy.keySet()));
@@ -136,27 +136,16 @@ public class ScheduledScanner {
 		});
 	}
 
-	/**
-	 * Checks if nrIterations reached the configured max and
-	 * triggers System.exit if this is the case.
-	 *
-	 * @param nrIterations
-	 * @param max
-	 */
-	private boolean shouldStopTrying(int nrIterations, int max) {
-		if (max != -1 && nrIterations >= max) {
-			logger.info("==>>>>> Reached configured number of iterations (" + max + "). Exiting... <<<<<==");
-			return shouldStopApp();
-		}
-		return false;
-	}
-
 	private boolean shouldStopApp() {
 		// When scanning every second, we assume that the scanner should run only once.
 		// The appl is closed when the patter is '* * * * * *'
 		if (scanCron.equals("* * * * * *")) {
 			logger.info("Closing the app after running one time. When scheduled scanning " +
 			"is needed set the scan.cron property to a value different from '* * * * * *'");
+			scheduledScannerService.stopAppWithSuccess();
+		}
+		if (scanIterations != -1 && nrIterations >= scanIterations) {
+			logger.info("==>>>>> Reached configured number of iterations (" + scanIterations + "). Exiting... <<<<<==");
 			scheduledScannerService.stopAppWithSuccess();
 		}
 		return true;
