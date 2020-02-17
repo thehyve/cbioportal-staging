@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
@@ -51,6 +52,9 @@ public class ResourceIgnoreSet extends HashSet<String> {
         public BufferedReader bufferedReader(@Value("${scan.ignore.file:}") Resource ignoreFile)
                 throws IOException {
             if (ignoreFile != null) {
+                String filePath = ignoreFile.getFile().getAbsolutePath();
+                File path = new File(filePath.substring(0, filePath.lastIndexOf("/")));
+                path.mkdirs();
                 ignoreFile.getFile().createNewFile();
                 return new BufferedReader(new FileReader(ignoreFile.getFile()));
             }
