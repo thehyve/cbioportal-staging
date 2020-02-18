@@ -13,8 +13,8 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -27,9 +27,9 @@ import org.springframework.stereotype.Component;
  * of the study folder.
  *
  */
-@Profile("scan.studydir")
-@Component
 @Primary
+@Component
+@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "studydir")
 public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderStudyResourceStrategy.class);
