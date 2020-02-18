@@ -22,15 +22,15 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 
-@Profile("dirsByStudy")
-@Component
 @Primary
+@Component
+@ConditionalOnProperty(value="etl.dir.format", havingValue = "studyversion")
 public class DirectoryCreatorByStudy implements IDirectoryCreator {
 
     @Autowired
