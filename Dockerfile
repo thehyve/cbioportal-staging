@@ -26,8 +26,10 @@ ENV STAGING_HOME=/cbioportal-staging
 COPY . $STAGING_HOME
 WORKDIR $STAGING_HOME
 
-RUN mvn clean install -Dcbioportal-staging.test.excludes="**/Integration*.java" && \
-	mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
+ARG mvnprofiles=''
+
+RUN mvn clean install $mvnprofiles
+RUN mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
 
 # service to be started with default properties (can be overridden in docker run),
 # taking also custom properties, if given at default -v location
