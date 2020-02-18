@@ -26,9 +26,6 @@ ENV STAGING_HOME=/cbioportal-staging
 COPY . $STAGING_HOME
 WORKDIR $STAGING_HOME
 
-# # prepare application.properties, so that this is take by default by spring framework
-RUN cp $STAGING_HOME/src/main/resources/application.properties.EXAMPLE $STAGING_HOME/src/main/resources/application.properties
-
 RUN mvn clean install -Dcbioportal-staging.test.excludes="**/Integration*.java" && \
 	mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
 
