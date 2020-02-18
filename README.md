@@ -26,12 +26,10 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
   - [Local usage](#local-usage)
     - [Build](#build-1)
     - [Run](#run-1)
-  - [Application profiles](#application-profiles)
-    - [Docker vs Local deployment](#docker-vs-local-deployment)
-    - [Strategy for discovering study files](#strategy-for-discovering-study-files)
+  - [Strategy for discovering study files](#strategy-for-discovering-study-files)
       - [Yaml file format and location of study files](#yaml-file-format-and-location-of-study-files)
       - [Study-specific directories for location of study files](#study-specific-directories-for-location-of-study-files)
-  - [Running with AWS remote file system](#running-with-aws-remote-file-system)
+    - [Running with AWS remote file system](#running-with-aws-remote-file-system)
   - [Application properties](#application-properties)
     - [Extractor settings](#extractor-settings)
     - [Transformer settings](#transformer-settings)
@@ -54,7 +52,7 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
 Configure your custom settings in `src/main/resources/application.properties` or run
 the app wit extra parameter like for example `--spring.config.location=file:///custom/custom.properties`
 (see **Run** section below). For details on how to configure, see provided example
-file [src/main/resources/application.properties.EXAMPLE](src/main/resources/application.properties.EXAMPLE)
+file [src/main/resources/application.properties](src/main/resources/application.properties.EXAMPLE)
 and **Application properties** section below.
 
 ## Docker usage (recommended)
@@ -74,7 +72,7 @@ To run in Docker, use:
 
 ```sh
 docker run -d --rm \
-    --name=cbio-staging-container \
+    --name=cbio-staging \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
     -v $PWD/custom.properties:/custom/custom.properties \
@@ -90,11 +88,11 @@ adding them directly to the end of the docker command, e.g.:
 
 ```sh
 docker run -d --rm \
-    --name=cbio-staging-container \
+    --name=cbio-staging \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/bin/docker:/usr/bin/docker \
     -v $PWD/custom.properties:/custom/custom.properties \
-    cbio-staging --scan.cron="* * * * * *"
+    cbio-staging --scan.cron="0 * * * * *"
 ```
 
 ## Local usage
@@ -144,7 +142,7 @@ You can override application properties at runtime by adding them as parameters,
 for example:
 
 ```sh
-./target/cbioportal-staging-*.jar --scan.cron="* * * * * *"
+./target/cbioportal-staging-*.jar --scan.cron="0 * * * * *"
 ```
 
 or link your own custom properties file, for example:
@@ -153,36 +151,7 @@ or link your own custom properties file, for example:
 ./target/cbioportal-staging-*.jar --spring.config.location=file:///custom/custom.properties
 ```
 
-## Application profiles
-
-The behavior of the staging application can be changed to suit different production
-environments via specification of spring profile parameters. The active spring
-profile can be passed to the application via the `--spring-boot.run.profiles=` parameter
-like so:
-
-```sh
-mvn spring-boot:run --spring-boot.run.profiles=<profile-name,profile-name,..>
-```
-
-or, when running in docker:
-
-```sh
-docker run -d --restart=always \
-    --name=cbio-staging-container \
-    ...
-    cbio-staging --spring-boot.run.profiles=<profile-name,profile-name,..>
-```
-
-### Docker vs Local deployment
-
-The application supports Dockerized cBioPortal services that run in
-containers (default) and cBioPortal services that are installed directly on the
-host system. To use local cBioPortal installation pass the `local` profile
-to the application.
-
-Make sure to configure [docker profile (default)](#properties-for-docker-application-profile) or [local profile](#properties-for-local-application-profile) in the properties file.
-
-### Strategy for discovering study files
+## Strategy for discovering study files
 
 The application supports different modes of discovery of study resources
 on at the scanned location. The default method is via a yaml-file that lists
@@ -244,9 +213,9 @@ working directory
 
 In the example above the study identifiers will be _study1_ and _study2_.
 
-## Running with AWS remote file system
+### Running with AWS remote file system
 
-Start the staging application with the `aws` maven profile, like so:
+To start the staging application with the `aws` maven profile:
 
 <pre>
 mvn spring-boot:run <b>-P aws</b>
