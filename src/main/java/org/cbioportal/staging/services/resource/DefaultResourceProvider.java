@@ -2,13 +2,13 @@ package org.cbioportal.staging.services.resource;
 
 import java.util.stream.Stream;
 
-import com.pivovarit.function.ThrowingPredicate;
-
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import com.pivovarit.function.ThrowingPredicate;
 
 /**
  * DefaultResourceProvider

@@ -31,7 +31,7 @@ import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.services.IDirectoryCreator;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

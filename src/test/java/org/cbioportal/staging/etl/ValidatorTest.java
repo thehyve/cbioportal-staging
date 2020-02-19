@@ -27,7 +27,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.IValidatorService;
+import org.cbioportal.staging.services.etl.IValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Before;
 import org.junit.Test;

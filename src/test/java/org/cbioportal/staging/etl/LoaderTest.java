@@ -28,7 +28,7 @@ import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.ILoaderService;
+import org.cbioportal.staging.services.etl.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Before;
 import org.junit.Test;

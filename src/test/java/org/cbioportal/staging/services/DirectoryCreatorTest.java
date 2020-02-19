@@ -25,6 +25,8 @@ import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.DirectoryCreatorByJob;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;

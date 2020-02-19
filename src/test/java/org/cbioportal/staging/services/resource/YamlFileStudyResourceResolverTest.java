@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.pivovarit.function.ThrowingFunction;
-
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.junit.Before;
@@ -26,6 +24,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.yaml.snakeyaml.Yaml;
+
+import com.pivovarit.function.ThrowingFunction;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = {

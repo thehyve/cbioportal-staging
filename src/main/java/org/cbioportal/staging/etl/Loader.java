@@ -21,7 +21,7 @@ import java.util.Map;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.ILoaderService;
+import org.cbioportal.staging.services.etl.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

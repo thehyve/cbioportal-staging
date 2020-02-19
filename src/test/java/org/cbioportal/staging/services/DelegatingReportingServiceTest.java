@@ -1,15 +1,15 @@
 package org.cbioportal.staging.services;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.cbioportal.staging.exceptions.ReporterException;
-import org.cbioportal.staging.services.reporting.DelegatingReportingService;
-import org.cbioportal.staging.services.reporting.EmailReportingService;
-import org.cbioportal.staging.services.reporting.LogReportingService;
+import org.cbioportal.staging.services.report.DelegatingReportingService;
+import org.cbioportal.staging.services.report.EmailReportingService;
+import org.cbioportal.staging.services.report.LogReportingService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
