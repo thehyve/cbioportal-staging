@@ -51,10 +51,10 @@ public class FolderStudyResourceStrategyTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String, Resource[]> resources = folderStudyResourceStrategy.resolveResources(studyDirs);
+        Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
-        assertEquals(1, resources.size());
-        assert (resources.containsKey("study_folder"));
+        assertEquals(1, resources.length);
+        assert(TestUtils.has(resources, "study_folder"));
     }
 
     @Test
@@ -72,10 +72,10 @@ public class FolderStudyResourceStrategyTest {
         when(utils.extractDirs(any())).thenReturn(studyDirs);
         when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
 
-        Map<String,Resource[]> resources = folderStudyResourceStrategy.resolveResources(studyDirs);
+        Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
-        assertEquals(1, resources.size());
-        assert(resources.containsKey("dummy_study_id_1"));
+        assertEquals(1, resources.length);
+        assert(TestUtils.has(resources, "dummy_study_id_1"));
     }
 
 }

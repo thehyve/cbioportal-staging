@@ -31,7 +31,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = { "scan.cron.iterations=5", "scan.ignore.append=false" })
 @SpringBootTest(classes = ScheduledScanner.class)
@@ -58,11 +57,10 @@ public class ScheduledScannerTest {
     @Test
     public void testScan_sucess() throws Exception {
 
-        Map<String, Resource[]> res = new HashMap<>();
-        res.put("dummy", new Resource[0]);
+        Study[] res = TestUtils.studyList(new Study("dummy", null, null, null, new Resource[0]));
         when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
-        doNothing().when(etlProcessRunner).run(any(Map.class));
+        doNothing().when(etlProcessRunner).run(any(Study[].class));
 
         scheduledScanner.scan();
 
@@ -84,11 +82,10 @@ public class ScheduledScannerTest {
     @Test
     public void testScan_etlFails() throws Exception {
 
-        Map<String, Resource[]> res = new HashMap<>();
-        res.put("dummy", new Resource[0]);
+        Study[] res = TestUtils.studyList(new Study("dummy", null, null, null, new Resource[0]));
         when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
-        doThrow(ResourceCollectionException.class).when(etlProcessRunner).run(any(Map.class));
+        doThrow(ResourceCollectionException.class).when(etlProcessRunner).run(any(Study[].class));
 
         scheduledScanner.scan();
 
@@ -99,7 +96,7 @@ public class ScheduledScannerTest {
     @Test
     public void testScan_gracefulExitAfterIneffectiveScans() throws Exception {
 
-        Map<String, Resource[]> emptyRes = new HashMap<>();
+        Study[] emptyRes = new Study[0];
         when(resourceCollector.getResources(isA(Resource.class))).thenReturn(emptyRes);
 
         boolean exitStatus = scheduledScanner.scan();
@@ -113,11 +110,13 @@ public class ScheduledScannerTest {
 
         ReflectionTestUtils.setField(scheduledScanner, "ignoreAppend", true);
 
-        Map<String, Resource[]> res = new HashMap<>();
         Resource[] resToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/success_resource.txt", 0)};
         Resource[] resNotToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/failure_resource.txt", 0)};
-        res.put("dummy_study_success", resToBeIgnored);
-        res.put("dummy_study_failure", resNotToBeIgnored);
+        Study[] res = TestUtils.studyList(
+            new Study("dummy_study_success", null, null, null, resToBeIgnored),
+            new Study("dummy_study_failure", null, null, null, resNotToBeIgnored)
+        );
+
         when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
         Map<String, ExitStatus> exit = new HashMap<>();

@@ -1,14 +1,11 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.TestUtils;
@@ -49,24 +46,22 @@ public class DefaultResourceFilterTest {
     @Test
     public void testFilterResources_removesFileIngnoreFile() throws ResourceCollectionException {
 
-        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///dummy1.txt", "file:///dummy2.txt");
+        Study[] studyFiles = createResourceMap("study1", "file:///dummy1.txt", "file:///dummy2.txt");
 
-        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(studyFiles);
-        assertEquals(1, filteredResources.entrySet().size());
-        assertNotNull(filteredResources.entrySet().iterator().next().getKey());
-        assertEquals("study1", filteredResources.entrySet().iterator().next().getKey());
-        assertEquals(1, filteredResources.entrySet().iterator().next().getValue().length);
+        Study[] filteredResources = defaultResourceFilter.filterResources(studyFiles);
+        assertEquals(1, filteredResources.length);
+        assertEquals("study1", filteredResources[0].getStudyId());
+        assertEquals(1, filteredResources[0].getResources().length);
     }
 
     @Test
     public void testFilterResources_notFiltered() throws ResourceCollectionException {
 
-        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///dummy3.txt", "file:///dummy4.txt");
-        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(studyFiles);
-        assertEquals(1, filteredResources.entrySet().size());
-        assertNotNull(filteredResources.entrySet().iterator().next().getKey());
-        assertEquals("study1", filteredResources.entrySet().iterator().next().getKey());
-        assertEquals(2, filteredResources.entrySet().iterator().next().getValue().length);
+        Study[] studyFiles = createResourceMap("study1", "file:///dummy3.txt", "file:///dummy4.txt");
+        Study[] filteredResources = defaultResourceFilter.filterResources(studyFiles);
+        assertEquals(1, filteredResources.length);
+        assertEquals("study1", filteredResources[0].getStudyId());
+        assertEquals(2, filteredResources[0].getResources().length);
     }
 
     @Test
@@ -76,30 +71,27 @@ public class DefaultResourceFilterTest {
         includeDirs.add("included_dir");
         ReflectionTestUtils.setField(defaultResourceFilter, "includedDirs", includeDirs);
 
-        Map<String, Resource[]> studyFiles = createResourceMap("study1", "file:///scan_location/included_dir/dummy5.txt", "file:///scan_location/included_dir/dummy6.txt");
-        Map<String, Resource[]> studyFiles2 = createResourceMap("study2", "file:///scan_location/excluded_dir/dummy7.txt", "file:///scan_location/excluded_dir/dummy8.txt");
-        studyFiles.put("study2", studyFiles2.get("study2"));
+        Study[] studyFiles1 = createResourceMap("study1", "file:///scan_location/included_dir/dummy5.txt", "file:///scan_location/included_dir/dummy6.txt");
+        Study[] studyFiles2 = createResourceMap("study2", "file:///scan_location/excluded_dir/dummy7.txt", "file:///scan_location/excluded_dir/dummy8.txt");
+        Study[] studyFiles = new Study[] {studyFiles1[0], studyFiles2[0]};
 
-        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(studyFiles);
+        Study[] filteredResources = defaultResourceFilter.filterResources(studyFiles);
 
-        assertEquals(1, filteredResources.entrySet().size());
-        assertNotNull(filteredResources.entrySet().iterator().next().getKey());
-        assertEquals("study1", filteredResources.entrySet().iterator().next().getKey());
-        assertEquals(2, filteredResources.entrySet().iterator().next().getValue().length);
+        assertEquals(1, filteredResources.length);
+        assertEquals("study1", filteredResources[0].getStudyId());
+        assertEquals(2, filteredResources[0].getResources().length);
     }
 
     @Test
     public void testFilterResources_nullArgument() throws ResourceCollectionException {
-        Map<String,Resource[]> filteredResources = defaultResourceFilter.filterResources(null);
-        assertEquals(0, filteredResources.entrySet().size());
+        Study[] filteredResources = defaultResourceFilter.filterResources(null);
+        assertEquals(0, filteredResources.length);
     }
 
-    private Map<String, Resource[]> createResourceMap(String studyId, String ... fileNames) {
+    private Study[] createResourceMap(String studyId, String ... fileNames) {
         List<Resource> resources = new ArrayList<>();
         Stream.of(fileNames).forEach(e -> resources.add(TestUtils.createMockResource(e, 0)));
-        Map<String, Resource[]> studyFiles = new HashMap<>();
-        studyFiles.put(studyId, resources.toArray(new Resource[0]));
-        return studyFiles;
+        return TestUtils.studyList(new Study(studyId, null, null, null, resources.toArray(new Resource[0])));
     }
 
 }

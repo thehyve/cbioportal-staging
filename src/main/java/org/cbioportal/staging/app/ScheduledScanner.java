@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
@@ -28,6 +29,7 @@ import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.IResourceCollector;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
+import org.cbioportal.staging.services.resource.Study;
 import org.cbioportal.staging.services.scanner.IScheduledScannerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,13 +90,13 @@ public class ScheduledScanner {
 			nrIterations++;
 
 			logger.info("Started fetching of resources.");
-			Map<String, Resource[]> resourcesPerStudy = resourceCollector.getResources(scanLocation);
+			Study[] resourcesPerStudy = resourceCollector.getResources(scanLocation);
 
-			if (resourcesPerStudy.keySet().size() == 0) {
+			if (resourcesPerStudy.length == 0) {
 				return shouldStopApp();
 			}
 
-			logger.info("Started ETL process for studies: ", String.join(", ", resourcesPerStudy.keySet()));
+			logger.info("Started ETL process for studies: ", Stream.of(resourcesPerStudy).map(Study::getStudyId).collect(Collectors.joining(", ")));
 
 			etlProcessRunner.run(resourcesPerStudy);
 
@@ -117,20 +119,20 @@ public class ScheduledScanner {
 		return shouldStopApp();
 	}
 
-	private void addToIgnoreFile(Map<String,ExitStatus> loaderStatus, Map<String, Resource[]> resourcesPerStudy) {
+	private void addToIgnoreFile(Map<String,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
 
-		List<String> successStudies = loaderStatus.entrySet().stream()
+		List<String> successStudyIds = loaderStatus.entrySet().stream()
 			.filter(e -> e.getValue() == ExitStatus.SUCCESS)
 			.map(Entry::getKey)
 			.collect(Collectors.toList());
 
-		List<Entry<String,Resource[]>> exludeResources = resourcesPerStudy.entrySet().stream()
-			.filter(e -> successStudies.contains(e.getKey()))
+		List<Study> successStudies = Stream.of(resourcesPerStudy)
+			.filter(s -> successStudyIds.contains(s.getStudyId()))
 			.collect(Collectors.toList());
 
-		exludeResources.stream().forEach(e -> {
+		successStudies.stream().forEach(s -> {
 			try {
-				resourceIgnoreSet.appendResources(e.getValue());
+				resourceIgnoreSet.appendResources(s.getResources());
 			} catch (ResourceCollectionException ex) {
 				throw new RuntimeException(ex);
 			}

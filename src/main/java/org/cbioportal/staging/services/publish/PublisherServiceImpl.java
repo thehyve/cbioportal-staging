@@ -71,9 +71,10 @@ public class PublisherServiceImpl implements IPublisherService {
             );
     }
 
-    private Resource publish(Resource logFile, String timestamp) throws PublisherException {
+    // TODO make publish use the same structure as the transformation dir
+    private Resource publish(Resource logFile, String folder) throws PublisherException {
         try {
-            Resource centralShareLocationPath = directoryCreator.getCentralShareLocationPath(centralShareLocation, timestamp);
+            Resource centralShareLocationPath = directoryCreator.getCentralShareLocationPath(centralShareLocation, folder);
             // TODO is this conditional really needed (does it throw an error if not)?
             if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
                 utils.ensureDirs(centralShareLocation);

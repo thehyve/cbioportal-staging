@@ -1,9 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,19 +48,20 @@ public class DefaultResourceFilter implements IResourceFilter {
     }
 
     @Override
-    public Map<String,Resource[]> filterResources(Map<String,Resource[]> resources) throws ResourceCollectionException {
-        Map<String,Resource[]> out = new HashMap<String,Resource[]>();
+    public Study[] filterResources(Study[] studies) throws ResourceCollectionException {
 
-        if (resources == null)
-            return out;
+        List<Study> out = new ArrayList<>();
 
-        for (Entry<String,Resource[]> entry: resources.entrySet()) {
-            Resource[] res = filter(entry.getValue());
+        if (studies == null)
+            return out.toArray(new Study[0]);
+
+        for (Study study: studies) {
+            Resource[] res = filter(study.getResources());
             if (res.length > 0)
-                out.put(entry.getKey(), filter(entry.getValue()));
+                out.add(new Study(study.getStudyId(), study.getVersion(), study.getTimestamp(), study.getStudyDir(), res));
         }
 
-        return out;
+        return out.toArray(new Study[0]);
     }
 
     private Resource[] filter(Resource[] resources) {

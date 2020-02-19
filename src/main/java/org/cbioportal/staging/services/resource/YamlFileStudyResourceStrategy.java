@@ -3,7 +3,6 @@ package org.cbioportal.staging.services.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,9 +56,10 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
     private ResourceUtils utils;
 
     @Override
-    public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
+    public Study[] resolveResources(Resource[] resources) throws ResourceCollectionException {
 
-        Map<String,Resource[]> out = new HashMap<String,Resource[]>();
+        List<Study> out = new ArrayList<>();
+        String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
 
             logger.info("Looking for newest yaml file...");
@@ -79,7 +79,7 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
                         String fullFilePath = filePath(filePath);
                         collectedResources.add(resourcePatternResolver.getResource(fullFilePath));
                     }
-                    out.put(entry.getKey(), collectedResources.toArray(new Resource[0]));
+                    out.add(new Study(entry.getKey(), yamlFile.getFilename(), timestamp, null, collectedResources.toArray(new Resource[0])));
                 }
             }
 
@@ -87,7 +87,7 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
             throw new ResourceCollectionException("Cannot read from yaml file.");
         }
 
-        return out;
+        return out.toArray(new Study[0]);
     }
 
     private Map<String, List<String>> parseYaml(Resource resource) throws IOException {

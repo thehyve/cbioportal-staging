@@ -17,7 +17,7 @@ import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.services.directory.DirectoryCreatorByJob;
+import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.publish.PublisherServiceImpl;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -31,7 +31,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { PublisherServiceImpl.class, DirectoryCreatorByJob.class }, properties = {
+@SpringBootTest(classes = { PublisherServiceImpl.class, DirectoryCreator.class }, properties = {
         "central.share.location=file:/fake-share/" })
 public class PublisherServiceImplTest {
 

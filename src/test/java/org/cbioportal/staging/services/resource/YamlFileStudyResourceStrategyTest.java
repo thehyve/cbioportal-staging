@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
@@ -25,13 +28,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.yaml.snakeyaml.Yaml;
 
-import com.pivovarit.function.ThrowingFunction;
-
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = {
-    "scan.location=file:/tmp"
-})
-@SpringBootTest(classes = {YamlFileStudyResourceStrategy.class, ResourceUtils.class})
+@TestPropertySource(properties = { "scan.location=file:/tmp" })
+@SpringBootTest(
+    classes = { YamlFileStudyResourceStrategy.class, ResourceUtils.class },
+    properties = "scan.studyfiles.strategy=yaml"
+)
 public class YamlFileStudyResourceStrategyTest {
 
     @MockBean
@@ -59,27 +61,36 @@ public class YamlFileStudyResourceStrategyTest {
 
     @Test
     public void testResolveResources_success() throws ResourceCollectionException {
-        Resource[] files = new Resource[1];
-        files[0] = TestUtils.createMockResource("list_of_studies", "yaml", 0);
-        Map<String,Resource[]> result = resourceStrategy.resolveResources(files);
-        assertEquals(2, result.entrySet().size());
-        assertEquals(2, result.get("study1").length);
-        assertEquals(2, result.get("study2").length);
-        List<String> filesStudy1 = Stream.of(result.get("study1"))
-            .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
-            .collect(Collectors.toList());
-        List<String> filesStudy2 = Stream.of(result.get("study2"))
+        Resource[] files = new Resource[] { TestUtils.createMockResource("list_of_studies", "yaml", 0) };
+        Study[] result = resourceStrategy.resolveResources(files);
+        assertEquals(2, result.length);
+
+        Optional<Study> study1 = Stream.of(result).filter(s -> s.getStudyId().equals("study1")).findFirst();
+        Optional<Study> study2 = Stream.of(result).filter(s -> s.getStudyId().equals("study2")).findFirst();
+
+
+        assert(study1.isPresent());
+        assertEquals(2, study1.get().getResources().length);
+        List<String> filesStudy1 = Stream.of(study1.get().getResources())
             .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
             .collect(Collectors.toList());
         assert(filesStudy1.contains("file:/tmp/files/dummy1.txt"));
         assert(filesStudy1.contains("file:/tmp/files/dummy2.txt"));
+
+
+
+        assert(study2.isPresent());
+        assertEquals(2, study2.get().getResources().length);
+        List<String> filesStudy2 = Stream.of(study2.get().getResources())
+            .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
+            .collect(Collectors.toList());
         assert(filesStudy2.contains("file:/tmp/files/dummy3.txt"));
         assert(filesStudy2.contains("file:/tmp/files/dummy4.txt"));
     }
 
     @Test
     public void testResolveResources_emptyArg() throws ResourceCollectionException {
-        assert(resourceStrategy.resolveResources(new Resource[0]).isEmpty());
+        assert(resourceStrategy.resolveResources(new Resource[0]).length == 0);
     }
 
 }

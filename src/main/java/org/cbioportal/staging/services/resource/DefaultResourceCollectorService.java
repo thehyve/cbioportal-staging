@@ -1,8 +1,5 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.slf4j.Logger;
@@ -33,14 +30,14 @@ public class DefaultResourceCollectorService implements IResourceCollector {
     private IResourceFilter resourceFilter;
 
     @Override
-    public Map<String, Resource[]> getResources(Resource scanLocation)
+    public Study[] getResources(Resource scanLocation)
             throws ConfigurationException, ResourceCollectionException {
 
         if (scanLocation == null) {
             throw new ConfigurationException("scan location is null.");
         }
 
-        Map<String,Resource[]> resources = new HashMap<>();
+        Study[] resources = new Study[0];
 
         try {
 
@@ -49,7 +46,7 @@ public class DefaultResourceCollectorService implements IResourceCollector {
             logger.info("Found " + scannedResources.length + " files");
 
             if (scannedResources.length > 0) {
-                Map<String,Resource[]> resolvedResources = resourceStrategy.resolveResources(scannedResources);
+                Study[] resolvedResources = resourceStrategy.resolveResources(scannedResources);
                 resources = resourceFilter.filterResources(resolvedResources);
             }
 

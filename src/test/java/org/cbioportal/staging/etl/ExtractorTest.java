@@ -15,6 +15,7 @@
 */
 package org.cbioportal.staging.etl;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -24,8 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Stream;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
@@ -34,6 +34,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,23 +62,25 @@ public class ExtractorTest {
 			ExtractionException, ResourceUtilsException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
-		when(directoryCreator.createStudyExtractDir(eq("dummy-time"), eq("dummy-study"))).thenReturn(targetDir);
+		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
 
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
-		Map<String,Resource[]> remoteResources = new HashMap<>();
-		remoteResources.put("dummy-study", new Resource[] {remoteFile1, remoteFile2} );
+
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource localFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
 		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
 		doReturn(localFile2).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
 
-		Map<String, Resource> extractedResources = extractor.run(remoteResources, "dummy-time");
+		Study[] extractedResources = extractor.run(dummyStudies);
 
 		assert(extractor.errorFiles().isEmpty());
-		assert(extractedResources.containsKey("dummy-study"));
-		assert(extractedResources.get("dummy-study").getURL().toString().equals("file:/extract-dir/dummy-study"));
+		assert(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
+
+		Study extractedStudy = extractedResources[0];
+		assert(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
 		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
 	}
@@ -88,34 +91,29 @@ public class ExtractorTest {
 			ResourceUtilsException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
-		when(directoryCreator.createStudyExtractDir(eq("dummy-time"), eq("dummy-study"))).thenReturn(targetDir);
+		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
 
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
-		Map<String,Resource[]> remoteResources = new HashMap<>();
-		remoteResources.put("dummy-study", new Resource[] {remoteFile1, remoteFile2} );
+
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
 		doReturn(null).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
 
-		Map<String, Resource> extractedResources = extractor.run(remoteResources, "dummy-time");
+		Study[] extractedResources = extractor.run(dummyStudies);
 
 		assert(extractor.errorFiles().containsKey("dummy-study"));
 		assert(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
-		assert(extractedResources.isEmpty());
+		assert(extractedResources.length == 0);
 		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
 	}
 
 	@Test(expected = ExtractionException.class)
 	public void testRun_nullResources() throws ExtractionException {
-		extractor.run(null, "dummy-time");
-	}
-
-	@Test(expected = ExtractionException.class)
-	public void testRun_nullTimeStamp() throws ExtractionException {
-		extractor.run(new HashMap<>(), null);
+		extractor.run(null);
 	}
 
 }

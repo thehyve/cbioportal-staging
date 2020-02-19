@@ -32,6 +32,7 @@ import org.cbioportal.staging.services.command.IRestarter;
 import org.cbioportal.staging.services.publish.IPublisherService;
 import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,7 +94,7 @@ public class ETLProcessRunner {
 	Map<String, ExitStatus> validatorExitStatus;
 	Map<String, ExitStatus> loaderExitStatus;
 
-	public void run(Map<String, Resource[]> remoteResources) throws Exception {
+	public void run(Study[] remoteResources) throws Exception {
 		try  {
 
 			String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
@@ -106,7 +107,7 @@ public class ETLProcessRunner {
 			}
 
             //E (Extract) step:
-			Map<String,Resource> localResources = extractor.run(remoteResources, timestamp);
+			Study[] localResources = extractor.run(remoteResources);
 
 			if (! extractor.errorFiles().isEmpty()) {
 				reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
@@ -119,30 +120,30 @@ public class ETLProcessRunner {
 			loaderExitStatus = new HashMap<>();
 
 			//T (TRANSFORM) STEP:
-			Map<String, Resource> transformedStudiesPaths;
+			Study[] transformedStudies;
 			if (! skipTransformation) {
-				transformerExitStatus = transformer.transform(timestamp, localResources, "command");
+				transformerExitStatus = transformer.transform(localResources, "command");
                 Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
                 logPaths.putAll(transformationLogFiles);
 				if (logPaths.size() > 0) {
 					reportingService.reportTransformedStudies(transformerExitStatus, logPaths);
                 }
-                transformedStudiesPaths = transformer.getValidStudies();
+                transformedStudies = transformer.getValidStudies();
 			} else {
-				transformedStudiesPaths = localResources;
+				transformedStudies = localResources;
 			}
 
 			//V (VALIDATE) STEP:
-			if (! transformedStudiesPaths.isEmpty()) {
-                validatorExitStatus = validator.validate(transformedStudiesPaths);
+			if (transformedStudies.length > 0) {
+                validatorExitStatus = validator.validate(transformedStudies);
                 Map<String, Resource> validationAndReportFiles = publisher.publish(timestamp, validator.getLogAndReportFiles());
                 logPaths.putAll(validationAndReportFiles);
 				reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
 
-				Map <String, Resource> studiesThatPassedValidation = validator.getValidStudies();
+				Study[] studiesThatPassedValidation = validator.getValidStudies();
 
 				//L (LOAD) STEP:
-				if (studiesThatPassedValidation.size() > 0) {
+				if (studiesThatPassedValidation.length > 0) {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
                     Map<String, Resource> loadingLogFiles = publisher.publish(timestamp, loader.getLogFiles());
                     logPaths.putAll(loadingLogFiles);

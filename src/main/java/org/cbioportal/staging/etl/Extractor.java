@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,6 +32,7 @@ import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,29 +58,26 @@ class Extractor {
 
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
-	public Map<String, Resource> run(Map<String, Resource[]> resources, String timestamp) throws ExtractionException {
+	public Study[] run(Study[] studies) throws ExtractionException {
 
-		if (resources == null) {
+		if (studies == null) {
 			throw new ExtractionException("Argument 'resources' is null.");
 		}
 
-		if (timestamp == null) {
-			throw new ExtractionException("Argument 'timestamp' is null.");
-		}
-
 		filesNotFound.clear();
-		Map<String, Resource> out = new HashMap<>();
+		List<Study> out = new ArrayList<>();
 
 		try {
-			for (Entry<String, Resource[]> studyResources : resources.entrySet()) {
+			for (Study study: studies) {
 
-                String studyId = studyResources.getKey();
-                Resource studyDir = directoryCreator.createStudyExtractDir(timestamp, studyId);
+                String studyId = study.getStudyId();
+                Resource studyDir = directoryCreator.createStudyExtractDir(study);
 
-				String remoteBasePath = getBasePathResources(studyResources.getValue());
+				String remoteBasePath = getBasePathResources(study.getResources());
 
 				List<String> errorFiles = new ArrayList<>();
-				for (Resource remoteResource : studyResources.getValue()) {
+				List<Resource> files = new ArrayList<>();
+				for (Resource remoteResource : study.getResources()) {
 
 					String fullOriginalFilePath = remoteResource.getURL().toString();
 					String remoteFilePath = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
@@ -88,12 +85,14 @@ class Extractor {
 					Resource localResource = attemptCopyResource(studyDir, remoteResource, remoteFilePath);
 					if (localResource == null) {
 						errorFiles.add(fullOriginalFilePath);
+					} else {
+						files.add(localResource);
 					}
 				}
 
 				// register successfully extracted study
 				if (errorFiles.isEmpty()) {
-					out.put(studyId, studyDir);
+					out.add(new Study(study.getStudyId(), study.getVersion(), study.getTimestamp(), studyDir, files.toArray(new Resource[0])));
 				} else {
 					filesNotFound.put(studyId, errorFiles);
 				}
@@ -112,7 +111,7 @@ class Extractor {
         }
 
 		logger.info("Extractor step finished");
-		return out;
+        return out.toArray(new Study[0]);
 	}
 
 	private Resource attemptCopyResource(Resource destination, Resource resource, String remoteFilePath)

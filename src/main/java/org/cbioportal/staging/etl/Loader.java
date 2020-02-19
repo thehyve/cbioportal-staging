@@ -23,6 +23,7 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.etl.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +44,19 @@ public class Loader {
 
     final private Map<String, Resource> logFiles = new HashMap<>();
 
-    Map<String, ExitStatus> load(final Map<String, Resource> studyPaths) throws LoaderException {
+    Map<String, ExitStatus> load(final Study[] studies) throws LoaderException {
 
         areStudiesLoaded = false;
         logFiles.clear();
 
         final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
         try {
-            for (final String studyId : studyPaths.keySet()) {
+            for (final Study study: studies) {
+
+                String studyId = study.getStudyId();
+
                 logger.info("Starting loading of study " + studyId + ". This can take some minutes.");
-                final Resource studyPath = studyPaths.get(studyId);
+                final Resource studyPath = study.getStudyDir();
                 Resource logFile;
                 logFile = utils.createFileResource(studyPath, studyId + "_loading_log.txt");
                 logFiles.put(studyId+" loading log", logFile);

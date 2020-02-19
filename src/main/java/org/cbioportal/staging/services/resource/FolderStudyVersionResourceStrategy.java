@@ -1,7 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,10 +46,12 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
     }
 
     @Override
-    public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
+    public Study[] resolveResources(Resource[] resources) throws ResourceCollectionException {
 
-        Map<String,Resource[]> out = new HashMap<>();
+        List<Study> out = new ArrayList<>();
         String studyPath = "";
+        String studyVersionPath = "";
+        String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
 
             logger.info("Looking for study directories...");
@@ -60,26 +62,32 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
 
             for (Resource studyDir : studyDirs) {
 
+                studyPath = studyDir.getFilename();
+
                 Resource studyVersionDir = getMostRecentStudyVersion(studyDir);
 
                 if (studyVersionDir != null) {
 
-                    logger.info("Most recent version for "+studyDir.getFilename()+": "+studyVersionDir.getFilename());
+                    studyVersionPath = studyVersionDir.getFilename();
+                    String studyVersion = getStudyVersion(studyVersionDir);
+
+                    logger.info("Most recent version for " + studyPath + ": " + studyVersionPath);
+                    logger.info("For study " + studyPath + "use version: " + studyVersion);
 
                     Resource[] studyResources = resourceProvider.list(studyVersionDir, true, true);
 
-                    String studyId = getStudyId(studyResources, studyDir.getFilename());
+                    String studyId = getStudyId(studyResources, studyPath);
 
-                    out.put(studyId, studyResources);
+                    out.add(new Study(studyId, studyVersion, timestamp, studyVersionDir, studyResources));
                 }
-                  
+
             }
 
         } catch (ResourceUtilsException e) {
-            throw new ResourceCollectionException("Cannot read from study directory:" + studyPath);
+            throw new ResourceCollectionException("Cannot read from study directory:" + studyVersionPath, e);
         }
 
-        return out;
+        return out.toArray(new Study[0]);
     }
 
     private String getStudyId(Resource[] resources, String studyFolder) throws ResourceUtilsException {
@@ -100,6 +108,11 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
             return null;
         }
         return utils.getMostRecent(versions);
+    }
+
+    private String getStudyVersion(Resource dir) throws ResourceUtilsException {
+        String url = utils.trimDir(utils.getURL(dir).toString());
+        return url.substring(url.lastIndexOf("/") + 1);
     }
 
 }

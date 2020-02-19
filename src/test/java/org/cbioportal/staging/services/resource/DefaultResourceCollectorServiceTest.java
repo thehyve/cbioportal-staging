@@ -1,13 +1,10 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -53,18 +50,14 @@ public class DefaultResourceCollectorServiceTest {
     @Test
     public void testGetResources_success() throws ResourceCollectionException, ConfigurationException {
 
-        List<Resource> strategyResources = new ArrayList<>();
-        strategyResources.add(TestUtils.createMockResource("dummy", "txt", 1));
-        strategyResources.add(TestUtils.createMockResource("dummy", "txt", 2));
-        Map<String, Resource[]> studyFiles = new HashMap<>();
-        studyFiles.put("study1", strategyResources.toArray(new Resource[0]));
-        Mockito.when(studyResourceStrategy.resolveResources(any())).thenReturn(studyFiles);
+        Resource[] strategyResources = new Resource[] {TestUtils.createMockResource("dummy", "txt", 1), TestUtils.createMockResource("dummy", "txt", 2)};
+        Study[] study = new Study[] {new Study("study1", null, null, null, strategyResources)};
+        Mockito.when(studyResourceStrategy.resolveResources(any())).thenReturn(study);
 
-        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources(fakeScanLocation);
-        assertEquals(resources.entrySet().size(), 1);
-        assertNotNull(resources.entrySet().iterator().next().getKey());
-        assertEquals(resources.entrySet().iterator().next().getKey(), "study1");
-        assertEquals(resources.entrySet().iterator().next().getValue().length, 2);
+        Study[] resources = defaultResourceCollectorService.getResources(fakeScanLocation);
+        assertEquals(1, resources.length);
+        assertEquals("study1", resources[0].getStudyId());
+        assertEquals(2, resources[0].getResources().length);
     }
 
     @Test(expected = ConfigurationException.class)
@@ -77,8 +70,8 @@ public class DefaultResourceCollectorServiceTest {
 
         Mockito.when(resourceProvider.list(any())).thenReturn(new Resource[0]);
 
-        Map<String,Resource[]> resources = defaultResourceCollectorService.getResources(fakeScanLocation);
-        assertEquals(0, resources.keySet().size());
+        Study[] resources = defaultResourceCollectorService.getResources(fakeScanLocation);
+        assertEquals(0, resources.length);
     }
 
 }

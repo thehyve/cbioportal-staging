@@ -15,7 +15,9 @@
 */
 package org.cbioportal.staging.etl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -26,6 +28,7 @@ import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.etl.ITransformerService;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,51 +52,61 @@ public class Transformer {
 	private IDirectoryCreator directoryCreator;
 
     final private Map<String, Resource> logFiles = new HashMap<>();
-    final private Map<String, Resource> dirsValidStudies = new HashMap<>();
+    final private List<Study> validStudies = new ArrayList<>();
 
-    public Map<String, ExitStatus> transform(String timestamp, Map<String, Resource> studyPaths, String transformationCommand) throws ReporterException {
+    public Map<String, ExitStatus> transform(Study[] studies, String transformationCommand) throws ReporterException {
 
         logFiles.clear();
-        dirsValidStudies.clear();
+        validStudies.clear();
 
         Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
 
-        for (String studyId : studyPaths.keySet()) {
+        try {
+            for (Study study: studies) {
 
-            ExitStatus transformationStatus = ExitStatus.SUCCESS;
-            Resource transformedFilesPath;
-            try {
-                Resource untransformedFilesPath = studyPaths.get(studyId);
-                transformedFilesPath = directoryCreator.createTransformedStudyDir(timestamp, studyId, untransformedFilesPath);
+                String studyId = study.getStudyId();
+                ExitStatus transformationStatus = ExitStatus.SUCCESS;
+                Resource transformedFilesPath;
+                try {
+                    Resource untransformedFilesPath = study.getStudyDir();
+                    transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
 
-                Resource logFile = utils.createFileResource(transformedFilesPath, studyId + "_transformation_log.txt");
-                logFiles.put(studyId+" loading log", logFile);
+                    Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
+                    logFiles.put(studyId + " loading log", logFile);
 
-                if (metaFileExists(untransformedFilesPath)) {
-                    utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
-                    transformationStatus = ExitStatus.SKIPPED;
-                } else {
-                    transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
+                    if (metaFileExists(untransformedFilesPath)) {
+                        utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
+                        transformationStatus = ExitStatus.SKIPPED;
+                    } else {
+                        transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
+                    }
+
+                } catch (Exception e) {
+                    throw new ReporterException(e);
                 }
 
-            } catch (Exception e) {
-                throw new ReporterException(e);
+                Resource[] resources;
+                    resources = provider.list(transformedFilesPath);
+                    Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
+
+                //Add status of the validation for the study
+                statusStudies.put(studyId, transformationStatus);
+                if (transformationStatus == ExitStatus.SUCCESS) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Transformation of study "+studyId+" finished successfully.");
+                } else if (transformationStatus == ExitStatus.WARNING) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
+                } else if (transformationStatus == ExitStatus.SKIPPED) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
+                } else {
+                    logger.error("Transformation process of study "+studyId+" failed.");
+                }
             }
 
-            //Add status of the validation for the study
-            statusStudies.put(studyId, transformationStatus);
-            if (transformationStatus == ExitStatus.SUCCESS) {
-                dirsValidStudies.put(studyId, transformedFilesPath);
-                logger.info("Transformation of study "+studyId+" finished successfully.");
-            } else if (transformationStatus == ExitStatus.WARNING) {
-                logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
-            } else if (transformationStatus == ExitStatus.SKIPPED) {
-                dirsValidStudies.put(studyId, transformedFilesPath);
-                logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
-            } else {
-                logger.error("Transformation process of study "+studyId+" failed.");
-            }
-
+        } catch (ResourceCollectionException e) {
+            throw new ReporterException(e);
         }
 
         logger.info("Transformation step finished.");
@@ -109,7 +122,7 @@ public class Transformer {
         return logFiles;
     }
 
-    public Map<String, Resource> getValidStudies() {
-        return dirsValidStudies;
+    public Study[] getValidStudies() {
+        return validStudies.toArray(new Study[0]);
     }
 }

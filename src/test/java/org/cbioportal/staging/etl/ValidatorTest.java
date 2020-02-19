@@ -22,13 +22,16 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.etl.IValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,19 +61,19 @@ public class ValidatorTest {
     public void init() throws ResourceCollectionException, ResourceUtilsException {
         when(utils.createFileResource(isA(Resource.class), any(String.class))).thenReturn(null);
 	}
-
 	@Test
 	public void studySuccessValidationWithWarningLevel() throws ValidatorException, ResourceCollectionException {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        assertEquals(studies, validator.getValidStudies());
+
+        assertEquals(1, validator.getValidStudies().length);
+        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -83,13 +86,13 @@ public class ValidatorTest {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.WARNING);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNING);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        assertEquals(new HashMap<>(), validator.getValidStudies());
+
+        assertEquals(0, validator.getValidStudies().length);
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -102,13 +105,13 @@ public class ValidatorTest {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        assertEquals(new HashMap<>(), validator.getValidStudies());
+
+        assertEquals(0, validator.getValidStudies().length);
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -121,13 +124,14 @@ public class ValidatorTest {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        assertEquals(studies, validator.getValidStudies());
+
+        assertEquals(1, validator.getValidStudies().length);
+        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -137,16 +141,20 @@ public class ValidatorTest {
 
     @Test
     public void studyWarningValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.WARNING);
+
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.WARNING);
+
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
+
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.WARNING);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        assertEquals(studies, validator.getValidStudies());
+
+        assertEquals(1, validator.getValidStudies().length);
+        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -159,15 +167,15 @@ public class ValidatorTest {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
+
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
-        Map<String, Resource> validStudies = validator.getValidStudies();
-        Map<String, Resource> expectedValidStudies = new HashMap<>();
-        assertEquals(expectedValidStudies, validStudies);
+
+        Study[] validStudies = validator.getValidStudies();
+        assertEquals(0, validStudies.length);
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -180,10 +188,7 @@ public class ValidatorTest {
         when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "WARNING");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
-        studies.put("study1", null);
-        studies.put("study2", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014", "study1", "study2");
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -191,9 +196,8 @@ public class ValidatorTest {
         expectedValidatedStudies.put("study2", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
 
-        Map<String, ExitStatus> expectedValidStudies = new HashMap<String, ExitStatus>();
-        expectedValidStudies.put("lgg_ucsf_2014", null);
-        assertEquals(expectedValidStudies, validator.getValidStudies());
+        assertEquals(1, validator.getValidStudies().length);
+        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -207,24 +211,22 @@ public class ValidatorTest {
 
     @Test
 	public void multipleStudiesValidationWithErrorLevel() throws ValidatorException, ResourceCollectionException {
-        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
         ReflectionTestUtils.setField(validator, "validationLevel", "ERROR");
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", null);
-        studies.put("study1", null);
-        studies.put("study2", null);
+        Study[] studies = dummyStudyInput("lgg_ucsf_2014", "study1", "study2");
+        when(validatorService.validate(any(), any(), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.WARNING, ExitStatus.ERROR);
+
         Map<String, ExitStatus> validatedStudies = validator.validate(studies);
+
         Map<String, ExitStatus> expectedValidatedStudies = new HashMap<String, ExitStatus>();
         expectedValidatedStudies.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         expectedValidatedStudies.put("study1", ExitStatus.WARNING);
         expectedValidatedStudies.put("study2", ExitStatus.ERROR);
         assertEquals(expectedValidatedStudies, validatedStudies);
 
-        Map<String, ExitStatus> expectedValidStudies = new HashMap<String, ExitStatus>();
-        expectedValidStudies.put("lgg_ucsf_2014", null);
-        expectedValidStudies.put("study1", null);
-        assertEquals(expectedValidStudies, validator.getValidStudies());
+        assertEquals(2, validator.getValidStudies().length);
+        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assert(TestUtils.has(validator.getValidStudies(), "study1"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -235,4 +237,9 @@ public class ValidatorTest {
         logPaths.put("study2 validation report", null);
         assertEquals(logPaths, validator.getLogAndReportFiles());
     }
+
+    private Study[] dummyStudyInput(String ... ids) {
+        return Stream.of(ids).map(id -> new Study(id, null, null, null, null)).toArray(Study[]::new);
+    }
+
 }

@@ -15,7 +15,9 @@
 */
 package org.cbioportal.staging.etl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
@@ -23,6 +25,7 @@ import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.etl.IValidatorService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +47,7 @@ public class Validator {
     private String validationLevel;
 
     private Map<String, Resource> logAndReportFiles = new HashMap<>();;
-    Map<String, Resource> dirsValidStudies = new HashMap<>();;
+    List<Study> validStudies = new ArrayList<>();
 
     private boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
         if (validationLevel.equals("WARNING")) { // Load studies with no warnings and no errors
@@ -63,19 +66,22 @@ public class Validator {
         }
     }
 
-    public Map<String, ExitStatus> validate(Map<String, Resource> studyPaths) throws ValidatorException {
+    public Map<String, ExitStatus> validate(Study[] studies) throws ValidatorException {
 
         logAndReportFiles.clear();
-        dirsValidStudies.clear();
+        validStudies.clear();
 
         Map<String, ExitStatus> validatedStudies = new HashMap<>();
         logAndReportFiles = new HashMap<>();
-        dirsValidStudies = new HashMap<>();
+        validStudies.clear();
 
         try {
-            for (String studyId : studyPaths.keySet()) {
+            for (Study study : studies) {
+
+                String studyId = study.getStudyId();
+
                 logger.info("Starting validation of study " + studyId);
-                Resource studyPath = studyPaths.get(studyId);
+                Resource studyPath = study.getStudyDir();
 
                 Resource logFile = utils.createFileResource(studyPath, studyId + "_validation_log.txt");
                 Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.txt");
@@ -86,7 +92,7 @@ public class Validator {
                 validatedStudies.put(studyId, exitStatus);
 
                 if (hasStudyPassed(exitStatus)) {
-                    dirsValidStudies.put(studyId, studyPath);
+                    validStudies.add(study);
                     logger.info("Study "+studyId+" has passed validation.");
                 } else {
                     logger.info("Study "+studyId+" has failed validation.");
@@ -102,7 +108,7 @@ public class Validator {
         return logAndReportFiles;
     }
 
-    public Map<String,Resource> getValidStudies() throws ValidatorException {
-        return dirsValidStudies;
+    public Study[] getValidStudies() throws ValidatorException {
+        return validStudies.toArray(new Study[0]);
     }
 }

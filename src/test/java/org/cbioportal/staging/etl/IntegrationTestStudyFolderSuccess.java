@@ -38,7 +38,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -50,8 +49,10 @@ import freemarker.template.TemplateNotFoundException;
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = App.class)
-@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
-@ActiveProfiles("versiondir")
+@TestPropertySource(
+    locations = "classpath:e2e_studies/e2e_integration_test.properties",
+    properties = "scan.studyfiles.strategy=studydir"
+)
 public class IntegrationTestStudyFolderSuccess {
 
     @MockBean

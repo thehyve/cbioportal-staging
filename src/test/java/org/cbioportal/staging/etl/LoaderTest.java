@@ -30,6 +30,7 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.etl.ILoaderService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,9 +63,10 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
+        Study[] studies = TestUtils.studyList(new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null));
+
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
+
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
         assertEquals(expectedLoadingStatus, loadingStatus);
@@ -81,8 +83,8 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
+        Study[] studies = TestUtils.studyList(new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null));
+
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
@@ -100,9 +102,11 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
-        studies.put("study_2", TestUtils.createMockResource("file:/test/path2", 1));
+        Study[] studies = TestUtils.studyList(
+            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
+            new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
+        );
+
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -122,9 +126,11 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
-        studies.put("study_with_errors", TestUtils.createMockResource("file:/test/path2", 1));
+        Study[] studies = TestUtils.studyList(
+            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
+            new Study("study_with_errors", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
+        );
+
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
@@ -144,9 +150,11 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
-        Map<String, Resource> studies = new HashMap<>();
-        studies.put("lgg_ucsf_2014", TestUtils.createMockResource("file:/test/path", 0));
-        studies.put("study_2", TestUtils.createMockResource("file:/test/path2", 1));
+        Study[] studies = TestUtils.studyList(
+            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
+            new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
+        );
+
         Map<String, ExitStatus> loadingStatus = loader.load(studies);
         Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
         expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);

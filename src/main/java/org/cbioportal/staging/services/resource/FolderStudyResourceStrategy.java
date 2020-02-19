@@ -1,7 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,10 +46,12 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
     }
 
     @Override
-    public Map<String,Resource[]> resolveResources(Resource[] resources) throws ResourceCollectionException {
+    public Study[] resolveResources(Resource[] resources) throws ResourceCollectionException {
 
-        Map<String,Resource[]> out = new HashMap<>();
+        List<Study> out = new ArrayList<>();
+
         String studyPath = "";
+        String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
 
             logger.info("Looking for study directories...");
@@ -64,14 +66,14 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
                 String studyId = getStudyId(studyResources, studyDir.getFilename());
 
-                out.put(studyId, studyResources);
+                out.add(new Study(studyId, null, timestamp, studyDir, studyResources));
             }
 
         } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + studyPath);
         }
 
-        return out;
+        return out.toArray(new Study[0]);
     }
 
     private String getStudyId(Resource[] resources, String studyPath) throws ResourceUtilsException {

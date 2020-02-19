@@ -6,7 +6,9 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.stream.Stream;
 
+import org.cbioportal.staging.services.resource.Study;
 import org.springframework.core.io.WritableResource;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,14 @@ public class TestUtils {
 
     public static WritableResource createMockResource(String prefix, String extension, int number) {
         return createMockResource("file:/"+prefix+"_"+String.valueOf(number)+"."+extension, number);
+    }
+
+    public static Study[] studyList(Study ... s) {
+        return s;
+    }
+
+    public static boolean has(Study[] studies, String id) {
+        return Stream.of(studies).filter(s -> s.getStudyId().equals(id)).findAny().isPresent();
     }
 
 }

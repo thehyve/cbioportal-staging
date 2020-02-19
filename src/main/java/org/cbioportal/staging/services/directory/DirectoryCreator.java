@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class DirectoryCreatorByJob implements IDirectoryCreator {
+public class DirectoryCreator implements IDirectoryCreator {
 
     @Autowired
     private ResourceUtils utils;
@@ -38,9 +39,14 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
     @Value("${transformation.directory:}")
     private Resource transformationDir;
 
+    @Value("${etl.dir.format:job}")
+    private String dirFormat;
+
+    @Value("${etl.dir.version.format:version}")
+    private String versionFormat;
+
     @Override
-    public Resource createStudyExtractDir(final String timestamp, final String studyId)
-            throws DirectoryCreatorException {
+    public Resource createStudyExtractDir(Study study) throws DirectoryCreatorException {
         try {
 
             if (etlWorkingDir  == null) {
@@ -48,23 +54,31 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
             }
 
             if (!etlWorkingDir.exists()) {
-                throw new DirectoryCreatorException(
-                        "etl.working.dir does not exist on the local file system: " + etlWorkingDir);
+				throw new DirectoryCreatorException(
+						"etl.working.dir does not exist on the local file system: " + etlWorkingDir);
+			}
+			if (utils.isFile(etlWorkingDir)) {
+				throw new DirectoryCreatorException(
+						"etl.working.dir points to a file on the local file system, but should point to a directory.: "
+								+ etlWorkingDir);
             }
-            if (utils.isFile(etlWorkingDir)) {
-                throw new DirectoryCreatorException(
-                        "etl.working.dir points to a file on the local file system, but should point to a directory.: "
-                                + etlWorkingDir);
+
+            // by job timestamp --> studies
+            if (dirFormat.equals("job")) {
+                return createDir(etlWorkingDir, study.getTimestamp(), study.getStudyId());
             }
-            return utils.createDirResource(etlWorkingDir, timestamp, studyId);
-        } catch (final ResourceUtilsException e) {
-            throw new DirectoryCreatorException("Cannot create Resource.", e);
-        }
+
+            // by study --> version/timestamp
+            String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
+            return createDir(etlWorkingDir, study.getStudyId(), versionLabel);
+
+        } catch (ResourceUtilsException e) {
+			throw new DirectoryCreatorException("Cannot create Resource.", e);
+		}
     }
 
     @Override
-    public Resource createTransformedStudyDir(final String timestamp, final String studyId,
-            final Resource untransformedStudyDir) throws DirectoryCreatorException {
+    public Resource createTransformedStudyDir(Study study, Resource untransformedStudyDir) throws DirectoryCreatorException {
         try {
             if (transformationDir != null) {
                 if (utils.isFile(transformationDir)) {
@@ -72,32 +86,43 @@ public class DirectoryCreatorByJob implements IDirectoryCreator {
                             "transformation.directory points to a file on the local file system, but should point to a directory.: "
                                     + transformationDir);
                 }
-                return utils.createDirResource(transformationDir, timestamp, studyId);
+                            // by job timestamp --> studies
+                if (dirFormat.equals("job")) {
+                    return createDir(transformationDir, study.getTimestamp(), study.getStudyId());
+                }
+
+                // by study --> version/timestamp
+                String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
+                return createDir(transformationDir, study.getStudyId(), versionLabel);
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
             }
-        } catch (final ResourceUtilsException e) {
+        } catch (ResourceUtilsException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
     }
 
     @Override
-    public Resource getCentralShareLocationPath(final Resource centralShareLocation, final String timestamp)
-            throws DirectoryCreatorException {
+    public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException {
         try {
-            if (utils.isFile(centralShareLocation)) {
-                throw new DirectoryCreatorException(
-                        "central.share.location points to a file on the local file system, but should point to a directory.: "
-                                + centralShareLocation);
-            }
+			if (utils.isFile(centralShareLocation)) {
+				throw new DirectoryCreatorException(
+						"central.share.location points to a file on the local file system, but should point to a directory.: "
+								+ centralShareLocation);
+			}
             if (utils.getURL(centralShareLocation).toString().contains("file:")) {
                 return utils.createDirResource(centralShareLocation, timestamp);
             }
             return centralShareLocation.createRelative(timestamp);
-        } catch (final ResourceUtilsException e) {
+        } catch (ResourceUtilsException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new DirectoryCreatorException("Cannot create the relative folder.", e);
         }
+    }
+
+    private Resource createDir(Resource dir, String frstLevelDirName, String scndLevelDirName)
+            throws ResourceUtilsException {
+        return utils.createDirResource(dir, frstLevelDirName, scndLevelDirName);
     }
 }
