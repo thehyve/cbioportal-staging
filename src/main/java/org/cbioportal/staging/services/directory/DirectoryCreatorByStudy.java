@@ -36,7 +36,7 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
     @Autowired
     private ResourceUtils utils;
 
-    @Value("${etl.working.dir:${java.io.tmpdir}}")
+    @Value("${etl.working.dir:")
     private Resource etlWorkingDir;
 
     @Value("${transformation.directory:}")
@@ -45,6 +45,11 @@ public class DirectoryCreatorByStudy implements IDirectoryCreator {
     @Override
     public Resource createStudyExtractDir(String timestamp, String studyId) throws DirectoryCreatorException {
         try {
+
+            if (etlWorkingDir  == null) {
+                throw new DirectoryCreatorException("etl.working.dir not defined. Please check the application properties.");
+            }
+
             if (!etlWorkingDir.exists()) {
 				throw new DirectoryCreatorException(
 						"etl.working.dir does not exist on the local file system: " + etlWorkingDir);

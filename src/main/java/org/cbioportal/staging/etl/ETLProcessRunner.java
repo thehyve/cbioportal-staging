@@ -15,7 +15,6 @@
  */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
@@ -23,6 +22,7 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ValidatorException;
@@ -81,7 +81,7 @@ public class ETLProcessRunner {
     private String studyAuthorizeCommandPrefix;
 
     @Value("${etl.working.dir:}")
-    private File etlWorkingDir;
+    private Resource etlWorkingDir;
 
     @Value("${skip.transformation:false}")
     private boolean skipTransformation;
@@ -99,7 +99,11 @@ public class ETLProcessRunner {
 			String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			startProcess();
 
-			utils.ensureDirs(etlWorkingDir);
+			if (etlWorkingDir  == null) {
+                throw new ConfigurationException("etl.working.dir not defined. Please check the application properties.");
+			} else {
+				utils.ensureDirs(etlWorkingDir);
+			}
 
             //E (Extract) step:
 			Map<String,Resource> localResources = extractor.run(remoteResources, timestamp);
