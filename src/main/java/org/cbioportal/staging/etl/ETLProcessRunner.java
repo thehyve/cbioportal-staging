@@ -124,10 +124,13 @@ public class ETLProcessRunner {
 			if (! skipTransformation) {
 				transformerExitStatus = transformer.transform(localResources, "command");
                 Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
-                logPaths.putAll(transformationLogFiles);
-				if (logPaths.size() > 0) {
-					reportingService.reportTransformedStudies(transformerExitStatus, logPaths);
+                if(transformationLogFiles != null) {
+                    logPaths.putAll(transformationLogFiles);
+                    if (logPaths.size() > 0) {
+                        reportingService.reportTransformedStudies(transformerExitStatus, logPaths);
+                    }
                 }
+                
                 transformedStudies = transformer.getValidStudies();
 			} else {
 				transformedStudies = localResources;
@@ -137,8 +140,10 @@ public class ETLProcessRunner {
 			if (transformedStudies.length > 0) {
                 validatorExitStatus = validator.validate(transformedStudies);
                 Map<String, Resource> validationAndReportFiles = publisher.publish(timestamp, validator.getLogAndReportFiles());
-                logPaths.putAll(validationAndReportFiles);
-				reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
+                if (validationAndReportFiles != null) {
+                    logPaths.putAll(validationAndReportFiles);
+				    reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
+                }
 
 				Study[] studiesThatPassedValidation = validator.getValidStudies();
 
@@ -146,8 +151,10 @@ public class ETLProcessRunner {
 				if (studiesThatPassedValidation.length > 0) {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
                     Map<String, Resource> loadingLogFiles = publisher.publish(timestamp, loader.getLogFiles());
-                    logPaths.putAll(loadingLogFiles);
-					reportingService.reportStudiesLoaded(loaderExitStatus, logPaths);
+                    if (loadingLogFiles != null) {
+                        logPaths.putAll(loadingLogFiles);
+					    reportingService.reportStudiesLoaded(loaderExitStatus, logPaths);
+                    }
 
 					if (loader.areStudiesLoaded()) {
 						restarterService.restart();

@@ -54,6 +54,7 @@ public class PublisherServiceImpl implements IPublisherService {
 
         if (centralShareLocation == null) {
             logger.info("No central.share.location was defined. Skipping publishing of log files.");
+            return null;
         }
 
         if (date == null) {
