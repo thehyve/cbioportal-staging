@@ -54,7 +54,7 @@ public class Transformer {
     final private Map<String, Resource> logFiles = new HashMap<>();
     final private List<Study> validStudies = new ArrayList<>();
 
-    public Map<String, ExitStatus> transform(Study[] studies, String transformationCommand) throws ReporterException {
+    public Map<String, ExitStatus> transform(Study[] studies) throws ReporterException {
 
         logFiles.clear();
         validStudies.clear();

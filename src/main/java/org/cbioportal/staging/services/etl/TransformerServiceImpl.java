@@ -22,9 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.Transformer;
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
@@ -42,8 +41,8 @@ public class TransformerServiceImpl implements ITransformerService {
     @Value("${transformation.command.script:}")
     private String transformationCommandScript;
 
-    @Value("${skip.transformation:false}")
-    private boolean skipTransformation;
+    @Value("${transformation.command.script.docker.image:}")
+    private String transformationCommandScriptDockerImage;
 
     @Autowired
     private ResourcePatternResolver resourceResolver;
@@ -52,31 +51,58 @@ public class TransformerServiceImpl implements ITransformerService {
     private ResourceUtils utils;
 
     @Override
-    public ExitStatus transform(Resource untransformedFilesPath, Resource transformedFilesPath, Resource logFile)
-            throws ReporterException, ConfigurationException, IOException {
-
-        if (transformationCommandScript.equals("") && ! skipTransformation) {
-            throw new ReporterException(
-                "No transformation command script has been specified in the application.properties.");
-        }
-
-        List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
-        Resource script = resourceResolver.getResource(command.get(0));
-        script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
-                                              // dir
-
+    public List<String> parseCommandScript() throws TransformerException {
         try {
+            List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
+            Resource script = resourceResolver.getResource(command.get(0));
+            script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
+                                                // dir
+
             if (!script.exists()) {
-                throw new ConfigurationException(
+                throw new TransformerException(
                         "Transformation command script specified in the application.properties points does not exist at the indication location.");
             }
 
             if (script.getFile().isDirectory()) {
-                throw new ConfigurationException(
+                throw new TransformerException(
                         "Transformation command script specified in the application.properties points to directory.");
             }
             String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
             command.set(0, scriptPath);
+            return command;
+        } catch (IOException e) {
+            throw new TransformerException("Cannot access script path.", e);
+        }
+    }
+
+    @Override
+    public List<String> buildCommand(Resource untransformedFilesPath, Resource transformedFilesPath) throws TransformerException {
+        if (transformationCommandScriptDockerImage.equals("")) {
+            return parseCommandScript();
+        } else {
+            try {
+                String untransformedPath = utils.stripResourceTypePrefix(untransformedFilesPath.getURL().toString());
+                String transformedPath = utils.stripResourceTypePrefix(transformedFilesPath.getURL().toString());
+                String dockerPrefix = "docker run --rm -v "+untransformedPath+":"+untransformedPath+
+                    " -v "+transformedPath+":"+transformedPath+" "+transformationCommandScriptDockerImage;
+                List<String> command = Stream.of(dockerPrefix.trim().split("\\s+")).collect(Collectors.toList());
+                if (!transformationCommandScript.equals("")) {
+                    List<String> transformationCommand = parseCommandScript();
+                    command.addAll(transformationCommand);
+                }
+                return command;
+            } catch (IOException e) {
+                throw new TransformerException("Cannot access ETL Working Directory.", e);
+            }
+        }
+    }
+
+    @Override
+    public ExitStatus transform(Resource untransformedFilesPath, Resource transformedFilesPath, Resource logFile)
+            throws TransformerException {
+
+        try {
+            List<String> command = buildCommand(untransformedFilesPath, transformedFilesPath);
 
             logger.info("Starting transformation for study: " + untransformedFilesPath.getFilename());
 
@@ -105,14 +131,13 @@ public class TransformerServiceImpl implements ITransformerService {
                 exitStatus = ExitStatus.ERROR;
             }
             return exitStatus;
-
-            // } catch (FileNotFoundException e) {
-            // throw new TransformerException("The following file path was not found:
-            // "+utils.getFile(untransformedFilesPath).getAbsolutePath(), e);
         } catch (InterruptedException e) {
-            throw new ReporterException("The transformation process has been interrupted by another process.", e);
+            throw new TransformerException("The transformation process has been interrupted by another process.", e);
         } catch (ResourceUtilsException e) {
-            throw new ReporterException("Could not read from Resource.", e);
+            throw new TransformerException("Could not read from Resource.", e);
+        } catch (IOException e) {
+             throw new TransformerException("The study directory specified in the command do not exist, "
+                    + "or you do not have permissions to execute the transformer command.", e);
         }
 	}
 }

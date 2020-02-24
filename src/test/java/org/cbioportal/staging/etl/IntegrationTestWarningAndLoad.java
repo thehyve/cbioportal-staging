@@ -21,6 +21,7 @@ import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.RestarterException;
+import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.authorize.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.command.IRestarter;
@@ -90,7 +91,7 @@ public class IntegrationTestWarningAndLoad {
     @Test
     public void throwValidationWarningsAndFail_es1() throws TemplateNotFoundException, MalformedTemplateNameException, ParseException,
     IOException, TemplateException, InterruptedException, ConfigurationException, ReporterException,
-    ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException {
+    ValidatorException, LoaderException, RestarterException, PublisherException, ResourceCollectionException, TransformerException {
 
         doNothing().when(restarterService).restart();
 

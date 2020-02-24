@@ -255,7 +255,7 @@ files are not removed from the `scan.location`.
 ### Transformer settings
 
 - `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
-- `skip.transformation`: set this parameter to `true` if you want to skip the transformation step.
+- `transformation.skip`: set this parameter to `true` if you want to skip the transformation step.
 - `transformation.directory`: resource path to directory where transformed study files are placed after transformation. When not set, transformed files are placed in the 'staging' subdirectory of study folders in the `etl.working.dir`.
 
 ### Validation and Loader settings

@@ -102,7 +102,7 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
 
         verify(utils, times(1)).copyDirectory(any(),any());
         verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
@@ -118,7 +118,7 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
         when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
 
         verify(utils, never()).copyDirectory(any(),any());
         verify(transformerService, times(1)).transform(any(),any(),any());
@@ -137,7 +137,7 @@ public class TransformerTest {
 
         when(transformerService.transform(any(),any(),any())).thenReturn(ExitStatus.WARNING);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput(), "");
+        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
 
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
         assert(transformer.getLogFiles().containsKey("dummy_study loading log"));

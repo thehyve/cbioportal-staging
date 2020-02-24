@@ -21,6 +21,7 @@ import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.RestarterException;
+import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.authorize.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.command.IRestarter;
@@ -53,7 +54,7 @@ import freemarker.template.TemplateNotFoundException;
     classes = App.class,
     properties = {
         "scan.location=classpath:e2e_studies/es_0_tar",
-        "skip.transformation=false",
+        "transformation.skip=false",
         "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py"}
 )
 public class IntegrationTestTransformationSuccess {
@@ -94,7 +95,7 @@ public class IntegrationTestTransformationSuccess {
     public void transformSuccessful_es0()
             throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
             TemplateException, InterruptedException, ConfigurationException, ReporterException, ValidatorException,
-            LoaderException, RestarterException, PublisherException, ResourceCollectionException {
+            LoaderException, RestarterException, PublisherException, ResourceCollectionException, TransformerException {
 
         doNothing().when(restarterService).restart();
 

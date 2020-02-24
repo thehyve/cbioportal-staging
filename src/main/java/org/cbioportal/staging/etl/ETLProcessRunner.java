@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Hyve B.V.
+ * Copyright (c) 2020 The Hyve B.V.
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
@@ -29,6 +29,7 @@ import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.authorize.IAuthorizerService;
 import org.cbioportal.staging.services.command.IRestarter;
+import org.cbioportal.staging.services.etl.EtlUtils;
 import org.cbioportal.staging.services.publish.IPublisherService;
 import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -76,16 +77,16 @@ public class ETLProcessRunner {
 	private IReportingService reportingService;
 
 	@Autowired
-	private ResourceUtils utils;
+    private ResourceUtils utils;
+    
+    @Autowired
+	private EtlUtils etlUtils;
 
 	@Value("${study.authorize.command_prefix:}")
     private String studyAuthorizeCommandPrefix;
 
     @Value("${etl.working.dir:}")
     private Resource etlWorkingDir;
-
-    @Value("${skip.transformation:false}")
-    private boolean skipTransformation;
 
     @Value("${validation.level:ERROR}")
 	private String validationLevel;
@@ -121,8 +122,8 @@ public class ETLProcessRunner {
 
 			//T (TRANSFORM) STEP:
 			Study[] transformedStudies;
-			if (! skipTransformation) {
-				transformerExitStatus = transformer.transform(localResources, "command");
+			if (etlUtils.doTransformation()) {
+				transformerExitStatus = transformer.transform(localResources);
                 Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
                 if(transformationLogFiles != null) {
                     logPaths.putAll(transformationLogFiles);
