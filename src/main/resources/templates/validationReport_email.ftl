@@ -9,7 +9,7 @@
             <#if status == "SUCCES">
                 <li>${name}, status: <span style="color: #04B404; font-weight: bold;">VALID</span></li>
             <#elseif status == "WARNING">
-                <li>${name}, status: <span style="color: navy; font-weight: bold;">VALID with WARNINGS</span></li>
+                <li>${name}, status: <span style="color: #FFBF00; font-weight: bold;">VALID with WARNINGS</span></li>
             <#elseif status == "ERROR">
                 <li>${name}, status: <span style="color: #FF0000; font-weight: bold;">ERRORS</span></li>
             </#if>
@@ -25,7 +25,7 @@
     <br>
     <br>The system will proceed and attempt loading the
     <#if level == "ERROR">
-        <span style="color: #04B404; font-weight: bold;">VALID</span> and <span style="color: navy; font-weight: bold;">VALID with WARNINGS</span>
+        <span style="color: #04B404; font-weight: bold;">VALID</span> and <span style="color: #FFBF00; font-weight: bold;">VALID with WARNINGS</span>
     <#elseif level == "WARNING">
         <span style="color: #04B404; font-weight: bold;">VALID</span>
     </#if> studies.

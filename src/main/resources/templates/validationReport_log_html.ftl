@@ -5,7 +5,7 @@ Study validation status:
     <#if status == "SUCCES">
       <li>${name}, status: <span style="color: #04B404; font-weight: bold;">VALID</span></li>
     <#elseif status == "WARNING">
-      <li>${name}, status: <span style="color: navy; font-weight: bold;">VALID with WARNINGS</span></li>
+      <li>${name}, status: <span style="color: #FFBF00; font-weight: bold;">VALID with WARNINGS</span></li>
     <#elseif status == "ERROR">
       <li>${name}, status: <span style="color: #FF0000; font-weight: bold;">ERRORS</span></li>
     </#if>
