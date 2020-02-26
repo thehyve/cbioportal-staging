@@ -1,7 +1,3 @@
-<head>
-  <#include "style.css">
-</head>
-<body>
   <div>
     Dear cBioPortal Administrator,
     <br>
@@ -10,9 +6,9 @@
     <ul>
       <#list studies as name, status>
         <#if status == "SUCCESS">
-          <li>${name}, status: <span class="success">VALID</span></li>
+          <li>${name}, status: <span style="color: #04B404; font-weight: bold;">VALID</span></li>
         <#elseif status == "ERROR">
-          <li>${name}, status: <span class="error">ERRORS</span></li>
+          <li>${name}, status: <span style="color: #FF0000; font-weight: bold;">ERRORS</span></li>
         </#if>
       </#list>
     </ul>
@@ -25,7 +21,7 @@
       </#list>
     </ul>
     <br>
-    <br>The <span class="success">SUCCESSFULLY LOADED</span> studies are
+    <br>The <span style="color: #04B404; font-weight: bold;">SUCCESSFULLY LOADED</span> studies are
     available for querying in the portal.
     <br>
     <br>
@@ -33,4 +29,3 @@
     <br>
     cBioPortal staging app.
   </div>
-</body>

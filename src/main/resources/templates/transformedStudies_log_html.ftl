@@ -3,11 +3,11 @@ Study transformation status:<br>
 <ul>
   <#list studies as name, status>
     <#if status == "SUCCESS">
-      <li>${name}, status: <span class="success">VALID</span></li>
+      <li>${name}, status: <span style="color: #04B404; font-weight: bold;">VALID</span></li>
     <#elseif status == "WARNING">
-      <li>${name}, status: <span class="warning">VALID with WARNINGS</span></li>
+      <li>${name}, status: <span style="color: navy; font-weight: bold;">VALID with WARNINGS</span></li>
     <#elseif status == "ERROR">
-      <li>${name}, status: <span class="error">ERRORS</span></li>
+      <li>${name}, status: <span style="color: #FF0000; font-weight: bold;">ERRORS</span></li>
     </#if>
   </#list>
 </ul><br>
