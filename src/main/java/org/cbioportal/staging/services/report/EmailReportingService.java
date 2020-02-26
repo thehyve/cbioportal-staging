@@ -30,6 +30,8 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.pivovarit.function.ThrowingFunction;
+
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
@@ -41,10 +43,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import com.pivovarit.function.ThrowingFunction;
 @Component
-@ConditionalOnProperty(value="email.enable", havingValue = "true")
+@ConditionalOnProperty(value="mail.enable", havingValue = "true")
 public class EmailReportingService implements IReportingService {
 
 	private static final Logger logger = LoggerFactory.getLogger(EmailReportingService.class);
@@ -85,10 +85,10 @@ public class EmailReportingService implements IReportingService {
 	@Value("${scan.location}")
 	private String scanLocation;
 
-	@Value("${study.curator.emails}")
+	@Value("${study.curator.emails:}")
 	private String studyCuratorEmails;
 
-	@Value("${server.alias}")
+	@Value("${server.alias:}")
 	private String serverAlias;
 
 	@Value("${debug.mode:false}")
@@ -142,7 +142,7 @@ public class EmailReportingService implements IReportingService {
 	public void reportTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
 
-			Map<String, Resource> logPaths = getLogPaths(filesPaths);
+            Map<String, Resource> logPaths = getLogPaths(filesPaths);
 
 			Properties properties = getProperties();
 			Session session = getSession(properties);
