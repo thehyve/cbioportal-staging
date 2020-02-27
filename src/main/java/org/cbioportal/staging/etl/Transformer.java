@@ -72,7 +72,7 @@ public class Transformer {
                     transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
 
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
-                    logFiles.put(studyId + " loading log", logFile);
+                    logFiles.put(studyId + " transformation log", logFile);
 
                     if (metaFileExists(untransformedFilesPath)) {
                         utils.copyDirectory(untransformedFilesPath, transformedFilesPath);

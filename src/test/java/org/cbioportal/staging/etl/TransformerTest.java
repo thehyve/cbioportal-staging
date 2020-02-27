@@ -107,7 +107,7 @@ public class TransformerTest {
         verify(utils, times(1)).copyDirectory(any(),any());
         verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
-        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
         assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
@@ -123,7 +123,7 @@ public class TransformerTest {
         verify(utils, never()).copyDirectory(any(),any());
         verify(transformerService, times(1)).transform(any(),any(),any());
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
-        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
         assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
@@ -140,7 +140,7 @@ public class TransformerTest {
         Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
 
         assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
-        assert(transformer.getLogFiles().containsKey("dummy_study loading log"));
+        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
         assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
