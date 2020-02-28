@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -51,7 +50,7 @@ public class LogMessageUtils {
 		}
 	}
 
-	public String messageTransformedStudies(String template, Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) throws ReporterException {
+	public String messageTransformedStudies(String template, Map<String,ExitStatus> transformedStudies, Map<String,String> filesPaths) throws ReporterException {
 
         try {
 
@@ -70,7 +69,7 @@ public class LogMessageUtils {
 		}
 	}
 
-	public String messageValidationReport(String template, Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPath) throws ReporterException {
+	public String messageValidationReport(String template, Map<String,ExitStatus> validatedStudies, String level, Map<String,String> filesPath) throws ReporterException {
         try {
 
             Map<String, String> studies = validatedStudies.entrySet().stream()
@@ -90,7 +89,7 @@ public class LogMessageUtils {
 		}
 	}
 
-	public String messageStudiesLoaded(String template, Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws ReporterException {
+	public String messageStudiesLoaded(String template, Map<String,ExitStatus> studiesLoaded, Map<String,String> filesPath) throws ReporterException {
 
         try{
 

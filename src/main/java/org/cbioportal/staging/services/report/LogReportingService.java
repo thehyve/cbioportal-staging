@@ -17,8 +17,11 @@ package org.cbioportal.staging.services.report;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+
+import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ReporterException;
@@ -92,7 +95,7 @@ public class LogReportingService implements IReportingService {
 			template = "transformedStudies_log_txt.ftl";
 		}
 		appender.addToLog(
-			writableLog, messageUtils.messageTransformedStudies(template, studiesTransformed, filesPaths)
+			writableLog, messageUtils.messageTransformedStudies(template, studiesTransformed, getLogPaths(filesPaths))
 		);
 	}
 
@@ -104,7 +107,7 @@ public class LogReportingService implements IReportingService {
 			template = "validationReport_log_txt.ftl";
 		}
 		appender.addToLog(
-			writableLog, messageUtils.messageValidationReport(template, validatedStudies, level, studyPaths)
+			writableLog, messageUtils.messageValidationReport(template, validatedStudies, level, getLogPaths(studyPaths))
 		);
 	}
 
@@ -116,7 +119,7 @@ public class LogReportingService implements IReportingService {
 			template = "studiesLoaded_log_txt.ftl";
 		}
 		appender.addToLog(
-			writableLog, messageUtils.messageStudiesLoaded(template, studiesLoaded, filesPath)
+			writableLog, messageUtils.messageStudiesLoaded(template, studiesLoaded, getLogPaths(filesPath))
 		);
 	}
 
@@ -129,6 +132,14 @@ public class LogReportingService implements IReportingService {
 		appender.addToLog(
 			writableLog, messageUtils.messageGenericError(template, errorMessage, e)
 		);
-	}
+    }
+    
+    private Map<String,String> getLogPaths(Map<String,Resource> filesPaths) {
+        return filesPaths.entrySet().stream()
+            .collect(Collectors
+                .toMap(e -> e.getKey(), ThrowingFunction.sneaky(e -> resourceUtils.getFile(e.getValue()).getAbsolutePath())
+                )
+            );
+    }
 
 }

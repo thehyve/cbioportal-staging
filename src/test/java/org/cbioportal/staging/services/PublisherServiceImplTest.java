@@ -28,7 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { PublisherServiceImpl.class }, properties = {
         "central.share.location=file:/fake-share/",
-        "etl.working.dir=file:/etl-working-dir/" })
+        "transformation.directory=file:/transf-dir/" })
 public class PublisherServiceImplTest {
 
     @Autowired
@@ -48,7 +48,7 @@ public class PublisherServiceImplTest {
         doReturn(fakePublishedLogFile).when(utils).copyResource(isA(Resource.class), isA(Resource.class), anyString());
 
         Map<String,Resource> logFiles = new HashMap<>();
-        Resource fakeLogFile = TestUtils.createMockResource("file:/etl-working-dir/log1.txt", 0);
+        Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/log1.txt", 0);
         logFiles.put("dummy_study", fakeLogFile);
         Map<String,Resource> publishedLogFiles = publisherService.publishFiles(logFiles);
 

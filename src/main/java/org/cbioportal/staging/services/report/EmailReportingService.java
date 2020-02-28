@@ -98,7 +98,7 @@ public class EmailReportingService implements IReportingService {
     private Resource centralShareLocation;
 
     @Value("${central.share.location.web.address:}")
-	private Resource centralShareLocationWebAddress;
+	private String centralShareLocationWebAddress;
 
 	@Autowired
 	private LogMessageUtils messageUtils;
@@ -142,7 +142,7 @@ public class EmailReportingService implements IReportingService {
 	public void reportTransformedStudies(Map<String,ExitStatus> transformedStudies, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
 
-            Map<String, Resource> logPaths = getLogPaths(filesPaths);
+            Map<String, String> logPaths = getLogPaths(filesPaths);
 
 			Properties properties = getProperties();
 			Session session = getSession(properties);
@@ -174,7 +174,7 @@ public class EmailReportingService implements IReportingService {
 	public void reportValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
 
-			Map<String, Resource> logPaths = getLogPaths(filesPaths);
+			Map<String, String> logPaths = getLogPaths(filesPaths);
 
 			Properties properties = getProperties();
 			Session session = getSession(properties);
@@ -207,7 +207,7 @@ public class EmailReportingService implements IReportingService {
 	public void reportStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPaths) throws ReporterException {
 		try {
 
-			Map<String, Resource> logPaths = getLogPaths(filesPaths);
+			Map<String, String> logPaths = getLogPaths(filesPaths);
 
 			Properties properties = getProperties();
 			Session session = getSession(properties);
@@ -292,27 +292,30 @@ public class EmailReportingService implements IReportingService {
 		}
 	}
 
-    private Map<String,Resource> getLogPaths(Map<String,Resource> filesPaths) throws ResourceCollectionException, IOException {
-		Map<String, Resource> logPaths = new HashMap<String, Resource>();
+    private Map<String,String> getLogPaths(Map<String,Resource> filesPaths) throws ResourceCollectionException, IOException {
+		Map<String, String> logPaths = new HashMap<String, String>();
         if (centralShareLocation != null && centralShareLocationWebAddress != null) {
 			logPaths = replaceLogPaths(filesPaths);
         } else {
-			logPaths = filesPaths;
+			logPaths = filesPaths.entrySet().stream()
+            .collect(Collectors
+                .toMap(e -> e.getKey(), ThrowingFunction.sneaky(e -> utils.getFile(e.getValue()).getAbsolutePath())
+                )
+            );;
         }
         return logPaths;
     }
 
-	private Map<String,Resource> replaceLogPaths(Map<String,Resource> filesPaths) {
+	private Map<String,String> replaceLogPaths(Map<String,Resource> filesPaths) {
 		return filesPaths.entrySet().stream()
 			.collect(
 				Collectors.toMap(
 					e -> e.getKey(),
 					ThrowingFunction.sneaky( e -> {
-						String cslUrl = centralShareLocation.getURL().toString();
-						String cslWebUrl = centralShareLocationWebAddress.getURL().toString();
-						String logUrl = e.getValue().getURL().toString();
-						logUrl.replaceFirst(cslUrl,cslWebUrl);
-						return utils.getResource(logUrl);
+                        String cslUrl = utils.getFile(centralShareLocation).getAbsolutePath();
+                        String cslWebUrl = centralShareLocationWebAddress;
+                        String logUrl = utils.getFile(e.getValue()).getAbsolutePath(); //e.getValue().getURL().toString();
+                        return logUrl.replaceFirst(cslUrl,cslWebUrl);
 					})
 				)
 			);

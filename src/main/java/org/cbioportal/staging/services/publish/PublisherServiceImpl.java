@@ -43,6 +43,9 @@ public class PublisherServiceImpl implements IPublisherService {
     @Value("${central.share.location:}")
     private Resource centralShareLocation;
 
+    @Value("${transformation.directory:}")
+    private Resource transformationDirectory;
+
     @Value("${etl.working.dir:}")
     private Resource etlWorkingDir;
 
@@ -69,8 +72,13 @@ public class PublisherServiceImpl implements IPublisherService {
 
     private Resource publishOneFile(Resource logFile) throws PublisherException {
         try {
-            String fileName = logFile.getURL().toString().replaceFirst(etlWorkingDir.getURL().toString(), "");
-            return utils.copyResource(centralShareLocation, logFile, fileName);
+            Resource initialDir = etlWorkingDir;
+            if (transformationDirectory != null) {
+                initialDir = transformationDirectory;
+            }
+            String fileName = logFile.getURL().toString().replaceFirst(initialDir.getURL().toString(), "");
+            Resource result = utils.copyResource(centralShareLocation, logFile, fileName);
+            return result;
         } catch (IOException e) {
             throw new PublisherException("There has been an error getting the etlWorkingDir.", e);
         } catch (ResourceUtilsException e) {
