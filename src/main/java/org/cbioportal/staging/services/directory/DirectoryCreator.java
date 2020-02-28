@@ -15,8 +15,6 @@
 */
 package org.cbioportal.staging.services.directory;
 
-import java.io.IOException;
-
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -63,14 +61,7 @@ public class DirectoryCreator implements IDirectoryCreator {
 								+ etlWorkingDir);
             }
 
-            // by job timestamp --> studies
-            if (dirFormat.equals("job")) {
-                return createDir(etlWorkingDir, study.getTimestamp(), study.getStudyId());
-            }
-
-            // by study --> version/timestamp
-            String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
-            return createDir(etlWorkingDir, study.getStudyId(), versionLabel);
+            return createDir(etlWorkingDir, study);
 
         } catch (ResourceUtilsException e) {
 			throw new DirectoryCreatorException("Cannot create Resource.", e);
@@ -86,14 +77,9 @@ public class DirectoryCreator implements IDirectoryCreator {
                             "transformation.directory points to a file on the local file system, but should point to a directory.: "
                                     + transformationDir);
                 }
-                            // by job timestamp --> studies
-                if (dirFormat.equals("job")) {
-                    return createDir(transformationDir, study.getTimestamp(), study.getStudyId());
-                }
 
-                // by study --> version/timestamp
-                String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
-                return createDir(transformationDir, study.getStudyId(), versionLabel);
+                return createDir(transformationDir, study);
+
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
             }
@@ -102,27 +88,15 @@ public class DirectoryCreator implements IDirectoryCreator {
         }
     }
 
-    @Override
-    public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException {
-        try {
-			if (utils.isFile(centralShareLocation)) {
-				throw new DirectoryCreatorException(
-						"central.share.location points to a file on the local file system, but should point to a directory.: "
-								+ centralShareLocation);
-			}
-            if (utils.getURL(centralShareLocation).toString().contains("file:")) {
-                return utils.createDirResource(centralShareLocation, timestamp);
-            }
-            return centralShareLocation.createRelative(timestamp);
-        } catch (ResourceUtilsException e) {
-            throw new DirectoryCreatorException("Cannot create Resource.", e);
-        } catch (IOException e) {
-            throw new DirectoryCreatorException("Cannot create the relative folder.", e);
-        }
-    }
-
-    private Resource createDir(Resource dir, String frstLevelDirName, String scndLevelDirName)
+    private Resource createDir(Resource dir, Study study)
             throws ResourceUtilsException {
-        return utils.createDirResource(dir, frstLevelDirName, scndLevelDirName);
+                // by job timestamp --> studies
+                if (dirFormat.equals("job")) {
+                    return utils.createDirResource(dir, study.getTimestamp(), study.getStudyId());
+                }
+
+                // by study --> version/timestamp
+                String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
+                return utils.createDirResource(dir, study.getStudyId(), versionLabel);
     }
 }

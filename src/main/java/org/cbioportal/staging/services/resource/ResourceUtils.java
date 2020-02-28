@@ -154,14 +154,14 @@ public class ResourceUtils {
         }
     }
 
-    public Resource copyResource(Resource destination, InputStreamSource resource, String remoteFilePath)
+    public Resource copyResource(Resource destinationDir, InputStreamSource inputResource, String fileName)
             throws ResourceUtilsException {
         try {
-            String fullDestinationPath = trimDir(getFile(destination).getAbsolutePath()) + "/" + trimFile(remoteFilePath);
+            String fullDestinationPath = trimDir(getFile(destinationDir).getAbsolutePath()) + "/" + trimFile(fileName);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
 
             WritableResource localFile = getWritableResource(fullDestinationPath);
-            IOUtils.copy(resource.getInputStream(), localFile.getOutputStream());
+            IOUtils.copy(inputResource.getInputStream(), localFile.getOutputStream());
 
             return localFile;
         } catch (IOException e) {

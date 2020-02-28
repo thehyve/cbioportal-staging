@@ -106,7 +106,7 @@ public class IntegrationTestTransformationFailure {
         verify(validatorService, never()).validate(any(), any(), any());
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
-        verify(publisherService, times(1)).publish(anyString(), any(Map.class));
+        verify(publisherService, times(1)).publishFiles(any(Map.class));
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 

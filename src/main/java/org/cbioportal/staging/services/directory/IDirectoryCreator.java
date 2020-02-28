@@ -25,6 +25,4 @@ public interface IDirectoryCreator {
 
     public Resource createTransformedStudyDir(Study study, Resource untransformedStudyDir) throws DirectoryCreatorException;
 
-    public Resource getCentralShareLocationPath(Resource centralShareLocation, String timestamp) throws DirectoryCreatorException;
-
 }

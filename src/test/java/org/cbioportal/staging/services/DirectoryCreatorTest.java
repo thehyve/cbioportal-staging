@@ -216,14 +216,4 @@ public class DirectoryCreatorTest {
 
         assertEquals(transDir, transformedDir);
     }
-
-	@Test(expected = DirectoryCreatorException.class)
-	public void centralShareLocation_isFile() throws DirectoryCreatorException, ResourceUtilsException {
-
-        Resource csl = mock(Resource.class);
-		when(utils.isFile(isA(Resource.class))).thenReturn(true);
-
-		directoryCreator.getCentralShareLocationPath(csl, "mock-timestamp");
-    }
-
 }

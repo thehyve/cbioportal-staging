@@ -22,6 +22,6 @@ import org.springframework.core.io.Resource;
 
 public interface IPublisherService {
 
-    public Map<String, Resource> publish(String timestamp, Map<String, Resource> initialLogFiles) throws PublisherException;
+    public Map<String, Resource> publishFiles(Map<String, Resource> initialLogFiles) throws PublisherException;
 
 }

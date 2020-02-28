@@ -112,7 +112,7 @@ public class IntegrationTestError {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
-        verify(publisherService, times(1)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(1)).publishFiles(any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 

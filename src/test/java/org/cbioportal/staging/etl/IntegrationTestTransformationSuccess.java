@@ -107,7 +107,7 @@ public class IntegrationTestTransformationSuccess {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
-        verify(publisherService, times(3)).publish(anyString(), any(Map.class));
+        verify(publisherService, times(3)).publishFiles(any(Map.class));
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 

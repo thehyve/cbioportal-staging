@@ -110,7 +110,7 @@ public class IntegrationTestStudyVersionFolderSuccess {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
-        verify(publisherService, times(2)).publish(anyString(), any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(2)).publishFiles(any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 

@@ -17,14 +17,13 @@ package org.cbioportal.staging.services.publish;
 
 import static com.pivovarit.function.ThrowingFunction.sneaky;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,45 +43,36 @@ public class PublisherServiceImpl implements IPublisherService {
     @Value("${central.share.location:}")
     private Resource centralShareLocation;
 
+    @Value("${etl.working.dir:}")
+    private Resource etlWorkingDir;
+
     @Autowired
     private ResourceUtils utils;
 
-    @Autowired
-    private IDirectoryCreator directoryCreator;
-
-    public Map<String, Resource> publish(String date, Map<String, Resource> logFiles) throws PublisherException {
+    public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
 
         if (centralShareLocation == null) {
-            logger.info("No central.share.location was defined. Skipping publishing of log files.");
+            logger.info("No central.share.location defined. Skipping publishing of log files.");
             return null;
         }
 
-        if (date == null) {
-            throw new PublisherException("Argument 'date' may not be null.");
-        }
-
         if (logFiles == null) {
-            throw new PublisherException("Argument 'logFiles' may not be null.");
+            throw new PublisherException("Argument 'logFiles' cannot be null.");
         }
 
         return logFiles.entrySet().stream()
             .collect(Collectors
-                .toMap(Entry::getKey, sneaky(e -> publish(e.getValue(), date))
+                .toMap(Entry::getKey, sneaky(e -> publishOneFile(e.getValue()))
                 )
             );
     }
 
-    // TODO make publish use the same structure as the transformation dir
-    private Resource publish(Resource logFile, String folder) throws PublisherException {
+    private Resource publishOneFile(Resource logFile) throws PublisherException {
         try {
-            Resource centralShareLocationPath = directoryCreator.getCentralShareLocationPath(centralShareLocation, folder);
-            // TODO is this conditional really needed (does it throw an error if not)?
-            if (! utils.getURL(centralShareLocation).toString().contains("s3:")) {
-                utils.ensureDirs(centralShareLocation);
-            }
-            return utils.copyResource(centralShareLocationPath, logFile, logFile.getFilename());
-        } catch (DirectoryCreatorException e) {
-            throw new PublisherException("There has been an error creating the Central Share Location", e);
+            String fileName = logFile.getURL().toString().replaceFirst(etlWorkingDir.getURL().toString(), "");
+            return utils.copyResource(centralShareLocation, logFile, fileName);
+        } catch (IOException e) {
+            throw new PublisherException("There has been an error getting the etlWorkingDir.", e);
         } catch (ResourceUtilsException e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }

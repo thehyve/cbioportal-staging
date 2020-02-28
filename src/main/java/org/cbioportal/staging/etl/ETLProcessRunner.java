@@ -97,8 +97,6 @@ public class ETLProcessRunner {
 
 	public void run(Study[] remoteResources) throws Exception {
 		try  {
-
-			String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
 			startProcess();
 
 			if (etlWorkingDir  == null) {
@@ -124,7 +122,7 @@ public class ETLProcessRunner {
 			Study[] transformedStudies;
 			if (etlUtils.doTransformation()) {
 				transformerExitStatus = transformer.transform(localResources);
-                Map<String, Resource> transformationLogFiles = publisher.publish(timestamp, transformer.getLogFiles());
+                Map<String, Resource> transformationLogFiles = publisher.publishFiles(transformer.getLogFiles());
                 if(transformationLogFiles != null) {
                     logPaths.putAll(transformationLogFiles);
                     if (logPaths.size() > 0) {
@@ -140,7 +138,7 @@ public class ETLProcessRunner {
 			//V (VALIDATE) STEP:
 			if (transformedStudies.length > 0) {
                 validatorExitStatus = validator.validate(transformedStudies);
-                Map<String, Resource> validationAndReportFiles = publisher.publish(timestamp, validator.getLogAndReportFiles());
+                Map<String, Resource> validationAndReportFiles = publisher.publishFiles(validator.getLogAndReportFiles());
                 if (validationAndReportFiles != null) {
                     logPaths.putAll(validationAndReportFiles);
 				    reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
@@ -151,7 +149,7 @@ public class ETLProcessRunner {
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.length > 0) {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
-                    Map<String, Resource> loadingLogFiles = publisher.publish(timestamp, loader.getLogFiles());
+                    Map<String, Resource> loadingLogFiles = publisher.publishFiles(loader.getLogFiles());
                     if (loadingLogFiles != null) {
                         logPaths.putAll(loadingLogFiles);
 					    reportingService.reportStudiesLoaded(loaderExitStatus, logPaths);
