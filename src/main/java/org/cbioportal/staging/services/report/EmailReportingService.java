@@ -98,7 +98,7 @@ public class EmailReportingService implements IReportingService {
     private Resource centralShareLocation;
 
     @Value("${central.share.location.web.address:}")
-	private String centralShareLocationWebAddress;
+	private Resource centralShareLocationWebAddress;
 
 	@Autowired
 	private LogMessageUtils messageUtils;
@@ -299,9 +299,9 @@ public class EmailReportingService implements IReportingService {
         } else {
 			logPaths = filesPaths.entrySet().stream()
             .collect(Collectors
-                .toMap(e -> e.getKey(), ThrowingFunction.sneaky(e -> utils.getFile(e.getValue()).getAbsolutePath())
+                .toMap(e -> e.getKey(), ThrowingFunction.sneaky(e -> e.getValue().getURL().toString())
                 )
-            );;
+            );
         }
         return logPaths;
     }
@@ -312,9 +312,9 @@ public class EmailReportingService implements IReportingService {
 				Collectors.toMap(
 					e -> e.getKey(),
 					ThrowingFunction.sneaky( e -> {
-                        String cslUrl = utils.getFile(centralShareLocation).getAbsolutePath();
-                        String cslWebUrl = centralShareLocationWebAddress;
-                        String logUrl = utils.getFile(e.getValue()).getAbsolutePath(); //e.getValue().getURL().toString();
+                        String cslUrl = centralShareLocation.getURL().toString();
+                        String cslWebUrl = centralShareLocationWebAddress.getURL().toString();
+                        String logUrl = e.getValue().getURL().toString();
                         return logUrl.replaceFirst(cslUrl,cslWebUrl);
 					})
 				)

@@ -59,15 +59,7 @@ public class PublisherServiceImplTest {
     }
 
     @Test(expected = PublisherException.class)
-    public void testPublish_failNullDate() throws ResourceCollectionException, PublisherException {
-        Map<String,Resource> logFiles = new HashMap<>();
-        Resource fakeLogFile = TestUtils.createMockResource("file:/logdir/log1.txt", 0);
-        logFiles.put("dummy_study", fakeLogFile);
-        publisherService.publishFiles(logFiles);
-    }
-
-    @Test(expected = PublisherException.class)
-    public void testPublish_failLogFiles() throws ResourceCollectionException, PublisherException {
+    public void testPublish_nullLogFiles() throws ResourceCollectionException, PublisherException {
         publisherService.publishFiles(null);
     }
 
