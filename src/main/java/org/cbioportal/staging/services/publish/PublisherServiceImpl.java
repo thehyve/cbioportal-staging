@@ -15,15 +15,16 @@
 */
 package org.cbioportal.staging.services.publish;
 
-import static com.pivovarit.function.ThrowingFunction.sneaky;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import com.pivovarit.function.ThrowingFunction;
+
 import org.cbioportal.staging.exceptions.PublisherException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +33,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-/*
-    Calls a command when study loading is finished.
- */
 @Component
 public class PublisherServiceImpl implements IPublisherService {
 
@@ -50,7 +48,12 @@ public class PublisherServiceImpl implements IPublisherService {
     private Resource etlWorkingDir;
 
     @Autowired
+    IResourceProvider resourceProvider;
+
+    @Autowired
     private ResourceUtils utils;
+
+    private List<Resource> publishedFiles = new ArrayList<>();
 
     public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
 
@@ -63,27 +66,36 @@ public class PublisherServiceImpl implements IPublisherService {
             throw new PublisherException("Argument 'logFiles' cannot be null.");
         }
 
-        return logFiles.entrySet().stream()
-            .collect(Collectors
-                .toMap(Entry::getKey, sneaky(e -> publishOneFile(e.getValue()))
-                )
-            );
+        Map<String, Resource> files = logFiles.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, ThrowingFunction.sneaky(e -> publishOneFile(e.getValue()))));
+
+        publishedFiles.addAll(files.values());
+
+        return files;
     }
 
     private Resource publishOneFile(Resource logFile) throws PublisherException {
         try {
-            Resource initialDir = etlWorkingDir;
-            if (transformationDirectory != null) {
-                initialDir = transformationDirectory;
+            Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
+            String filePathRelative = logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
+            if (filePathRelative.lastIndexOf("/") > -1) {
+                filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/") + 1);
+            } else {
+                filePathRelative = "";
             }
-            String fileName = logFile.getURL().toString().replaceFirst(initialDir.getURL().toString(), "");
-            Resource result = utils.copyResource(centralShareLocation, logFile, fileName);
-            return result;
-        } catch (IOException e) {
-            throw new PublisherException("There has been an error getting the etlWorkingDir.", e);
-        } catch (ResourceUtilsException e) {
+            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimPathRight(centralShareLocation.getURL().toString()) + "/" + filePathRelative);
+            return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
+        } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }
+    }
+
+    public List<Resource> getPublishedFiles() {
+        return publishedFiles;
+    }
+
+    public void clear() {
+        publishedFiles.clear();
     }
 
 }

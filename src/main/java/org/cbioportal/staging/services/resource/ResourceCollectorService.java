@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-public class DefaultResourceCollectorService implements IResourceCollector {
+public class ResourceCollectorService implements IResourceCollector {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultResourceCollectorService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ResourceCollectorService.class);
 
     @Autowired
     private IResourceProvider resourceProvider;

@@ -29,8 +29,9 @@ import com.pivovarit.function.ThrowingFunction;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
@@ -51,10 +52,13 @@ class Extractor {
 	private Integer timeRetry;
 
 	@Autowired
-    private ResourceUtils utils;
+	private ResourceUtils utils;
 
-    @Autowired
+	@Autowired
 	private IDirectoryCreator directoryCreator;
+
+	@Autowired
+	private IResourceProvider resourceProvider;
 
 	Map<String, List<String>> filesNotFound = new HashMap<>();
 
@@ -68,10 +72,10 @@ class Extractor {
 		List<Study> out = new ArrayList<>();
 
 		try {
-			for (Study study: studies) {
+			for (Study study : studies) {
 
-                String studyId = study.getStudyId();
-                Resource studyDir = directoryCreator.createStudyExtractDir(study);
+				String studyId = study.getStudyId();
+				Resource studyDir = directoryCreator.createStudyExtractDir(study);
 
 				String remoteBasePath = getBasePathResources(study.getResources());
 
@@ -80,9 +84,12 @@ class Extractor {
 				for (Resource remoteResource : study.getResources()) {
 
 					String fullOriginalFilePath = remoteResource.getURL().toString();
-					String remoteFilePath = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
 
-					Resource localResource = attemptCopyResource(studyDir, remoteResource, remoteFilePath);
+					String path = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
+					path = path.substring(0, path.lastIndexOf("/"));
+
+					Resource targetDir = resourceProvider.getResource(studyDir.getURL() + path);
+					Resource localResource = attemptCopyResource(targetDir, remoteResource);
 					if (localResource == null) {
 						errorFiles.add(fullOriginalFilePath);
 					} else {
@@ -92,7 +99,8 @@ class Extractor {
 
 				// register successfully extracted study
 				if (errorFiles.isEmpty()) {
-					out.add(new Study(study.getStudyId(), study.getVersion(), study.getTimestamp(), studyDir, files.toArray(new Resource[0])));
+					out.add(new Study(study.getStudyId(), study.getVersion(), study.getTimestamp(), studyDir,
+							files.toArray(new Resource[0])));
 				} else {
 					filesNotFound.put(studyId, errorFiles);
 				}
@@ -104,25 +112,25 @@ class Extractor {
 			throw new ExtractionException(e.getMessage(), e);
 		} catch (InterruptedException e) {
 			throw new ExtractionException("Timeout for resource downloads was interrupted.", e);
-		} catch (ResourceUtilsException e) {
+		} catch (ResourceCollectionException e) {
 			throw new ExtractionException("Cannot copy Resource.", e);
 		} catch (DirectoryCreatorException e) {
-            throw new ExtractionException("Cannot create directory.", e);
-        }
+			throw new ExtractionException("Cannot create directory.", e);
+		}
 
 		logger.info("Extractor step finished");
-        return out.toArray(new Study[0]);
+		return out.toArray(new Study[0]);
 	}
 
-	private Resource attemptCopyResource(Resource destination, Resource resource, String remoteFilePath)
-			throws InterruptedException, ResourceUtilsException {
+	private Resource attemptCopyResource(Resource destination, Resource remoteResource)
+			throws InterruptedException, ResourceCollectionException {
 		int i = 1;
 		int times = 5;
 		Resource r = null;
 		while (i++ <= times) {
 			try {
-				logger.info("Copying resource " + resource.getURL() + " to "+ destination);
-				r = utils.copyResource(destination, resource, remoteFilePath);
+				logger.info("Copying resource " + remoteResource.getURL() + " to "+ destination);
+				r = resourceProvider.copyFromRemote(destination, remoteResource);
 				logger.info("File has been copied successfully to "+ destination);
 				break;
 			} catch (IOException f) {

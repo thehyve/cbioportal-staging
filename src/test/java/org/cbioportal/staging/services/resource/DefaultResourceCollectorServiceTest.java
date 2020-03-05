@@ -20,14 +20,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {DefaultResourceCollectorService.class})
+@SpringBootTest(classes = {ResourceCollectorService.class})
 public class DefaultResourceCollectorServiceTest {
 
     @Autowired
-    private DefaultResourceCollectorService defaultResourceCollectorService;
+    private ResourceCollectorService defaultResourceCollectorService;
 
     @MockBean
-    public DefaultResourceProvider resourceProvider;
+    public IResourceProvider resourceProvider;
 
     @MockBean
     public YamlFileStudyResourceStrategy studyResourceStrategy;

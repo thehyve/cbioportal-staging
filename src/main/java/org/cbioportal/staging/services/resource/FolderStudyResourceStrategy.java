@@ -62,7 +62,7 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
             for (Resource studyDir : studyDirs) {
 
-                Resource[] studyResources = resourceProvider.list(studyDir, true);
+                Resource[] studyResources = resourceProvider.list(studyDir, true, true);
 
                 String studyId = getStudyId(studyResources, studyDir.getFilename());
 
@@ -83,7 +83,7 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
             return utils.readMetaFile(studyMetaFile.get()).get("cancer_study_identifier");
         }
         // if not meta file found use the study folder name as studyId
-        studyPath = utils.trimDir(studyPath);
+        studyPath = utils.trimPathRight(studyPath);
         return studyPath.substring(studyPath.lastIndexOf("/") + 1);
     }
 

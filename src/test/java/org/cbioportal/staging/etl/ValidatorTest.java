@@ -16,6 +16,7 @@
 package org.cbioportal.staging.etl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
@@ -73,7 +74,7 @@ public class ValidatorTest {
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         assertEquals(1, validator.getValidStudies().length);
-        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -131,7 +132,7 @@ public class ValidatorTest {
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         assertEquals(1, validator.getValidStudies().length);
-        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -154,7 +155,7 @@ public class ValidatorTest {
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         assertEquals(1, validator.getValidStudies().length);
-        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -197,7 +198,7 @@ public class ValidatorTest {
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         assertEquals(1, validator.getValidStudies().length);
-        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);
@@ -225,8 +226,8 @@ public class ValidatorTest {
         assertEquals(expectedValidatedStudies, validatedStudies);
 
         assertEquals(2, validator.getValidStudies().length);
-        assert(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
-        assert(TestUtils.has(validator.getValidStudies(), "study1"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "lgg_ucsf_2014"));
+        assertTrue(TestUtils.has(validator.getValidStudies(), "study1"));
 
         Map<String, Resource> logPaths = new HashMap<>();
         logPaths.put("lgg_ucsf_2014 validation log", null);

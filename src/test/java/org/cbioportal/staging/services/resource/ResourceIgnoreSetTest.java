@@ -2,6 +2,7 @@ package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -90,7 +91,7 @@ public class ResourceIgnoreSetTest {
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});
 
-        assert(resourceIgnoreSet.contains("file:/resource_to_be_ignored.txt"));
+        assertTrue(resourceIgnoreSet.contains("file:/resource_to_be_ignored.txt"));
         verify(utils, times(1)).writeToFile(eq(ignoreFile), any(Collection.class), eq(true));
 
     }
@@ -103,7 +104,7 @@ public class ResourceIgnoreSetTest {
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});
 
-        assert(resourceIgnoreSet.contains("file:/resource_to_be_ignored.txt"));
+        assertTrue(resourceIgnoreSet.contains("file:/resource_to_be_ignored.txt"));
         verify(utils, never()).writeToFile(any(WritableResource.class), any(Collection.class), anyBoolean());
 
     }

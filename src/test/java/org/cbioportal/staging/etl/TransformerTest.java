@@ -15,6 +15,7 @@
 */
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
@@ -38,7 +39,7 @@ import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.etl.TransformerServiceImpl;
-import org.cbioportal.staging.services.resource.DefaultResourceProvider;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
 import org.junit.Before;
@@ -52,7 +53,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { Transformer.class, TransformerServiceImpl.class, ResourceUtils.class,
-        DefaultResourceProvider.class, DirectoryCreator.class })
+        IResourceProvider.class, DirectoryCreator.class })
 public class TransformerTest {
 
     @Autowired
@@ -65,7 +66,7 @@ public class TransformerTest {
     private ResourceUtils utils;
 
     @MockBean
-    private DefaultResourceProvider provider;
+    private IResourceProvider provider;
 
     @MockBean
     private IDirectoryCreator directoryCreator;
@@ -106,9 +107,9 @@ public class TransformerTest {
 
         verify(utils, times(1)).copyDirectory(any(),any());
         verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
-        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
-        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
+        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
+        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
     @Test
@@ -122,9 +123,9 @@ public class TransformerTest {
 
         verify(utils, never()).copyDirectory(any(),any());
         verify(transformerService, times(1)).transform(any(),any(),any());
-        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
-        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
+        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
+        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
     @Test
@@ -139,9 +140,9 @@ public class TransformerTest {
 
         Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
 
-        assert(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
-        assert(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assert(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
+        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
+        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
     }
 
     private Study[] dummyStudyInput() {

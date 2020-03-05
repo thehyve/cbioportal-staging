@@ -1,5 +1,6 @@
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -86,6 +87,7 @@ public class IntegrationTestStudyFolderSuccess {
     @After
     public void cleanUp() throws ResourceUtilsException {
         ignoreSet.resetAndDeleteFile();
+        publisherService.clear();
     }
 
     @Test
@@ -97,7 +99,7 @@ public class IntegrationTestStudyFolderSuccess {
 
         boolean exitValue = scheduledScanner.scan();
 
-        assert(exitValue);
+        assertTrue(exitValue);
 
         verify(transformationService, never()).transform(any(), any(), any());
         verify(validatorService, times(1)).validate(any(), any(), any());
@@ -112,6 +114,10 @@ public class IntegrationTestStudyFolderSuccess {
         verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
         verify(emailServiceImpl, times(1)).reportStudiesLoaded(any(Map.class),any(Map.class));
         verify(emailServiceImpl, never()).reportGenericError(any(),any());
+
+        // check files have been published
+        publisherService.getPublishedFiles().stream()
+            .forEach(p -> assertTrue(p.exists()));
     }
 
 }

@@ -97,7 +97,7 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
             return utils.readMetaFile(studyMetaFile.get()).get("cancer_study_identifier");
         }
         // if not meta file found use the study folder name as studyId (folder previous to the "version" folder)
-        studyFolder = utils.trimDir(studyFolder);
+        studyFolder = utils.trimPathRight(studyFolder);
         return studyFolder.substring(studyFolder.lastIndexOf("/") + 1);
     }
 
@@ -111,7 +111,7 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
     }
 
     private String getStudyVersion(Resource dir) throws ResourceUtilsException {
-        String url = utils.trimDir(utils.getURL(dir).toString());
+        String url = utils.trimPathRight(utils.getURL(dir).toString());
         return url.substring(url.lastIndexOf("/") + 1);
     }
 

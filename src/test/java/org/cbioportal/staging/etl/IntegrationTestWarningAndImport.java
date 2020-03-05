@@ -1,5 +1,6 @@
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -86,6 +87,7 @@ public class IntegrationTestWarningAndImport {
     @After
     public void cleanUp() throws ResourceUtilsException {
         ignoreSet.resetAndDeleteFile();
+        publisherService.clear();
     }
 
     @Test
@@ -98,7 +100,7 @@ public class IntegrationTestWarningAndImport {
 
         boolean exitValue = scheduledScanner.scan();
 
-        assert(exitValue);
+        assertTrue(exitValue);
 
         verify(transformationService, never()).transform(any(), any(), any());
         verify(validatorService, times(1)).validate(any(), any(), any());

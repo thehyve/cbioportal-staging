@@ -101,13 +101,13 @@ public class LogReportingService implements IReportingService {
 
 	@Override
 	public void reportValidationReport(Map<String, ExitStatus> validatedStudies, String level,
-			Map<String, Resource> studyPaths) throws ReporterException {
+			Map<String, Resource> logPaths) throws ReporterException {
 		String template = "validationReport_log_html.ftl";
 		if (logFormat.equals("text")) {
 			template = "validationReport_log_txt.ftl";
 		}
 		appender.addToLog(
-			writableLog, messageUtils.messageValidationReport(template, validatedStudies, level, getLogPaths(studyPaths))
+			writableLog, messageUtils.messageValidationReport(template, validatedStudies, level, getLogPaths(logPaths))
 		);
 	}
 
@@ -133,12 +133,15 @@ public class LogReportingService implements IReportingService {
 			writableLog, messageUtils.messageGenericError(template, errorMessage, e)
 		);
     }
-    
+
+	// TODO make sure the log paths are correctly displayed in the reportrs
     private Map<String,String> getLogPaths(Map<String,Resource> filesPaths) {
         return filesPaths.entrySet().stream()
             .collect(Collectors
-                .toMap(e -> e.getKey(), ThrowingFunction.sneaky(e -> resourceUtils.getFile(e.getValue()).getAbsolutePath())
-                )
+				.toMap(e -> e.getKey(), ThrowingFunction.sneaky(e ->
+					resourceUtils.getURL(e.getValue()).toString())
+					// resourceUtils.stripResourceTypePrefix(resourceUtils.getURL(e.getValue()).toString()))
+				)
             );
     }
 

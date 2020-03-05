@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,7 +34,7 @@ public class FolderStudyResourceStrategyTest {
     private FolderStudyResourceStrategy folderStudyResourceStrategy;
 
     @MockBean
-    private DefaultResourceProvider resourceProvider;
+    private IResourceProvider resourceProvider;
 
     @MockBean
     private ResourceUtils utils;
@@ -43,18 +44,18 @@ public class FolderStudyResourceStrategyTest {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/not_a_study_meta_file.txt", 0));
-        when(resourceProvider.list(any(), anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
+        when(resourceProvider.list(any(), anyBoolean(), anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
 
         Resource[] studyDirs = new Resource[] { TestUtils.createMockResource("file:/study_folder/", 1) };
         Map<String, String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
+        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.length);
-        assert(TestUtils.has(resources, "study_folder"));
+        assertTrue(TestUtils.has(resources, "study_folder"));
     }
 
     @Test
@@ -63,19 +64,19 @@ public class FolderStudyResourceStrategyTest {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/meta_study.txt", 0));
-        when(resourceProvider.list(any(),anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
+        when(resourceProvider.list(any(),anyBoolean(), anyBoolean())).thenReturn(providedResources.toArray(new Resource[0]));
 
         Resource[] studyDirs = new Resource[] {TestUtils.createMockResource("file:/study_folder/", 1)};
         Map<String,String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.readMetaFile(any())).thenReturn(metaFileContents);
         when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
+        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.length);
-        assert(TestUtils.has(resources, "dummy_study_id_1"));
+        assertTrue(TestUtils.has(resources, "dummy_study_id_1"));
     }
 
 }

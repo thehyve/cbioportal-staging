@@ -124,10 +124,6 @@ public class LogMessageUtils {
 
     public String messageGenericError(String template, String errorMessage, Exception e) throws ReporterException {
 
-		if (studyCuratorEmails.equals("")) {
-			throw new ReporterException("No curators emails defined with study.curator.emails property.");
-		}
-
         try {
 			Template t = freemarkerConfig.getTemplate(template);
 			Map<String, Object> messageParams = new HashMap<>();

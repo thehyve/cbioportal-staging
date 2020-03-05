@@ -35,7 +35,6 @@ import com.pivovarit.function.ThrowingFunction;
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
-import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,9 +101,6 @@ public class EmailReportingService implements IReportingService {
 
 	@Autowired
 	private LogMessageUtils messageUtils;
-
-	@Autowired
-    private ResourceUtils utils;
 
 	public void reportStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws ReporterException {
 

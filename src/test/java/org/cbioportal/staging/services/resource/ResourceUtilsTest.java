@@ -1,18 +1,24 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
+import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -24,25 +30,26 @@ public class ResourceUtilsTest {
 
     @Test
     public void trimDir_success() {
-        assertEquals("file:/dir", utils.trimDir("file:/dir"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/*"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/**"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir//"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir//**"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/*"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/**"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir//"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir//**"));
     }
 
     @Test
     public void trimFile_success() {
-        assertEquals("file:/file.txt", utils.trimFile("file:/file.txt"));
-        assertEquals("file.txt", utils.trimFile("/file.txt"));
-        assertEquals("file.txt", utils.trimFile("//file.txt"));
+        assertEquals("file:/file.txt", utils.trimPathLeft("file:/file.txt"));
+        assertEquals("file.txt", utils.trimPathLeft("/file.txt"));
+        assertEquals("file.txt", utils.trimPathLeft("//file.txt"));
     }
 
     @Test
     public void stripResourceTypePrefix_success() {
         assertEquals("/file.txt", utils.stripResourceTypePrefix("file:/file.txt"));
         assertEquals("/file.txt", utils.stripResourceTypePrefix("s3:/file.txt"));
+        assertEquals("/file.txt", utils.stripResourceTypePrefix("file:///file.txt"));
     }
 
     @Test
@@ -122,6 +129,20 @@ public class ResourceUtilsTest {
         paths.add("");
         String common = utils.getBasePath(paths);
         assertEquals("", common);
+    }
+
+    @Test
+    public void testRemotePath_success() throws ResourceUtilsException, MalformedURLException {
+        URL url = new URL("ftp:/dummy_host/file.txt");
+        assertEquals("/file.txt", utils.remotePath("dummy_host", url));
+    }
+
+    @Test
+    public void createRemoteResourcePath_successSftp() throws ResourceUtilsException, MalformedURLException {
+        SftpFileInfo fileInfo = mock(SftpFileInfo.class);
+        when(fileInfo.getRemoteDirectory()).thenReturn("/root_dir/");
+        when(fileInfo.getFilename()).thenReturn("file.txt");
+        assertEquals("ftp:/dummy_host/root_dir/file.txt", utils.createRemoteURL("ftp", "dummy_host", fileInfo).toString());
     }
 
     private List<Resource> createResources(String prefix, String extension) {
