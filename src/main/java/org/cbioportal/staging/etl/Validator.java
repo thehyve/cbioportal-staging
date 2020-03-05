@@ -84,7 +84,7 @@ public class Validator {
                 Resource studyPath = study.getStudyDir();
 
                 Resource logFile = utils.createFileResource(studyPath, studyId + "_validation_log.txt");
-                Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.txt");
+                Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.html");
                 logAndReportFiles.put(studyId+" validation log", logFile);
                 logAndReportFiles.put(studyId+" validation report", reportFile);
 
