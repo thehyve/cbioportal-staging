@@ -2,13 +2,13 @@ package org.cbioportal.staging.services.resource;
 
 import java.util.stream.Stream;
 
+import com.pivovarit.function.ThrowingPredicate;
+
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import com.pivovarit.function.ThrowingPredicate;
 
 /**
  * DefaultResourceProvider
@@ -18,11 +18,17 @@ import com.pivovarit.function.ThrowingPredicate;
  * the spring-cloud-aws plugin.
  *
  */
+// TODO remove code duplication with SftpResourceProvider
 @Component
 public class DefaultResourceProvider implements IResourceProvider {
 
     @Autowired
     private ResourceUtils utils;
+
+    @Override
+    public Resource getResource(String url) throws ResourceCollectionException {
+        return utils.getResource(url);
+    }
 
     @Override
     public Resource[] list(Resource dir) throws ResourceCollectionException {
@@ -53,6 +59,21 @@ public class DefaultResourceProvider implements IResourceProvider {
         } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
         }
+    }
+
+    @Override
+    public Resource copyFromRemote(Resource destinationDir, Resource remoteResource)
+            throws ResourceCollectionException {
+        try {
+            return utils.copyResource(destinationDir, remoteResource, remoteResource.getFilename());
+        } catch (Exception e) {
+            throw new ResourceCollectionException("Cannot copy resource", e);
+        }
+    }
+
+    @Override
+    public Resource copyToRemote(Resource destinationDir, Resource localResource) throws ResourceCollectionException {
+        return copyFromRemote(destinationDir, localResource);
     }
 
 }

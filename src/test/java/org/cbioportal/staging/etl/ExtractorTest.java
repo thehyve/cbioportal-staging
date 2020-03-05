@@ -16,10 +16,8 @@
 package org.cbioportal.staging.etl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,6 +31,8 @@ import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
+import org.cbioportal.staging.services.resource.DefaultResourceProvider;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
 import org.junit.Test;
@@ -45,14 +45,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { Extractor.class })
+@SpringBootTest(classes = { Extractor.class, ResourceUtils.class, DefaultResourceProvider.class })
 public class ExtractorTest {
 
 	@Autowired
 	private Extractor extractor;
 
 	@SpyBean
-	private ResourceUtils utils;
+	private IResourceProvider provider;
 
 	@MockBean
 	private IDirectoryCreator directoryCreator;
@@ -71,8 +71,16 @@ public class ExtractorTest {
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource localFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
-		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
-		doReturn(localFile2).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
+		doAnswer(invocation -> {
+            String fileName = invocation.getArgument(1, Resource.class).getFilename();
+            if (fileName.equals("file1.txt")) {
+                return localFile1;
+			}
+			if (fileName.equals("file2.txt")) {
+                return localFile2;
+			}
+            return null;
+        }).when(provider).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 		Study[] extractedResources = extractor.run(dummyStudies);
 
@@ -81,7 +89,7 @@ public class ExtractorTest {
 
 		Study extractedStudy = extractedResources[0];
 		assert(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
-		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
+		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
 
@@ -99,15 +107,20 @@ public class ExtractorTest {
 		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
-		doReturn(localFile1).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file1.txt"));
-		doReturn(null).when(utils).copyResource(isA(Resource.class), isA(Resource.class), eq("/file2.txt"));
+		doAnswer(invocation -> {
+            String fileName = invocation.getArgument(1, Resource.class).getFilename();
+            if (fileName.equals("file1.txt")) {
+                return localFile1;
+			}
+            return null;
+        }).when(provider).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 		Study[] extractedResources = extractor.run(dummyStudies);
 
 		assert(extractor.errorFiles().containsKey("dummy-study"));
 		assert(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
 		assert(extractedResources.length == 0);
-		verify(utils, times(2)).copyResource(isA(Resource.class), isA(Resource.class), anyString());
+		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
 

@@ -38,6 +38,7 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
     - [Properties for 'local' application profile](#properties-for-local-application-profile)
     - [Reporting location settings](#reporting-location-settings)
     - [S3 file system settings](#s3-file-system-settings)
+    - [SFTP file system settings](#sftp-file-system-settings)
     - [Mail properties](#mail-properties)
     - [Log setttings](#log-setttings)
     - [Debug settings](#debug-settings)
@@ -286,6 +287,19 @@ If any of the `*.location` attributes above points to an S3 bucket, you will hav
 
 - `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
 - `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
+
+### SFTP file system settings
+
+Staging app can scan on a SFTP server. To activate this feature set property `ftp.enable` to _true_. Also, configure the
+following properties:
+
+- `ftp.enable`: when _true_ will activate scanning of remote SFTP server.
+- `ftp.host`: host name of SFTP server. Example: localhost
+- `ftp.port`: port of SFTP SERVER. Example: 22
+- `ftp.user`: username for account on SFTP SERVER.
+- `ftp.password`: user password for account on SFTP SERVER.
+- `sftp.privateKey`: file that contains RSA private key information for account. Example: file:///keys/my_privvate_key
+- `sftp.privateKeyPassphrase`: passphrase for RSA private key.
 
 ### Mail properties
 

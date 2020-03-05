@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,7 +47,7 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
     private String scanLocation;
 
     @Autowired
-    private ResourcePatternResolver resourcePatternResolver;
+    private IResourceProvider resourceProvider;
 
     @Autowired
     private Yaml yamlParser;
@@ -71,13 +71,13 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
 
                 logger.info("Most recent yaml file is: " + yamlFile.getFilename());
 
-                Map<String, List<String>> parsedYaml = parseYaml(yamlFile);
+                Map<String, List<String>> parsedYaml = parseYaml((InputStreamSource) yamlFile);
 
                 for (Entry<String, List<String>> entry : parsedYaml.entrySet()) {
                     List<Resource> collectedResources = new ArrayList<>();
                     for (String filePath : entry.getValue() ) {
                         String fullFilePath = filePath(filePath);
-                        collectedResources.add(resourcePatternResolver.getResource(fullFilePath));
+                        collectedResources.add(resourceProvider.getResource(fullFilePath));
                     }
                     out.add(new Study(entry.getKey(), yamlFile.getFilename(), timestamp, null, collectedResources.toArray(new Resource[0])));
                 }
@@ -90,10 +90,11 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
         return out.toArray(new Study[0]);
     }
 
-    private Map<String, List<String>> parseYaml(Resource resource) throws IOException {
+    private Map<String, List<String>> parseYaml(InputStreamSource resource) throws IOException {
 		InputStream is = resource.getInputStream();
 		@SuppressWarnings("unchecked")
-		Map<String, List<String>> result = (Map<String, List<String>>) yamlParser.load(is);
+        Map<String, List<String>> result = (Map<String, List<String>>) yamlParser.load(is);
+        is.close();
 		return result;
     }
 

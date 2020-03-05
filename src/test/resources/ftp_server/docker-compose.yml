@@ -1,0 +1,20 @@
+version: '2.4'
+
+networks:
+  ftp_network:
+    driver: bridge
+
+services:
+  sftp:
+    networks:
+    - ftp_network
+    container_name: ftp-server
+    image: atmoz/sftp
+    ports:
+    - "9922:22"
+    volumes:
+    - ./src/test/resources/e2e_studies:/home/testuser/studies:ro
+    - ./src/test/resources/ftp_server/key.pub:/home/testuser/.ssh/keys/key.pub
+    - ./src/test/resources/ftp_server/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
+    - ./src/test/resources/ftp_server/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    command: testuser:testuser:1001:100:/share,/studies

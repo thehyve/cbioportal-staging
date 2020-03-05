@@ -1,0 +1,115 @@
+package org.cbioportal.staging.services.resource.ftp;
+
+import java.net.MalformedURLException;
+import java.util.List;
+import java.util.stream.Stream;
+
+import com.pivovarit.function.ThrowingFunction;
+import com.pivovarit.function.ThrowingPredicate;
+
+import org.apache.commons.io.IOUtils;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.resource.IResourceProvider;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
+import org.springframework.integration.sftp.session.SftpFileInfo;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConditionalOnProperty(value="ftp.enable", havingValue ="true")
+@Primary
+// TODO remove code duplication with DefaultResourceProvider
+public class FtpResourceProvider implements IResourceProvider {
+
+    @Value("${sftp.host:localhost}")
+    private String sftpHost;
+
+    @Autowired
+    private FtpUtils ftpUtils;
+
+    @Autowired
+    private ResourceUtils utils;
+
+    @Autowired
+    private IFtpGateway ftpGateway;
+
+    @Override
+    public Resource getResource(String url) throws ResourceCollectionException {
+        try {
+            return new FtpResource(url, ftpGateway, ftpUtils);
+        } catch (MalformedURLException e) {
+            throw new ResourceCollectionException("Malformed URL!", e);
+        }
+    }
+
+    @Override
+    public Resource[] list(Resource dir) throws ResourceCollectionException {
+        return list(dir, false);
+    }
+
+    @Override
+    public Resource[] list(Resource dir, boolean recursive) throws ResourceCollectionException {
+        return list(dir, recursive, false);
+    }
+
+    @Override
+    public Resource[] list(Resource dir, boolean recursive, boolean excludeDirs) throws ResourceCollectionException {
+
+        try {
+
+            String remoteDir = ftpUtils.remotePath(dir);
+
+            List<SftpFileInfo> remoteFiles;
+            if (recursive) {
+                remoteFiles = ftpGateway.lsDirRecur(remoteDir);
+            } else {
+                remoteFiles = ftpGateway.lsDir(remoteDir);
+            }
+
+            Stream<SftpFileInfo> remoteFilesStream = remoteFiles.stream();
+            if (excludeDirs)
+                remoteFilesStream.filter(ThrowingPredicate.sneaky(e -> !e.isDirectory()));
+
+            Stream<Resource> resourceStream = remoteFilesStream.map(ftpUtils::createRemoteResourcePath)
+                                                            .map(ThrowingFunction.sneaky(r -> new FtpResource(r, ftpGateway, ftpUtils)));
+
+            return resourceStream.toArray(Resource[]::new);
+        } catch (Exception e) {
+            throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
+        }
+    }
+
+    @Override
+    public Resource copyFromRemote(Resource destinationDir, Resource remoteResource) throws ResourceCollectionException {
+        try {
+            if (remoteResource.getInputStream() != null) {
+                return utils.copyResource(destinationDir, remoteResource, remoteResource.getFilename());
+            }
+
+            return utils.copyResource(destinationDir, getResource(remoteResource.getURL().toString()), remoteResource.getFilename());
+        } catch (Exception e) {
+            throw new ResourceCollectionException("Cannot copy resource from remote.", e);
+        }
+    }
+
+    @Override
+    public Resource copyToRemote(Resource destinationDir, Resource localResource)
+            throws ResourceCollectionException {
+        try {
+            String remoteFilePath = ftpGateway.put(
+                IOUtils.toByteArray(localResource.getInputStream()),
+                ftpUtils.remotePath(destinationDir),
+                localResource.getFilename()
+            );
+
+            return getResource(ftpUtils.createRemoteResourcePath(remoteFilePath));
+        } catch (Exception e) {
+            throw new ResourceCollectionException("Cannot copy resource to remote.", e);
+        }
+    }
+
+}

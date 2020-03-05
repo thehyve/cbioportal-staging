@@ -14,12 +14,13 @@
 	<properties>
 		<jdk.version>1.8</jdk.version>
 		<test.cbioportal.docker.image>cbioportal/cbioportal:3.1.4</test.cbioportal.docker.image>
+		<test.ftp.host>sftp</test.ftp.host>
 		<test.db.host>cbioDB</test.db.host>
 		<test.db.user>cbio</test.db.user>
 		<test.db.password>P@ssword1</test.db.password>
 		<test.db.portal_db_name>cbioportal</test.db.portal_db_name>
 		<test.working.dir>/tmp/staging-integration-test/</test.working.dir>
-		<test.home>${basedir}/src/test/resources/local_database</test.home>
+		<test.home>${basedir}/src/test/resources/</test.home>
 	</properties>
 
 	<parent>
@@ -61,11 +62,16 @@
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 
-		<!-- <dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-integration</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.integration</groupId>
-			<artifactId>spring-integration-ftp</artifactId>
-			<version>5.2.3.RELEASE</version>
-		</dependency> -->
+			<artifactId>spring-integration-sftp</artifactId>
+			<version>5.2.4.RELEASE</version>
+		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
 		<dependency>
@@ -138,7 +144,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-				 	<systemPropertyVariables>
+					<systemPropertyVariables>
 						<property1>test</property1>
 						<property2>${my.value}</property2>
 					</systemPropertyVariables>
@@ -209,6 +215,7 @@
 								<configuration>
 									<executable>src/test/resources/local_database/setup.sh</executable>
 									<environmentVariables>
+										<FTP_HOST>${test.ftp.host}</FTP_HOST>
 										<DB_HOST>${test.db.host}</DB_HOST>
 										<DB_USER>${test.db.user}</DB_USER>
 										<DB_PASSWORD>${test.db.password}</DB_PASSWORD>

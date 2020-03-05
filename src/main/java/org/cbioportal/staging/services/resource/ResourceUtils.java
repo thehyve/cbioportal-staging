@@ -155,7 +155,7 @@ public class ResourceUtils {
     }
 
     public Resource copyResource(Resource destinationDir, InputStreamSource inputResource, String fileName)
-            throws ResourceUtilsException {
+        throws ResourceUtilsException {
         try {
             String fullDestinationPath = trimDir(getFile(destinationDir).getAbsolutePath()) + "/" + trimFile(fileName);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));

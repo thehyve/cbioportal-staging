@@ -17,14 +17,12 @@ package org.cbioportal.staging.services.publish;
 
 import static com.pivovarit.function.ThrowingFunction.sneaky;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.cbioportal.staging.exceptions.PublisherException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +30,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-/*
-    Calls a command when study loading is finished.
- */
 @Component
 public class PublisherServiceImpl implements IPublisherService {
 
@@ -50,7 +45,7 @@ public class PublisherServiceImpl implements IPublisherService {
     private Resource etlWorkingDir;
 
     @Autowired
-    private ResourceUtils utils;
+    IResourceProvider resourceProvider;
 
     public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
 
@@ -64,24 +59,17 @@ public class PublisherServiceImpl implements IPublisherService {
         }
 
         return logFiles.entrySet().stream()
-            .collect(Collectors
-                .toMap(Entry::getKey, sneaky(e -> publishOneFile(e.getValue()))
-                )
-            );
+                .collect(Collectors.toMap(Entry::getKey, sneaky(e -> publishOneFile(e.getValue()))));
     }
 
     private Resource publishOneFile(Resource logFile) throws PublisherException {
         try {
-            Resource initialDir = etlWorkingDir;
-            if (transformationDirectory != null) {
-                initialDir = transformationDirectory;
-            }
-            String fileName = logFile.getURL().toString().replaceFirst(initialDir.getURL().toString(), "");
-            Resource result = utils.copyResource(centralShareLocation, logFile, fileName);
-            return result;
-        } catch (IOException e) {
-            throw new PublisherException("There has been an error getting the etlWorkingDir.", e);
-        } catch (ResourceUtilsException e) {
+            Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
+            String filePathRelative = logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
+            filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/"));
+            Resource remoteDestinationDir = resourceProvider.getResource(centralShareLocation.getURL() + "/" + filePathRelative);
+            return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
+        } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }
     }
