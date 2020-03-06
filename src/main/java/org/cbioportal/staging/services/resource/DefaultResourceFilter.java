@@ -42,8 +42,8 @@ public class DefaultResourceFilter implements IResourceFilter {
     public void init() {
         scanExtractFolders = scanExtractFolders.replaceAll("\\s+", "");
         includedDirs = Stream.of(scanExtractFolders.split(","))
-            .map(e -> utils.trimDir(e))
-            .map(e -> utils.trimFile(e))
+            .map(e -> utils.trimPathRight(e))
+            .map(e -> utils.trimPathLeft(e))
             .collect(Collectors.toList());
     }
 
@@ -70,7 +70,7 @@ public class DefaultResourceFilter implements IResourceFilter {
                 try {
 
                     String path = utils.getURL(resource).toString();
-                    String pathMinusScanLocation = utils.trimFile(path.replace(utils.getURL(scanLocation).toString(), ""));
+                    String pathMinusScanLocation = utils.trimPathLeft(path.replace(utils.getURL(scanLocation).toString(), ""));
 
                     boolean inIgnoreFile = ! resourceIgnoreSet.isEmpty()
                                             && (resourceIgnoreSet.contains(path)

@@ -24,25 +24,26 @@ public class ResourceUtilsTest {
 
     @Test
     public void trimDir_success() {
-        assertEquals("file:/dir", utils.trimDir("file:/dir"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/*"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir/**"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir//"));
-        assertEquals("file:/dir", utils.trimDir("file:/dir//**"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/*"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir/**"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir//"));
+        assertEquals("file:/dir", utils.trimPathRight("file:/dir//**"));
     }
 
     @Test
     public void trimFile_success() {
-        assertEquals("file:/file.txt", utils.trimFile("file:/file.txt"));
-        assertEquals("file.txt", utils.trimFile("/file.txt"));
-        assertEquals("file.txt", utils.trimFile("//file.txt"));
+        assertEquals("file:/file.txt", utils.trimPathLeft("file:/file.txt"));
+        assertEquals("file.txt", utils.trimPathLeft("/file.txt"));
+        assertEquals("file.txt", utils.trimPathLeft("//file.txt"));
     }
 
     @Test
     public void stripResourceTypePrefix_success() {
         assertEquals("/file.txt", utils.stripResourceTypePrefix("file:/file.txt"));
         assertEquals("/file.txt", utils.stripResourceTypePrefix("s3:/file.txt"));
+        assertEquals("/file.txt", utils.stripResourceTypePrefix("file:///file.txt"));
     }
 
     @Test

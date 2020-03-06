@@ -8,14 +8,14 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 /**
  * DefaultResourceProvider
  *
- * Lists resources via expansion of paths. This class works
- * for a local file system and for S3 buckets when using
- * the spring-cloud-aws plugin.
+ * Lists resources via expansion of paths. This class works for a local file
+ * system and for S3 buckets when using the spring-cloud-aws plugin.
  *
  */
 @Component
@@ -24,9 +24,12 @@ public class DefaultResourceProvider implements IResourceProvider {
     @Autowired
     protected ResourceUtils utils;
 
+    @Autowired
+    private ResourcePatternResolver resourceResolver;
+
     @Override
     public Resource getResource(String url) throws ResourceCollectionException {
-        return utils.getResource(url);
+		return resourceResolver.getResource(url);
     }
 
     @Override
@@ -43,7 +46,7 @@ public class DefaultResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive, boolean filterDirs) throws ResourceCollectionException {
 
         try {
-            String path = utils.trimDir(utils.getURL(dir).toString());
+            String path = utils.trimPathRight(utils.getURL(dir).toString());
             String wildCardPath = path + "/*";
             if (recursive) {
                 wildCardPath += "*/*";

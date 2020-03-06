@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.pivovarit.function.ThrowingPredicate;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
@@ -33,30 +35,81 @@ public class ResourceUtils {
     @Autowired
     private ResourcePatternResolver resourceResolver;
 
-    public String trimDir(String dir) {
+    /**
+     * Remove trailing slashes and asterixes from the right end of a path.
+     *
+     * Examples:
+     * - '/test/' becomes '/test'
+     * - '/test//**' becomes '/test'
+     *
+     * @param dir path
+     * @return String trimmed path
+     */
+    public String trimPathRight(String dir) {
         return dir.replaceFirst("\\/*\\**$", "");
     }
 
-    public String trimFile(String dir) {
+    /**
+     * Remove trailing slashes from the left end of a path.
+     *
+     * Examples:
+     * - '/test/' becomes 'test/'
+     * - '//test/' becomes 'test/'
+     *
+     * @param dir  path
+     * @return String  trimmed path
+     */
+    public String trimPathLeft(String dir) {
         return dir.replaceFirst("^\\/*", "");
     }
 
+    /**
+     * Remove protocol prefix from URL string.
+     *
+     * Examples:
+     * - 'file:/test/' becomes '/test/'
+     * - 'file:///test/' becomes '/test/'
+     *
+     * @param dir
+     * @return String
+     */
     public String stripResourceTypePrefix(String dir) {
-        return dir.replaceFirst("^.*:", "");
+        String s = dir.replaceFirst("^.*:", "");
+        return s.replaceFirst("^\\/+", "/");
     }
 
+    /**
+     * Create a timestamp string.
+     *
+     * Example: pattern "yyyyMMdd-HHmmss" returns '20200303-15:36:01'
+     *
+     * @param pattern  SimpleDateFormat pattern
+     * @return String  formatted timestamp
+     */
     public String getTimeStamp(String pattern) {
         return new SimpleDateFormat(pattern).format(new Date());
     }
 
+    /**
+     * Filter Resources based on match with pre- and suffix string.
+     *
+     * @param resources  Resources be filtered
+     * @param prefixPattern  String that must be present at the start of a resource filename
+     * @param extensionPattern  String that must be present at the end of a resource filename
+     * @return Resource[]  list of fitered Resources that match pre- and extensionPattern
+     */
     public Resource[] filterFiles(Resource[] resources, String prefixPattern, String extensionPattern) {
         String filePattern = ".*" + prefixPattern + ".*" + extensionPattern + "$";
         return Stream.of(resources).filter(n -> n.getFilename().matches(filePattern)).toArray(Resource[]::new);
     }
 
+    /**
+     * Return the Resource with the most recent creation date.
+     *
+     * @param resources  Resources be filtered
+     * @return Resource  Resource with the most recent creation date
+     */
     public Resource getMostRecent(Resource[] resources) {
-        // Stream.of(resources).max(ThrowingBiFunction.unchecked((a,b) ->
-        // a.lastModified() - b.lastModified()));
         Resource file = null;
         try {
             for (Resource resource : resources) {
@@ -70,19 +123,25 @@ public class ResourceUtils {
         return file;
     }
 
+    /**
+     * Filter Resources to include directories exclusively.
+     *
+     * @param resources  Resources be filtered
+     * @return Resource[]  List of directory Resources
+     */
     public Resource[] extractDirs(Resource[] resources) {
-        // Stream.of(resources).filter(ThrowingFunction.unchecked(n ->
-        // n.getFile().isDirectory())).toArray(Resource[]::new);
-        return Stream.of(resources).filter(n -> {
-            try {
-                return n.getFile().isDirectory();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return false;
-        }).toArray(Resource[]::new);
+        return Stream.of(resources)
+            .filter(ThrowingPredicate.unchecked(n -> n.getFile().isDirectory()))
+            .toArray(Resource[]::new);
     }
 
+    /**
+     * Read the contents of a cBioPortal meta_study.txt file into a Map.
+     *
+     * @param studyMetaFile  Resource pointing to a meta_study.txt file
+     * @return Map<String, String>  Key-value pairs of entries in meta_study.txt file
+     * @throws ResourceUtilsException
+     */
     public Map<String, String> readMetaFile(Resource studyMetaFile) throws ResourceUtilsException {
         BufferedReader bufferedReader = null;
         Map<String, String> entries = new HashMap<>();
@@ -108,15 +167,22 @@ public class ResourceUtils {
     }
 
     /**
+     * Identify shared path to collection of Resources.
+     *
      * This method gets the "base path" of all entries. I.e. it assumes all entries
      * share a common parent path on the S3 or other resource folder where they are
      * originally shared. So for the following list of files configured in the list
-     * of studies yaml as below: study1: - folder/study1path/fileA.txt -
-     * folder/study1path/fileB.txt - folder/study1path/mafs/maf1.maf -
-     * folder/study1path/mafs/mafn.maf
+     * of studies yaml as below:
+     *
+     * study1:
+     * - folder/study1path/fileA.txt
+     * - folder/study1path/fileB.txt
+     * - folder/study1path/mafs/maf1.maf
+     * - folder/study1path/mafs/mafn.maf
      *
      * this method will return "folder/study1path".
      *
+     * @param paths  List of Resources with common base path
      * @throws ConfigurationException
      */
     public String getBasePath(List<String> paths) throws ConfigurationException {
@@ -146,6 +212,17 @@ public class ResourceUtils {
         return result;
     }
 
+    /**
+     * Copy a directory to a new location preserving the file dates.
+     *
+     * This method copies the specified directory and all its child directories
+     * and files to the specified destination.The destination is the new location
+     * and name of the directory.
+     *
+     * @param sourceDir  Directory to be copied
+     * @param targetDir  Name and path to new directory
+     * @throws ResourceUtilsException
+     */
     public void copyDirectory(Resource sourceDir, Resource targetDir) throws ResourceUtilsException {
         try {
             FileUtils.copyDirectory(sourceDir.getFile(), targetDir.getFile());
@@ -154,10 +231,19 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Copy a file to a new location.
+     *
+     * @param destinationDir  Resource pointing to directory where new file should be created
+     * @param inputResource  Object
+     * @param fileName
+     * @return Resource
+     * @throws ResourceUtilsException
+     */
     public Resource copyResource(Resource destinationDir, InputStreamSource inputResource, String fileName)
         throws ResourceUtilsException {
         try {
-            String fullDestinationPath = trimDir(getFile(destinationDir).getAbsolutePath()) + "/" + trimFile(fileName);
+            String fullDestinationPath = trimPathRight(getFile(destinationDir).getAbsolutePath()) + "/" + trimPathLeft(fileName);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
 
             WritableResource localFile = getWritableResource(fullDestinationPath);
@@ -169,6 +255,14 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Create all subdirectories under a file or directory.
+     *
+     * Only works on a local file system.
+     *
+     * @param path  File representing a path.
+     * @throws ResourceUtilsException
+     */
     public void ensureDirs(File path) throws ResourceUtilsException {
         if (path.isFile()) {
             String pathStr = path.getAbsolutePath();
@@ -180,18 +274,33 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Create all subdirectories under a file or directory.
+     *
+     * @param path  Resource representing a path.
+     * @throws ResourceUtilsException
+     */
     public void ensureDirs(Resource path) throws ResourceUtilsException {
         ensureDirs(getFile(path));
     }
 
+    /**
+     * Create all subdirectories under a file or directory.
+     *
+     * @param path  Resource representing a path.
+     * @throws ResourceUtilsException
+     */
     public void ensureDirs(String path) throws ResourceUtilsException {
 		ensureDirs(new File(path));
     }
 
-	public Resource getResource(String path) {
-		return resourceResolver.getResource(path);
-    }
-
+    /**
+     * Resolve the given location pattern into Resource objects.
+     *
+     * @param path   location pattern to resolve (e.g, file:///basedir/*)
+     * @return Resource[]  Resource objects matching the location pattern
+     * @throws ResourceUtilsException
+     */
     public Resource[] getResources(String path) throws ResourceUtilsException {
 		try {
             return resourceResolver.getResources(path);
@@ -200,21 +309,44 @@ public class ResourceUtils {
         }
     }
 
-    // TODO writable resources are hard coded to be on the local system
+    /**
+     * Create WritableResource object from URL string.
+     *
+     * @param path  URL string (e.g., file:///file.txt)
+     * @return WritableResource
+     */
+    // XXX writable resources are hard coded to be on the local system
     // if needed (writable remote files) update implementation.
     public WritableResource getWritableResource(String path) {
         return new FileSystemResource(path);
 	}
 
+    /**
+     * Create WritableResource object from Resource object.
+     *
+     * @param resource  Resource object to be converted in writable form
+     * @return WritableResource
+     * @throws ResourceUtilsException
+     */
     public WritableResource getWritableResource(Resource resource) throws ResourceUtilsException {
         return new FileSystemResource(getFile(resource));
     }
 
-	public Resource createFileResource(Resource basePath, String ... fileElements)
+    /**
+     * Create a file Resource based on a base directory and strings concatenated with "/".
+     *
+     * Example: ["file:/basedir", "subdir", "file.txt"] will become Resource["file:/basedir/subdir/file.txt"]
+     *
+     * @param basePath  Resource representing the base directory
+     * @param fileElements  Strings representing subdir and files
+     * @return Resource
+     * @throws ResourceUtilsException
+     */
+    public Resource createFileResource(Resource basePath, String ... fileElements)
             throws ResourceUtilsException {
         try {
-            String base = trimDir(basePath.getURL().toString());
-            Resource res = getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")));
+            String base = trimPathRight(basePath.getURL().toString());
+            Resource res = resourceResolver.getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")));
             res.getFile().createNewFile();
             return res;
         } catch (IOException e) {
@@ -222,11 +354,23 @@ public class ResourceUtils {
         }
     }
 
-	public Resource createDirResource(Resource basePath, String ... fileElements)
+    /**
+     * Create a directory Resource based on a base directory and strings concatenated with "/".
+     *
+     * Makes sure the path to the new Resource exists on the file system.
+     *
+     * Example: ["file:/basedir", "subdir1", "dir"] will become Resource["file:/basedir/subdir/dir/"]
+     *
+     * @param basePath  Resource representing the base directory
+     * @param fileElements  Strings representing directories
+     * @return Resource
+     * @throws ResourceUtilsException
+     */
+    public Resource createDirResource(Resource basePath, String ... fileElements)
             throws ResourceUtilsException {
         try {
-            String base = trimDir(basePath.getURL().toString());
-            Resource res = getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
+            String base = trimPathRight(basePath.getURL().toString());
+            Resource res = resourceResolver.getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
             ensureDirs(res);
             return res;
         } catch (IOException e) {
@@ -234,10 +378,23 @@ public class ResourceUtils {
         }
     }
 
-	public Resource createDirResource(Resource dir) throws ResourceUtilsException {
+    /**
+     * Create a directory structure on the file system to Resource object.
+     *
+     * @param dir  Resource representing the directory
+     * @return Resource
+     * @throws ResourceUtilsException
+     */
+    public Resource createDirResource(Resource dir) throws ResourceUtilsException {
         return createDirResource(dir, "");
     }
 
+    /**
+     * Delete a file or directory on the file system.
+     *
+     * @param res  Resource to be deleted
+     * @throws ResourceUtilsException
+     */
     public void deleteResource(Resource res) throws ResourceUtilsException {
         if (res.exists()) {
             try {
@@ -248,14 +405,28 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Check whether Resource represents a file (not a directory).
+     *
+     * @param resource
+     * @return boolean
+     * @throws ResourceUtilsException
+     */
     public boolean isFile(Resource resource) throws ResourceUtilsException {
         try {
-            return resource.getFile().isFile();
+            return resource.isFile() && resource.getFile().isFile();
         } catch (IOException e) {
-            throw new ResourceUtilsException("Cannot het File from Resource object: " + resource.getDescription());
+            throw new ResourceUtilsException("Cannot get File from Resource object: " + resource.getDescription());
         }
     }
 
+    /**
+     * Get URL from Resource object.
+     *
+     * @param resource
+     * @return URL
+     * @throws ResourceUtilsException
+     */
     public URL getURL(Resource resource) throws ResourceUtilsException {
         try {
             return resource.getURL();
@@ -264,6 +435,12 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Get File from Resource object.
+     * @param resource
+     * @return File
+     * @throws ResourceUtilsException
+     */
     public File getFile(Resource resource) throws ResourceUtilsException {
         try {
             return resource.getFile();
@@ -272,11 +449,27 @@ public class ResourceUtils {
         }
     }
 
+    /**
+     * Write lines to a Resource on the local file system.
+     *
+     * @param file  File on the local filesystem where lines will be written to
+     * @param lines  Strings that will be written as lines to the file
+     * @param append  When 'true' lines will be appended to the file
+     * @throws ResourceUtilsException
+     */
     public void writeToFile(WritableResource file, Collection<String> lines, boolean append) throws ResourceUtilsException {
         String line = lines.stream().collect(Collectors.joining("\n")) + "\n";
         writeToFile(file, line, append);
     }
 
+    /**
+     * Write a String to a Resource on the local file system.
+     *
+     * @param file  File on the local filesystem where lines will be written to
+     * @param content  String that will be written to the file
+     * @param append  When 'true' the conent will be appended to the file
+     * @throws ResourceUtilsException
+     */
     public void writeToFile(WritableResource file, String content, boolean append) throws ResourceUtilsException {
         try {
             FileWriter writer = new FileWriter(file.getFile(), append);

@@ -99,7 +99,7 @@ public class YamlFileStudyResourceStrategy implements IStudyResourceStrategy {
     }
 
     private String filePath(String filePath) {
-        String trimmedScanLocation = utils.trimDir(scanLocation);
+        String trimmedScanLocation = utils.trimPathRight(scanLocation);
         String trimmedFilePath = filePath.replaceFirst("^\\/+", "");
         return trimmedScanLocation + "/" + trimmedFilePath;
     }

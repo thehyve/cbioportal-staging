@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FtpUtils {
 
-    @Value("${ftp.host}")
+    @Value("${ftp.host:}")
     private String ftpHost;
 
     @Autowired
@@ -37,7 +37,7 @@ public class FtpUtils {
         if (!pathStr.startsWith("ftp:/"))
             throw new FtpUtilsException("Resource does not point to an ftp resource.");
 
-        pathStr = utils.trimFile(utils.stripResourceTypePrefix(pathStr));
+        pathStr = utils.trimPathLeft(utils.stripResourceTypePrefix(pathStr));
 
         if (!pathStr.startsWith(ftpHost))
             throw new FtpUtilsException("Resource path does not start with ftp.host specified in properties file.");

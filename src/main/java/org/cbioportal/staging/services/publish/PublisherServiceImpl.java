@@ -75,7 +75,7 @@ public class PublisherServiceImpl implements IPublisherService {
             } else {
                 filePathRelative = "";
             }
-            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimDir(centralShareLocation.getURL().toString()) + "/" + filePathRelative);
+            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimPathRight(centralShareLocation.getURL().toString()) + "/" + filePathRelative);
             return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
         } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);

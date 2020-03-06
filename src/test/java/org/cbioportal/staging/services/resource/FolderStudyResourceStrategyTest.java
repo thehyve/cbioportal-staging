@@ -49,7 +49,7 @@ public class FolderStudyResourceStrategyTest {
         Map<String, String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
+        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
@@ -70,7 +70,7 @@ public class FolderStudyResourceStrategyTest {
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
         when(utils.readMetaFile(any())).thenReturn(metaFileContents);
         when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimDir(anyString())).thenReturn("file:/study_folder");
+        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 

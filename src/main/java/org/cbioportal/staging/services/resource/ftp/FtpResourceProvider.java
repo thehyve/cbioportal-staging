@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Primary
 public class FtpResourceProvider extends DefaultResourceProvider {
 
-    @Value("${sftp.host:localhost}")
+    @Value("${ftp.host}")
     private String sftpHost;
 
     @Autowired
