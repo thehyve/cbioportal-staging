@@ -144,7 +144,7 @@ public class IntegrationTestSFTP {
         Resource[] remoteFiles = ftpProvider.list(ftpProvider.getResource("ftp:///localhost/share"), true);
         assert(has(remoteFiles, "test_study_es_0_yaml_loading_log.txt"));
         assert(has(remoteFiles, "test_study_es_0_yaml_validation_log.txt"));
-        assert(has(remoteFiles, "test_study_es_0_yaml_validation_report.txt"));
+        assert(has(remoteFiles, "test_study_es_0_yaml_validation_report.html"));
     }
 
     private boolean has(Resource[] resources, String fileName) {
