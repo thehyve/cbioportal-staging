@@ -15,6 +15,7 @@ import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.FtpUtilsException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +43,11 @@ public class FtpResourceProviderTest {
     @SpyBean
     private FtpUtils ftpUtils;
 
-    @Test
-    public void testList_success() throws ResourceCollectionException, FtpUtilsException, IOException {
+    Resource scanDir = TestUtils.createMockResource("ftp:/host/test", 0);
+    List<SftpFileInfo> filesInfo;
+
+    @Before
+    public void init() throws FtpUtilsException {
 
         doReturn("/test").when(ftpUtils).remotePath(any());
 
@@ -54,55 +58,29 @@ public class FtpResourceProviderTest {
 
         SftpFileInfo fileInfo2 = mock(SftpFileInfo.class);
         when(fileInfo2.getRemoteDirectory()).thenReturn("/root_dir/");
-        when(fileInfo2.getFilename()).thenReturn("file2.txt");
-        when(fileInfo2.isDirectory()).thenReturn(false);
+        when(fileInfo2.getFilename()).thenReturn("dir");
+        when(fileInfo2.isDirectory()).thenReturn(true);
 
-        List<SftpFileInfo> filesInfo = new ArrayList<>();
+        filesInfo = new ArrayList<>();
         filesInfo.add(fileInfo1);
         filesInfo.add(fileInfo2);
 
         when(ftpGateway.lsDir(anyString())).thenReturn(filesInfo);
+    }
 
-        Resource scanDir = TestUtils.createMockResource("ftp:/host/test", 0);
+    @Test
+    public void testList_success() throws ResourceCollectionException, FtpUtilsException, IOException {
         Resource[] res = provider.list(scanDir, false, false);
-
         assert(res.length == 2);
         assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURL().toString());
-        assertEquals("ftp:/host/root_dir/file2.txt", res[1].getURL().toString());
-
+        assertEquals("ftp:/host/root_dir/dir", res[1].getURL().toString());
     }
 
     @Test
     public void testList_exludeDirs() throws ResourceCollectionException, FtpUtilsException, IOException {
-
-        doReturn("/test").when(ftpUtils).remotePath(any());
-
-        SftpFileInfo fileInfo1 = mock(SftpFileInfo.class);
-        when(fileInfo1.getRemoteDirectory()).thenReturn("/root_dir/");
-        when(fileInfo1.getFilename()).thenReturn("file1.txt");
-        when(fileInfo1.isDirectory()).thenReturn(false);
-
-        SftpFileInfo fileInfo2 = mock(SftpFileInfo.class);
-        when(fileInfo2.getRemoteDirectory()).thenReturn("/root_dir/");
-        when(fileInfo2.getFilename()).thenReturn("file2.txt");
-        when(fileInfo2.isDirectory()).thenReturn(true);
-
-        List<SftpFileInfo> filesInfo = new ArrayList<>();
-        filesInfo.add(fileInfo1);
-        filesInfo.add(fileInfo2);
-
-        when(ftpGateway.lsDir(anyString())).thenReturn(filesInfo);
-
-        Resource scanDir = TestUtils.createMockResource("ftp:/host/test", 0);
         Resource[] res = provider.list(scanDir, false, true);
-
         assert(res.length == 1);
         assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURL().toString());
-
-    }
-
-    @Test
-    public void testList_excludeDirs() throws ResourceCollectionException, FtpUtilsException {
     }
 
 }

@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(value="ftp.enable", havingValue ="true")
 @Primary
-// TODO remove code duplication with DefaultResourceProvider
 public class FtpResourceProvider extends DefaultResourceProvider {
 
     @Value("${sftp.host:localhost}")
