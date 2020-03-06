@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.services.resource.IResourceProvider;
+import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,9 @@ public class PublisherServiceImpl implements IPublisherService {
     @Autowired
     IResourceProvider resourceProvider;
 
+    @Autowired
+    private ResourceUtils utils;
+
     public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
 
         if (centralShareLocation == null) {
@@ -66,8 +70,12 @@ public class PublisherServiceImpl implements IPublisherService {
         try {
             Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
             String filePathRelative = logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
-            filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/"));
-            Resource remoteDestinationDir = resourceProvider.getResource(centralShareLocation.getURL() + "/" + filePathRelative);
+            if (filePathRelative.lastIndexOf("/") > -1) {
+                filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/") + 1);
+            } else {
+                filePathRelative = "";
+            }
+            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimDir(centralShareLocation.getURL().toString()) + "/" + filePathRelative);
             return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
         } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);

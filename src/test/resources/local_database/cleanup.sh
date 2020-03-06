@@ -9,6 +9,7 @@ set -o pipefail # pipes fail when partial command fails
 docker exec "$DB_HOST" mysql -u root -p$DB_USER cbioportal < $MYSQL_DUMP
 
 docker stop $DB_HOST 2> /dev/null
+docker stop $FTP_HOST 2> /dev/null
 rm -rf /tmp/staging-integration-test 2> /dev/null || true
 
 exit 0

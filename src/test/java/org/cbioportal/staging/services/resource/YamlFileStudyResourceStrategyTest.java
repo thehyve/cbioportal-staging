@@ -24,15 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.yaml.snakeyaml.Yaml;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = { "scan.location=file:/tmp" })
 @SpringBootTest(
-    classes = { YamlFileStudyResourceStrategy.class, ResourceUtils.class },
-    properties = "scan.studyfiles.strategy=yaml"
+    classes = {YamlFileStudyResourceStrategy.class, DefaultResourceProvider.class, ResourceUtils.class },
+    properties = {"scan.studyfiles.strategy=yaml", "scan.location=file:/tmp"}
 )
 public class YamlFileStudyResourceStrategyTest {
 
@@ -68,7 +66,6 @@ public class YamlFileStudyResourceStrategyTest {
         Optional<Study> study1 = Stream.of(result).filter(s -> s.getStudyId().equals("study1")).findFirst();
         Optional<Study> study2 = Stream.of(result).filter(s -> s.getStudyId().equals("study2")).findFirst();
 
-
         assert(study1.isPresent());
         assertEquals(2, study1.get().getResources().length);
         List<String> filesStudy1 = Stream.of(study1.get().getResources())
@@ -76,8 +73,6 @@ public class YamlFileStudyResourceStrategyTest {
             .collect(Collectors.toList());
         assert(filesStudy1.contains("file:/tmp/files/dummy1.txt"));
         assert(filesStudy1.contains("file:/tmp/files/dummy2.txt"));
-
-
 
         assert(study2.isPresent());
         assertEquals(2, study2.get().getResources().length);

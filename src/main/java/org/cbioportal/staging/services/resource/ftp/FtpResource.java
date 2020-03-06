@@ -27,7 +27,7 @@ public class FtpResource extends UrlResource {
     @Override
     public InputStream getInputStream() throws IOException {
         try {
-            return gateway.getStream(utils.remotePath(this));
+            return gateway.getStream(utils.remotePath(this.getURL()));
         } catch (Exception e) {
             throw new IOException(e);
         }

@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource.ftp;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Stream;
@@ -9,8 +10,7 @@ import com.pivovarit.function.ThrowingPredicate;
 
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.services.resource.IResourceProvider;
-import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.DefaultResourceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,16 +23,13 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value="ftp.enable", havingValue ="true")
 @Primary
 // TODO remove code duplication with DefaultResourceProvider
-public class FtpResourceProvider implements IResourceProvider {
+public class FtpResourceProvider extends DefaultResourceProvider {
 
     @Value("${sftp.host:localhost}")
     private String sftpHost;
 
     @Autowired
     private FtpUtils ftpUtils;
-
-    @Autowired
-    private ResourceUtils utils;
 
     @Autowired
     private IFtpGateway ftpGateway;
@@ -47,21 +44,11 @@ public class FtpResourceProvider implements IResourceProvider {
     }
 
     @Override
-    public Resource[] list(Resource dir) throws ResourceCollectionException {
-        return list(dir, false);
-    }
-
-    @Override
-    public Resource[] list(Resource dir, boolean recursive) throws ResourceCollectionException {
-        return list(dir, recursive, false);
-    }
-
-    @Override
     public Resource[] list(Resource dir, boolean recursive, boolean excludeDirs) throws ResourceCollectionException {
 
         try {
 
-            String remoteDir = ftpUtils.remotePath(dir);
+            String remoteDir = ftpUtils.remotePath(dir.getURL());
 
             List<SftpFileInfo> remoteFiles;
             if (recursive) {
@@ -72,12 +59,13 @@ public class FtpResourceProvider implements IResourceProvider {
 
             Stream<SftpFileInfo> remoteFilesStream = remoteFiles.stream();
             if (excludeDirs)
-                remoteFilesStream.filter(ThrowingPredicate.sneaky(e -> !e.isDirectory()));
+                remoteFilesStream = remoteFilesStream.filter(ThrowingPredicate.sneaky(e -> ! e.isDirectory()));
 
-            Stream<Resource> resourceStream = remoteFilesStream.map(ftpUtils::createRemoteResourcePath)
-                                                            .map(ThrowingFunction.sneaky(r -> new FtpResource(r, ftpGateway, ftpUtils)));
+            return remoteFilesStream
+                .map(ThrowingFunction.sneaky(ftpUtils::createRemoteURL))
+                .map(ThrowingFunction.sneaky(r -> new FtpResource(r, ftpGateway, ftpUtils)))
+                .toArray(Resource[]::new);
 
-            return resourceStream.toArray(Resource[]::new);
         } catch (Exception e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
         }
@@ -86,12 +74,11 @@ public class FtpResourceProvider implements IResourceProvider {
     @Override
     public Resource copyFromRemote(Resource destinationDir, Resource remoteResource) throws ResourceCollectionException {
         try {
-            if (remoteResource.getInputStream() != null) {
-                return utils.copyResource(destinationDir, remoteResource, remoteResource.getFilename());
+            if (remoteResource.getInputStream() == null) {
+                remoteResource = getResource(remoteResource.getURL().toString());
             }
-
-            return utils.copyResource(destinationDir, getResource(remoteResource.getURL().toString()), remoteResource.getFilename());
-        } catch (Exception e) {
+            return super.copyFromRemote(destinationDir, remoteResource);
+        } catch (IOException e) {
             throw new ResourceCollectionException("Cannot copy resource from remote.", e);
         }
     }
@@ -102,11 +89,11 @@ public class FtpResourceProvider implements IResourceProvider {
         try {
             String remoteFilePath = ftpGateway.put(
                 IOUtils.toByteArray(localResource.getInputStream()),
-                ftpUtils.remotePath(destinationDir),
+                ftpUtils.remotePath(destinationDir.getURL()),
                 localResource.getFilename()
             );
 
-            return getResource(ftpUtils.createRemoteResourcePath(remoteFilePath));
+            return getResource(ftpUtils.createRemoteURL(remoteFilePath).toString());
         } catch (Exception e) {
             throw new ResourceCollectionException("Cannot copy resource to remote.", e);
         }

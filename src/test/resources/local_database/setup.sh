@@ -20,8 +20,8 @@ download_db_seed() {
 build_and_run_database() {
     # create local database from with cbioportal db and seed data
     download_db_seed
-    docker stop $DB_HOST && docker rm $DB_HOST
-    docker network create cbio-net >/dev/null || true
+    docker stop $DB_HOST >/dev/null || true && docker rm $DB_HOST >/dev/null || true
+    docker network create cbio-net 2>/dev/null || true
     docker run -d \
         --name=$DB_HOST \
         --net=cbio-net \
@@ -33,17 +33,17 @@ build_and_run_database() {
         -v "$MYSQL_DATA_DIR:/var/lib/mysql/" \
         -v "/tmp/staging-integration-test/cgds.sql:/docker-entrypoint-initdb.d/cgds.sql:ro" \
         -v "/tmp/staging-integration-test/seed.sql.gz:/docker-entrypoint-initdb.d/seed_part1.sql.gz:ro" \
-        mysql:5.7
+        mysql:5.7 1>/dev/null
 
-    while ! docker run --rm --net=cbio-net mysql:5.7 mysqladmin ping -u $DB_USER -p$DB_PASSWORD -h$DB_HOST --silent >/dev/null; do
+    while ! docker run --rm --net=cbio-net mysql:5.7 mysqladmin ping -u $DB_USER -p$DB_PASSWORD -h$DB_HOST --silent 2>/dev/null; do
         echo Waiting for cbioportal database to initialize...
         sleep 1
     done
 }
 
 run_ftp_server() {
-    docker stop $FTP_HOST && docker rm $FTP_HOST
-    docker network create ftp_network --driver bridge >/dev/null || true
+    docker stop $FTP_HOST >/dev/null || true && docker rm $FTP_HOST >/dev/null || true
+    docker network create ftp_network --driver bridge 2>/dev/null || true
     docker run -d \
         --name=$FTP_HOST \
         --net=ftp_network \
@@ -53,7 +53,7 @@ run_ftp_server() {
         -v $TEST_HOME/ftp_server/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
         -v $TEST_HOME/ftp_server/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
         atmoz/sftp \
-        testuser:testuser:1001:100:/share,/studies
+        testuser:testuser:1001:100:/share,/studies 1>/dev/null
 }
 
 migrate_db() {
@@ -76,11 +76,11 @@ run_ftp_server
 
 # Make a dump of the database. It will be used to restore
 # the database ot the initial state when tests have completed.
-docker exec "$DB_HOST" mysqldump -u root -p$DB_USER cbioportal > $MYSQL_DUMP
+docker exec "$DB_HOST" mysqldump -u root -p$DB_USER cbioportal > $MYSQL_DUMP 2>/dev/null
 
 # make test portal.properties available for Java integration test
 cp "$TEST_HOME/local_database/portal.properties" "$WORKING_DIR"
 
-cd -
+cd - 1>/dev/null
 
 exit 0

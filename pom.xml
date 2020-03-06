@@ -236,6 +236,7 @@
 								<configuration>
 									<executable>src/test/resources/local_database/cleanup.sh</executable>
 									<environmentVariables>
+										<FTP_HOST>${test.ftp.host}</FTP_HOST>
 										<DB_HOST>${test.db.host}</DB_HOST>
 										<DB_USER>${test.db.user}</DB_USER>
 										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>

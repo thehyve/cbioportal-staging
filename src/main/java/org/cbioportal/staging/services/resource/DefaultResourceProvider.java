@@ -18,12 +18,11 @@ import org.springframework.stereotype.Component;
  * the spring-cloud-aws plugin.
  *
  */
-// TODO remove code duplication with SftpResourceProvider
 @Component
 public class DefaultResourceProvider implements IResourceProvider {
 
     @Autowired
-    private ResourceUtils utils;
+    protected ResourceUtils utils;
 
     @Override
     public Resource getResource(String url) throws ResourceCollectionException {
