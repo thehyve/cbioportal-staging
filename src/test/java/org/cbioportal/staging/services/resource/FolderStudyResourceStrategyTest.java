@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -54,7 +55,7 @@ public class FolderStudyResourceStrategyTest {
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.length);
-        assert(TestUtils.has(resources, "study_folder"));
+        assertTrue(TestUtils.has(resources, "study_folder"));
     }
 
     @Test
@@ -75,7 +76,7 @@ public class FolderStudyResourceStrategyTest {
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
         assertEquals(1, resources.length);
-        assert(TestUtils.has(resources, "dummy_study_id_1"));
+        assertTrue(TestUtils.has(resources, "dummy_study_id_1"));
     }
 
 }

@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource.ftp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +54,7 @@ public class DefaultResourceProviderTest {
     @Test
     public void testList_success() throws ResourceCollectionException, FtpUtilsException, IOException {
         Resource[] res = provider.list(scanDir, false, false);
-        assert(res.length == 2);
+        assertTrue(res.length == 2);
         assertEquals("file:/scandir/file1.txt", res[0].getURL().toString());
         assertEquals("file:/scandir/dir/", res[1].getURL().toString());
     }
@@ -62,7 +63,7 @@ public class DefaultResourceProviderTest {
     public void testList_exludeDirs() throws ResourceCollectionException, FtpUtilsException, IOException {
         when(resources[1].getFile().isFile()).thenReturn(false);
         Resource[] res = provider.list(scanDir, false, true);
-        assert(res.length == 1);
+        assertTrue(res.length == 1);
         assertEquals("file:/scandir/file1.txt", res[0].getURL().toString());
     }
 

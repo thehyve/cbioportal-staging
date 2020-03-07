@@ -15,6 +15,7 @@
 */
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
@@ -84,11 +85,11 @@ public class ExtractorTest {
 
 		Study[] extractedResources = extractor.run(dummyStudies);
 
-		assert(extractor.errorFiles().isEmpty());
-		assert(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
+		assertTrue(extractor.errorFiles().isEmpty());
+		assertTrue(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
 
 		Study extractedStudy = extractedResources[0];
-		assert(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
+		assertTrue(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
 		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
@@ -117,9 +118,9 @@ public class ExtractorTest {
 
 		Study[] extractedResources = extractor.run(dummyStudies);
 
-		assert(extractor.errorFiles().containsKey("dummy-study"));
-		assert(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
-		assert(extractedResources.length == 0);
+		assertTrue(extractor.errorFiles().containsKey("dummy-study"));
+		assertTrue(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
+		assertTrue(extractedResources.length == 0);
 		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}

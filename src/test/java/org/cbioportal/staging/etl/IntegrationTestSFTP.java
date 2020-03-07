@@ -1,5 +1,6 @@
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -107,6 +108,7 @@ public class IntegrationTestSFTP {
     @After
     public void cleanUp() throws ResourceUtilsException {
         ignoreSet.resetAndDeleteFile();
+        publisherService.clear();
 
         // delete the log files from ftp server
         List<SftpFileInfo> logFiles = ftpGateway.lsDirRecur("/share/");
@@ -123,7 +125,7 @@ public class IntegrationTestSFTP {
 
         boolean exitValue = scheduledScanner.scan();
 
-        assert(exitValue);
+        assertTrue(exitValue);
 
         verify(transformationService, never()).transform(any(), any(), any());
         verify(validatorService, times(1)).validate(any(), any(), any());
@@ -142,9 +144,9 @@ public class IntegrationTestSFTP {
 
         // check files have been published
         Resource[] remoteFiles = ftpProvider.list(ftpProvider.getResource("ftp:///localhost/share"), true);
-        assert(has(remoteFiles, "test_study_es_0_yaml_loading_log.txt"));
-        assert(has(remoteFiles, "test_study_es_0_yaml_validation_log.txt"));
-        assert(has(remoteFiles, "test_study_es_0_yaml_validation_report.html"));
+        assertTrue(has(remoteFiles, "test_study_es_0_yaml_loading_log.txt"));
+        assertTrue(has(remoteFiles, "test_study_es_0_yaml_validation_log.txt"));
+        assertTrue(has(remoteFiles, "test_study_es_0_yaml_validation_report.html"));
     }
 
     private boolean has(Resource[] resources, String fileName) {

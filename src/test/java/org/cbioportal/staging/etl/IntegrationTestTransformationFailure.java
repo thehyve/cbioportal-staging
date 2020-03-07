@@ -1,5 +1,6 @@
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -89,6 +90,7 @@ public class IntegrationTestTransformationFailure {
     @After
     public void cleanUp() throws ResourceUtilsException {
         ignoreSet.resetAndDeleteFile();
+        publisherService.clear();
     }
 
     @Test
@@ -100,7 +102,7 @@ public class IntegrationTestTransformationFailure {
 
         boolean exitValue = scheduledScanner.scan();
 
-        assert(exitValue);
+        assertTrue(exitValue);
 
         verify(transformationService, times(1)).transform(any(), any(), any());
         verify(validatorService, never()).validate(any(), any(), any());

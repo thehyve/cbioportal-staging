@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -66,26 +67,26 @@ public class YamlFileStudyResourceStrategyTest {
         Optional<Study> study1 = Stream.of(result).filter(s -> s.getStudyId().equals("study1")).findFirst();
         Optional<Study> study2 = Stream.of(result).filter(s -> s.getStudyId().equals("study2")).findFirst();
 
-        assert(study1.isPresent());
+        assertTrue(study1.isPresent());
         assertEquals(2, study1.get().getResources().length);
         List<String> filesStudy1 = Stream.of(study1.get().getResources())
             .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
             .collect(Collectors.toList());
-        assert(filesStudy1.contains("file:/tmp/files/dummy1.txt"));
-        assert(filesStudy1.contains("file:/tmp/files/dummy2.txt"));
+        assertTrue(filesStudy1.contains("file:/tmp/files/dummy1.txt"));
+        assertTrue(filesStudy1.contains("file:/tmp/files/dummy2.txt"));
 
-        assert(study2.isPresent());
+        assertTrue(study2.isPresent());
         assertEquals(2, study2.get().getResources().length);
         List<String> filesStudy2 = Stream.of(study2.get().getResources())
             .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
             .collect(Collectors.toList());
-        assert(filesStudy2.contains("file:/tmp/files/dummy3.txt"));
-        assert(filesStudy2.contains("file:/tmp/files/dummy4.txt"));
+        assertTrue(filesStudy2.contains("file:/tmp/files/dummy3.txt"));
+        assertTrue(filesStudy2.contains("file:/tmp/files/dummy4.txt"));
     }
 
     @Test
     public void testResolveResources_emptyArg() throws ResourceCollectionException {
-        assert(resourceStrategy.resolveResources(new Resource[0]).length == 0);
+        assertTrue(resourceStrategy.resolveResources(new Resource[0]).length == 0);
     }
 
 }

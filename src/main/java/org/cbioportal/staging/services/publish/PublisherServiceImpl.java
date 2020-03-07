@@ -15,11 +15,13 @@
 */
 package org.cbioportal.staging.services.publish;
 
-import static com.pivovarit.function.ThrowingFunction.sneaky;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.services.resource.IResourceProvider;
@@ -51,6 +53,8 @@ public class PublisherServiceImpl implements IPublisherService {
     @Autowired
     private ResourceUtils utils;
 
+    private List<Resource> publishedFiles = new ArrayList<>();
+
     public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
 
         if (centralShareLocation == null) {
@@ -62,8 +66,12 @@ public class PublisherServiceImpl implements IPublisherService {
             throw new PublisherException("Argument 'logFiles' cannot be null.");
         }
 
-        return logFiles.entrySet().stream()
-                .collect(Collectors.toMap(Entry::getKey, sneaky(e -> publishOneFile(e.getValue()))));
+        Map<String, Resource> files = logFiles.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, ThrowingFunction.sneaky(e -> publishOneFile(e.getValue()))));
+
+        publishedFiles.addAll(files.values());
+
+        return files;
     }
 
     private Resource publishOneFile(Resource logFile) throws PublisherException {
@@ -80,6 +88,14 @@ public class PublisherServiceImpl implements IPublisherService {
         } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);
         }
+    }
+
+    public List<Resource> getPublishedFiles() {
+        return publishedFiles;
+    }
+
+    public void clear() {
+        publishedFiles.clear();
     }
 
 }

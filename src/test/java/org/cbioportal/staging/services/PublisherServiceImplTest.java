@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doReturn;
@@ -68,7 +69,7 @@ public class PublisherServiceImplTest {
         verify(resourceProvider).copyToRemote(remoteDestinationDir.capture(), eq(fakeLogFile));
         assertEquals("file:/fake-share/sub_dir/", remoteDestinationDir.getValue().getURL().toString());
 
-        assert(publishedLogFiles.containsKey("dummy_study"));
+        assertTrue(publishedLogFiles.containsKey("dummy_study"));
         assertEquals(fakePublishedLogFile, publishedLogFiles.get("dummy_study"));
 
     }

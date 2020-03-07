@@ -1,6 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -63,7 +64,7 @@ public class FolderStudyVersionResourceStrategyTest {
         Study[] outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
 
         assertEquals(1, outResult.length);
-        assert(TestUtils.has(outResult, "study1"));
+        assertTrue(TestUtils.has(outResult, "study1"));
         assertEquals("timestamp",  outResult[0].getTimestamp());
         assertEquals("version1",  outResult[0].getVersion());
         assertEquals(2, outResult[0].getResources().length);
@@ -96,7 +97,7 @@ public class FolderStudyVersionResourceStrategyTest {
         Study[] outResult = folderStudyVersionResourceStrategy.resolveResources(providedResources);
 
         assertEquals(1, outResult.length);
-        assert(TestUtils.has(outResult, "study_1_meta_study_id"));
+        assertTrue(TestUtils.has(outResult, "study_1_meta_study_id"));
         assertEquals("timestamp",  outResult[0].getTimestamp());
         assertEquals("version1",  outResult[0].getVersion());
         assertEquals(2, outResult[0].getResources().length);

@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -102,7 +103,7 @@ public class ScheduledScannerTest {
         boolean exitStatus = scheduledScanner.scan();
 
         verify(reportingService, never()).reportGenericError(anyString(), any());
-        assert(exitStatus);
+        assertTrue(exitStatus);
     }
 
     @Test
