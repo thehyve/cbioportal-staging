@@ -16,7 +16,6 @@
 package org.cbioportal.staging.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -97,7 +96,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("timestamp"), eq("studyId"))).thenReturn(expectedStudyDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyStub);
 
@@ -115,7 +114,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("studyId"), eq("version"))).thenReturn(expectedStudyDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyStub);
 
@@ -134,7 +133,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("studyId"), eq("timestamp"))).thenReturn(expectedStudyDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyStub);
 
@@ -175,7 +174,7 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("timestamp"), eq("studyId"))).thenReturn(transDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
 
 		Resource transformedDir = directoryCreator.createTransformedStudyDir(studyStub, untransformedDir);
 
@@ -192,7 +191,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("studyId"), eq("version"))).thenReturn(transDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir(studyStub, untransformedDir);
 
@@ -210,7 +209,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), eq("studyId"), eq("timestamp"))).thenReturn(transDir);
+		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir(studyStub, untransformedDir);
 

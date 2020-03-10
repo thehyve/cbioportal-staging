@@ -42,14 +42,14 @@ public class Loader {
 
     private boolean areStudiesLoaded;
 
-    final private Map<String, Resource> logFiles = new HashMap<>();
+    final private Map<Study, Resource> logFiles = new HashMap<>();
 
-    Map<String, ExitStatus> load(final Study[] studies) throws LoaderException {
+    Map<Study, ExitStatus> load(final Study[] studies) throws LoaderException {
 
         areStudiesLoaded = false;
         logFiles.clear();
 
-        final Map<String, ExitStatus> loadResults = new HashMap<String, ExitStatus>();
+        final Map<Study, ExitStatus> loadResults = new HashMap<Study, ExitStatus>();
         try {
             for (final Study study: studies) {
 
@@ -59,15 +59,15 @@ public class Loader {
                 final Resource studyPath = study.getStudyDir();
                 Resource logFile;
                 logFile = utils.createFileResource(studyPath, studyId + "_loading_log.txt");
-                logFiles.put(studyId+" loading log", logFile);
+                logFiles.put(study, logFile);
                 ExitStatus loadingStatus = loaderService.load(studyPath, logFile);
                 //Add loading result for the email loading report
                 if (loadingStatus == ExitStatus.SUCCESS) {
-                    loadResults.put(studyId, ExitStatus.SUCCESS);
+                    loadResults.put(study, ExitStatus.SUCCESS);
                     areStudiesLoaded = true;
                     logger.info("Loading of study "+studyId+" finished successfully.");
                 } else {
-                    loadResults.put(studyId, ExitStatus.ERROR);
+                    loadResults.put(study, ExitStatus.ERROR);
                     logger.error("Loading process of study "+studyId+" failed.");
                 }
             }
@@ -77,7 +77,7 @@ public class Loader {
         return loadResults;
     }
 
-    Map<String, Resource> getLogFiles() {
+    Map<Study, Resource> getLogFiles() {
         return logFiles;
     }
 

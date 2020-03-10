@@ -10,10 +10,13 @@ import java.util.stream.Collectors;
 
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -29,10 +32,16 @@ public class LogMessageUtils {
     private String studyCuratorEmails;
 
 	@Value("${scan.location}")
-	private String scanLocation;
+    private String scanLocation;
+    
+    @Value("${central.share.location.web.address:}")
+    private String centralShareLocationWebAddress;
 
 	@Autowired
-	private Configuration freemarkerConfig;
+    private Configuration freemarkerConfig;
+    
+    @Autowired
+	private IDirectoryCreator directoryCreator;
 
 	public String messageStudyFileNotFound(String template, Map<String, List<String>> failedStudies, Integer timeRetry) throws ReporterException {
         try {
@@ -50,18 +59,66 @@ public class LogMessageUtils {
 		}
 	}
 
-	public String messageTransformedStudies(String template, Map<String,ExitStatus> transformedStudies, Map<String,String> filesPaths) throws ReporterException {
+	public String messageSummaryStudies(String template, Study study, String serverAlias,
+        ExitStatus transformerStatus, Resource transformerLog, ExitStatus validatorStatus, Resource validatorLog, 
+        Resource validatorReport, ExitStatus loaderStatus, Resource loaderLog) throws ReporterException {
+
+            String intermediatePath = directoryCreator.getIntermediatePath(study);
+            String transformerLogPath = "";
+            if (transformerLog != null) {
+                transformerLogPath =  centralShareLocationWebAddress + "/" + intermediatePath + "/" + transformerLog.getFilename();
+            }
+            String validatorLogPath = "";
+            if (validatorLog != null) {
+                validatorLogPath = centralShareLocationWebAddress + "/" + intermediatePath + "/" +  validatorLog.getFilename();
+            }
+            String validatorReportPath = "";
+            if (validatorReport != null) {
+                validatorReportPath = centralShareLocationWebAddress + "/" + intermediatePath + "/" + validatorReport.getFilename();
+            }
+            String loaderLogPath = "";
+            if (loaderLog != null) {
+                loaderLogPath = centralShareLocationWebAddress + "/" + intermediatePath + "/" +  loaderLog.getFilename();
+            }
+            String transformerOutcome = "null";
+            if (transformerStatus != null) {
+                transformerOutcome = transformerStatus.toString();
+            }
+            String validatorOutcome = "null";
+            if (validatorStatus != null) {
+                validatorOutcome = validatorStatus.toString();
+            }
+            String loaderOutcome = "null";
+            if (loaderStatus != null) {
+                loaderOutcome = loaderStatus.toString();
+            }
+            String summaryOutcome = loaderOutcome;
+            if (summaryOutcome == "null") {
+                summaryOutcome = validatorOutcome;
+                if (summaryOutcome == "null") {
+                    summaryOutcome = transformerOutcome;
+                }
+            }
+
+            String studyVersion = "";
+            if (study.getVersion() != null) {
+                studyVersion = study.getVersion();
+            }
 
         try {
-
-            Map<String, String> studies = transformedStudies.entrySet().stream()
-				.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toString()));
-
 			Template t = freemarkerConfig.getTemplate(template);
 			Map<String, Object> messageParams = new HashMap<String, Object>();
-			messageParams.put("studies", studies);
-			messageParams.put("files", filesPaths);
-			messageParams.put("timestamp", new Date());
+            messageParams.put("studyId", study.getStudyId());
+            messageParams.put("studyVersion", studyVersion);
+            messageParams.put("serverAlias", serverAlias);
+            messageParams.put("transformerStatus", transformerOutcome);
+            messageParams.put("transformerLog", transformerLogPath);
+            messageParams.put("validatorStatus", validatorOutcome);
+            messageParams.put("validatorLog", validatorLogPath);
+            messageParams.put("validatorReport", validatorReportPath);
+            messageParams.put("loaderStatus", loaderOutcome);
+            messageParams.put("loaderLog", loaderLogPath);
+            messageParams.put("summaryStatus", summaryOutcome);
 			return FreeMarkerTemplateUtils.processTemplateIntoString(t, messageParams);
 		} catch(Exception me) {
 			logger.error(me.getMessage(), me);

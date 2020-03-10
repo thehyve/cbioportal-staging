@@ -20,7 +20,9 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
@@ -78,7 +80,7 @@ public class ETLProcessRunner {
 
 	@Autowired
     private ResourceUtils utils;
-    
+
     @Autowired
 	private EtlUtils etlUtils;
 
@@ -91,9 +93,9 @@ public class ETLProcessRunner {
     @Value("${validation.level:ERROR}")
 	private String validationLevel;
 
-	Map<String, ExitStatus> transformerExitStatus;
-	Map<String, ExitStatus> validatorExitStatus;
-	Map<String, ExitStatus> loaderExitStatus;
+	Map<Study, ExitStatus> transformerExitStatus;
+	Map<Study, ExitStatus> validatorExitStatus;
+	Map<Study, ExitStatus> loaderExitStatus;
 
 	public void run(Study[] remoteResources) throws Exception {
 		try  {
@@ -112,8 +114,6 @@ public class ETLProcessRunner {
 				reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
 			}
 
-			Map<String, Resource> logPaths = new HashMap<>();
-
 			transformerExitStatus = new HashMap<>();
 			validatorExitStatus = new HashMap<>();
 			loaderExitStatus = new HashMap<>();
@@ -122,47 +122,42 @@ public class ETLProcessRunner {
 			Study[] transformedStudies;
 			if (etlUtils.doTransformation()) {
 				transformerExitStatus = transformer.transform(localResources);
-                Map<String, Resource> transformationLogFiles = publisher.publishFiles(transformer.getLogFiles());
-                if(transformationLogFiles != null) {
-                    logPaths.putAll(transformationLogFiles);
-                    if (logPaths.size() > 0) {
-                        reportingService.reportTransformedStudies(transformerExitStatus, logPaths);
-                    }
-                }
-                
+                publisher.publishFiles(transformer.getLogFiles());
                 transformedStudies = transformer.getValidStudies();
 			} else {
+                for (Study study : localResources) {
+                    transformerExitStatus.put(study, ExitStatus.SKIPPED);
+                }
 				transformedStudies = localResources;
 			}
 
 			//V (VALIDATE) STEP:
 			if (transformedStudies.length > 0) {
                 validatorExitStatus = validator.validate(transformedStudies);
-                Map<String, Resource> validationAndReportFiles = publisher.publishFiles(validator.getLogAndReportFiles());
-                if (validationAndReportFiles != null) {
-                    logPaths.putAll(validationAndReportFiles);
-				    reportingService.reportValidationReport(validatorExitStatus, validationLevel, logPaths);
-                }
+                publisher.publishFiles(validator.getLogFiles());
+                publisher.publishFiles(validator.getReportFiles());
 
 				Study[] studiesThatPassedValidation = validator.getValidStudies();
 
 				//L (LOAD) STEP:
 				if (studiesThatPassedValidation.length > 0) {
                     loaderExitStatus = loader.load(studiesThatPassedValidation);
-                    Map<String, Resource> loadingLogFiles = publisher.publishFiles(loader.getLogFiles());
-                    if (loadingLogFiles != null) {
-                        logPaths.putAll(loadingLogFiles);
-					    reportingService.reportStudiesLoaded(loaderExitStatus, logPaths);
-                    }
+                    publisher.publishFiles(loader.getLogFiles());
 
 					if (loader.areStudiesLoaded()) {
-						restarterService.restart();
+                        restarterService.restart();
 						if (studyAuthorizeCommandPrefix != null && ! studyAuthorizeCommandPrefix.equals("")) {
-							authorizer.authorizeStudies(validatorExitStatus.keySet());
+                            Set<String> studyIds = new HashSet<String>();
+                            for (Study study : validatorExitStatus.keySet()) {
+                                studyIds.add(study.getStudyId());
+                            }
+							authorizer.authorizeStudies(studyIds);
 						}
 					}
 				}
-			}
+            }
+            reportSummary(localResources, transformer.getLogFiles(), validator.getLogFiles(), validator.getReportFiles(), loader.getLogFiles(),
+                transformerExitStatus, validatorExitStatus, loaderExitStatus);
 		} catch (ReporterException e) {
 			try {
 				logger.error("An error occurred during the transformation step. Error found: "+ e);
@@ -231,17 +226,51 @@ public class ETLProcessRunner {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
+    }
 
-	public Map<String, ExitStatus> getTransformerExitStatus() {
+    private void reportSummary(Study[] studies, Map<Study,Resource> transformerLogs, Map<Study,Resource> validatorLogs,
+    Map<Study,Resource> validatorReports, Map<Study,Resource> loaderLogs, Map<Study,ExitStatus> transformerStatus,
+    Map<Study,ExitStatus> validatorStatus, Map<Study,ExitStatus> loaderStatus) throws ReporterException {
+
+        for (Study study : studies) {
+            logger.debug("ETL calling the Reporting Service...");
+            reportingService.reportSummary(study, getStudyLogs(study.getStudyId(), transformerLogs), getStudyLogs(study.getStudyId(),validatorLogs),
+            getStudyLogs(study.getStudyId(), validatorReports), getStudyLogs(study.getStudyId(),loaderLogs),
+            getStudyStatus(study.getStudyId(), transformerStatus), getStudyStatus(study.getStudyId(), validatorStatus),
+            getStudyStatus(study.getStudyId(), loaderStatus));
+        }
+
+    }
+
+    private Resource getStudyLogs(String studyId, Map<Study, Resource> info) {
+        Resource studyLogs = null;
+        for (Study study : info.keySet()) {
+            if (study.getStudyId().equals(studyId)) {
+                studyLogs = info.get(study);
+            }
+        }
+        return studyLogs;
+    }
+
+    private ExitStatus getStudyStatus(String studyId, Map<Study, ExitStatus> info) {
+        ExitStatus studyStatus = null;
+        for (Study study : info.keySet()) {
+            if (study.getStudyId().equals(studyId)) {
+                studyStatus = info.get(study);
+            }
+        }
+        return studyStatus;
+    }
+
+	public Map<Study, ExitStatus> getTransformerExitStatus() {
 		return transformerExitStatus;
 	}
 
-	public Map<String, ExitStatus> getValidatorExitStatus() {
+	public Map<Study, ExitStatus> getValidatorExitStatus() {
 		return validatorExitStatus;
 	}
 
-	public Map<String, ExitStatus> getLoaderExitStatus() {
+	public Map<Study, ExitStatus> getLoaderExitStatus() {
 		return loaderExitStatus;
 	}
 

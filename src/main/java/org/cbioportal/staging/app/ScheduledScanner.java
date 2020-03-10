@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,11 +118,11 @@ public class ScheduledScanner {
 		return shouldStopApp();
 	}
 
-	private void addToIgnoreFile(Map<String,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
+	private void addToIgnoreFile(Map<Study,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
 
 		List<String> successStudyIds = loaderStatus.entrySet().stream()
 			.filter(e -> e.getValue() == ExitStatus.SUCCESS)
-			.map(Entry::getKey)
+			.map(e -> e.getKey().getStudyId())
 			.collect(Collectors.toList());
 
 		List<Study> successStudies = Stream.of(resourcesPerStudy)

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -55,7 +54,7 @@ import freemarker.template.TemplateNotFoundException;
     classes = App.class,
     properties = {"scan.location=classpath:e2e_studies/es_1", "validation.level=WARNING"}
 )
-public class IntegrationTestWarningAndLoad {
+public class IntegrationTestWarningAndFail {
 
     @MockBean
     private EmailReportingService emailServiceImpl;
@@ -105,15 +104,13 @@ public class IntegrationTestWarningAndLoad {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
-        verify(publisherService, times(1)).publishFiles(any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(2)).publishFiles(any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).reportGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(emailServiceImpl, never()).reportGenericError(any(), any());
 
         // check files have been published
         publisherService.getPublishedFiles().stream()

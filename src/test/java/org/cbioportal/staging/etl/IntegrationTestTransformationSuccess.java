@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -109,15 +108,13 @@ public class IntegrationTestTransformationSuccess {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
-        verify(publisherService, times(3)).publishFiles(any(Map.class));
+        verify(publisherService, times(4)).publishFiles(any(Map.class));
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, times(1)).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, times(1)).reportStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).reportGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(emailServiceImpl, never()).reportGenericError(any(), any());
 
         // check files have been published
         publisherService.getPublishedFiles().stream()

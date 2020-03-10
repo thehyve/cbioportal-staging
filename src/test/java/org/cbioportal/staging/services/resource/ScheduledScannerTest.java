@@ -113,16 +113,15 @@ public class ScheduledScannerTest {
 
         Resource[] resToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/success_resource.txt", 0)};
         Resource[] resNotToBeIgnored = new Resource[] {TestUtils.createMockResource("file:/failure_resource.txt", 0)};
-        Study[] res = TestUtils.studyList(
-            new Study("dummy_study_success", null, null, null, resToBeIgnored),
-            new Study("dummy_study_failure", null, null, null, resNotToBeIgnored)
-        );
+        Study dummyStudySuccess = new Study("dummy_study_success", null, null, null, resToBeIgnored);
+        Study dummyStudyFailure = new Study("dummy_study_failure", null, null, null, resNotToBeIgnored);
+        Study[] res = TestUtils.studyList(dummyStudySuccess, dummyStudyFailure);
 
         when(resourceCollector.getResources(isA(Resource.class))).thenReturn(res);
 
-        Map<String, ExitStatus> exit = new HashMap<>();
-        exit.put("dummy_study_success", ExitStatus.SUCCESS);
-        exit.put("dummy_study_failure", ExitStatus.ERROR);
+        Map<Study, ExitStatus> exit = new HashMap<>();
+        exit.put(dummyStudySuccess, ExitStatus.SUCCESS);
+        exit.put(dummyStudyFailure, ExitStatus.ERROR);
         when(etlProcessRunner.getLoaderExitStatus()).thenReturn(exit);
 
         scheduledScanner.scan();

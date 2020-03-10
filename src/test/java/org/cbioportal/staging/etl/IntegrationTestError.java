@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -24,6 +23,7 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.authorize.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.command.IRestarter;
 import org.cbioportal.staging.services.etl.LoaderServiceImpl;
@@ -33,6 +33,7 @@ import org.cbioportal.staging.services.publish.PublisherServiceImpl;
 import org.cbioportal.staging.services.report.EmailReportingService;
 import org.cbioportal.staging.services.report.LogReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
+import org.cbioportal.staging.services.resource.Study;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,20 +115,22 @@ public class IntegrationTestError {
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, never()).load(any(), any());
         verify(restarterService, never()).restart();
-        verify(publisherService, times(1)).publishFiles(any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(2)).publishFiles(any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).reportGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(emailServiceImpl, never()).reportGenericError(any(), any());
+
+        // verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
+        // verify(emailServiceImpl, times(1)).reportSummary(any(Study.class),any(),any(Resource.class),
+        //     any(Resource.class), any(), any(), any(ExitStatus.class), any());
+        // verify(emailServiceImpl, never()).reportGenericError(any(),any());
 
         verify(logServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(logServiceImpl, never()).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(logServiceImpl, times(1)).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(logServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
+        verify(emailServiceImpl, times(1)).reportSummary(any(Study.class),any(),any(Resource.class),
+            any(Resource.class), any(), any(), any(ExitStatus.class), any());
         verify(logServiceImpl, never()).reportGenericError(any(),any());
     }
 

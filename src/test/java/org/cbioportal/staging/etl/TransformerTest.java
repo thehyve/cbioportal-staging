@@ -97,19 +97,24 @@ public class TransformerTest {
     }
 
     @Test
-    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException {
+    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException, DirectoryCreatorException {
 
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
+        // when(directoryCreator.createTransformedStudyDir(isA(Study.class),isA(Resource.class))).thenReturn(studyFiles[0]);
         when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        // when(transformer.metaFileExists(null)).thenReturn(false);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
+		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
+
+
+        Map<Study, ExitStatus> exitStatus = transformer.transform(new Study[] {dummyStudy});
 
         verify(utils, times(1)).copyDirectory(any(),any());
         verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
-        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SKIPPED);
-        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
+        assertTrue(exitStatus.containsKey(dummyStudy) && exitStatus.get(dummyStudy) == ExitStatus.SKIPPED);
+        assertTrue(transformer.getLogFiles().containsKey(dummyStudy));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), dummyStudy.getStudyId()));
     }
 
     @Test
@@ -119,13 +124,15 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
         when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
+        Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
+
+        Map<Study, ExitStatus> exitStatus = transformer.transform(new Study[] {dummyStudy});
 
         verify(utils, never()).copyDirectory(any(),any());
         verify(transformerService, times(1)).transform(any(),any(),any());
-        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.SUCCESS);
-        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
+        assertTrue(exitStatus.containsKey(dummyStudy) && exitStatus.get(dummyStudy) == ExitStatus.SUCCESS);
+        assertTrue(transformer.getLogFiles().containsKey(dummyStudy));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), dummyStudy.getStudyId()));
     }
 
     @Test
@@ -136,18 +143,15 @@ public class TransformerTest {
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
         when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
 
+        Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
+
         when(transformerService.transform(any(),any(),any())).thenReturn(ExitStatus.WARNING);
 
-        Map<String, ExitStatus> exitStatus = transformer.transform(dummyStudyInput());
+        Map<Study, ExitStatus> exitStatus = transformer.transform(new Study[] {dummyStudy});
 
-        assertTrue(exitStatus.containsKey("dummy_study") && exitStatus.get("dummy_study") == ExitStatus.WARNING);
-        assertTrue(transformer.getLogFiles().containsKey("dummy_study transformation log"));
-        assertTrue(TestUtils.has(transformer.getValidStudies(), "dummy_study"));
-    }
-
-    private Study[] dummyStudyInput() {
-        Resource studyPath = TestUtils.createMockResource("file:/dummy_study_folder/", 0);
-        return new Study[] {new Study("dummy_study", null, null, studyPath, null)};
+        assertTrue(exitStatus.containsKey(dummyStudy) && exitStatus.get(dummyStudy) == ExitStatus.WARNING);
+        assertTrue(transformer.getLogFiles().containsKey(dummyStudy));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), dummyStudy.getStudyId()));
     }
 
 }

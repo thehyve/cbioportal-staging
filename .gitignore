@@ -5,3 +5,5 @@
 /.vscode
 .DS_Store
 src/main/resources/custom.properties
+/.idea/
+*.iml

@@ -61,7 +61,7 @@ public class DirectoryCreator implements IDirectoryCreator {
 								+ etlWorkingDir);
             }
 
-            return createDir(etlWorkingDir, study);
+            return utils.createDirResource(etlWorkingDir, getIntermediatePath(study));
 
         } catch (ResourceUtilsException e) {
 			throw new DirectoryCreatorException("Cannot create Resource.", e);
@@ -78,7 +78,7 @@ public class DirectoryCreator implements IDirectoryCreator {
                                     + transformationDir);
                 }
 
-                return createDir(transformationDir, study);
+                return utils.createDirResource(transformationDir, getIntermediatePath(study));
 
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
@@ -88,15 +88,14 @@ public class DirectoryCreator implements IDirectoryCreator {
         }
     }
 
-    private Resource createDir(Resource dir, Study study)
-            throws ResourceUtilsException {
-                // by job timestamp --> studies
-                if (dirFormat.equals("job")) {
-                    return utils.createDirResource(dir, study.getTimestamp(), study.getStudyId());
-                }
+    public String getIntermediatePath(Study study) {
+        // by job timestamp --> studies
+        if (dirFormat.equals("job")) {
+            return study.getTimestamp() + "/" + study.getStudyId();
+        }
 
-                // by study --> version/timestamp
-                String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
-                return utils.createDirResource(dir, study.getStudyId(), versionLabel);
+        // by study --> version/timestamp
+        String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
+        return study.getStudyId() + "/" + versionLabel;
     }
 }

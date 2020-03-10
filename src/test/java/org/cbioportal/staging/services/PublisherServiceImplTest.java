@@ -15,8 +15,11 @@ import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.DirectoryCreator;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.publish.PublisherServiceImpl;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
 import org.cbioportal.staging.services.resource.filesystem.IFileSystemGateway;
 import org.junit.Before;
@@ -31,11 +34,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { PublisherServiceImpl.class, FileSystemResourceProvider.class,
-        ResourceUtils.class }, properties = { "central.share.location=file:/fake-share/",
-                "transformation.directory=file:/transf-dir/" })
+        ResourceUtils.class, DirectoryCreator.class }, properties = { "central.share.location=file:/fake-share/",
+                "transformation.directory=file:/transf-dir/", "etl.dir.format:job" })
 public class PublisherServiceImplTest {
 
     @Value("${central.share.location:}")
@@ -47,49 +51,60 @@ public class PublisherServiceImplTest {
     @SpyBean
     private FileSystemResourceProvider resourceProvider;
 
-	@MockBean
-	private IFileSystemGateway gateway;
+    @SpyBean
+    private IDirectoryCreator directoryCreator;
 
+	@MockBean
+    private IFileSystemGateway gateway;
+    
     @Captor
     ArgumentCaptor<Resource> remoteDestinationDir;
 
-    Resource fakePublishedLogFile = TestUtils.createMockResource("file:/fake-share/log1.txt", 0);
+    Resource fakePublishedLogFile = TestUtils.createMockResource("file:/fake-share/dummy-study/log1.txt", 0);
 
     @Before
     public void init() throws ResourceCollectionException {
         doReturn(fakePublishedLogFile).when(resourceProvider).copyToRemote(isA(Resource.class), isA(Resource.class));
+        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "job");
     }
 
     @Test
     public void testPublish_success()
             throws ResourceCollectionException, PublisherException, ResourceUtilsException, IOException {
 
-        Map<String,Resource> logFiles = new HashMap<>();
-        Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/sub_dir/log1.txt", 0);
-        logFiles.put("dummy_study", fakeLogFile);
-        Map<String,Resource> publishedLogFiles = publisherService.publishFiles(logFiles);
+        Map<Study,Resource> logFiles = new HashMap<>();
+        Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/dummy-study/log1.txt", 0);
+        Study dummyStudy = new Study("dummy-study", "dummy-version", "dummy-time", null, null);
+        logFiles.put(dummyStudy, fakeLogFile);
+        Map<Study,Resource> publishedLogFiles = publisherService.publishFiles(logFiles);
 
         // verify the correct path of the destination dir used for copying
         verify(resourceProvider).copyToRemote(remoteDestinationDir.capture(), eq(fakeLogFile));
-        assertEquals("file:/fake-share/sub_dir/", remoteDestinationDir.getValue().getURL().toString());
+        assertEquals("file:/fake-share/dummy-time/dummy-study", remoteDestinationDir.getValue().getURL().toString());
 
-        assertTrue(publishedLogFiles.containsKey("dummy_study"));
-        assertEquals(fakePublishedLogFile, publishedLogFiles.get("dummy_study"));
+        assertTrue(publishedLogFiles.containsKey(dummyStudy));
+        assertEquals(fakePublishedLogFile, publishedLogFiles.get(dummyStudy));
 
     }
 
     @Test
-    public void testPublish_subDirEvaluation()
+    public void testPublish_success_with_version()
             throws ResourceCollectionException, PublisherException, ResourceUtilsException, IOException {
+        
+        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
 
-        Map<String,Resource> logFiles = new HashMap<>();
-        Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/sub_dir/log1.txt", 0);
-        logFiles.put("dummy_study", fakeLogFile);
-        publisherService.publishFiles(logFiles);
+        Map<Study,Resource> logFiles = new HashMap<>();
+        Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/dummy-study/log1.txt", 0);
+        Study dummyStudy = new Study("dummy-study", "dummy-version", "dummy-time", null, null);
+        logFiles.put(dummyStudy, fakeLogFile);
+        Map<Study,Resource> publishedLogFiles = publisherService.publishFiles(logFiles);
 
         // verify the correct path of the destination dir used for copying
         verify(resourceProvider).copyToRemote(remoteDestinationDir.capture(), eq(fakeLogFile));
-        assertEquals("file:/fake-share/sub_dir/", remoteDestinationDir.getValue().getURL().toString());
+        assertEquals("file:/fake-share/dummy-study/dummy-version", remoteDestinationDir.getValue().getURL().toString());
+
+        assertTrue(publishedLogFiles.containsKey(dummyStudy));
+        assertEquals(fakePublishedLogFile, publishedLogFiles.get(dummyStudy));
 
     }
 

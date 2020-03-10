@@ -14,6 +14,7 @@ import com.pivovarit.function.ThrowingPredicate;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 // NOTE: after refactoring the functionality of this class was not tested in S3 environment
 
 @Component
+@ConditionalOnProperty(value = "scan.location.type" , havingValue = "aws")
 public class AwsSystemService {
 
     @Autowired

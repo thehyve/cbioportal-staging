@@ -20,17 +20,15 @@ import java.util.Map;
 
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.resource.Study;
 import org.springframework.core.io.Resource;
 
 public interface IReportingService {
 
 	public void reportStudyFileNotFound(Map<String, List<String>> failedStudies, Integer timeRetry) throws ReporterException;
 
-    public void reportTransformedStudies(Map<String,ExitStatus> studiesTransformed, Map<String,Resource> filesPaths) throws ReporterException;
-
-	public void reportValidationReport(Map<String,ExitStatus> validatedStudies, String level, Map<String,Resource> studyPaths) throws ReporterException;
-
-	public void reportStudiesLoaded(Map<String,ExitStatus> studiesLoaded, Map<String,Resource> filesPath) throws ReporterException;
+    public void reportSummary(Study study, Resource transformerLogs, Resource validatorLogs, Resource validatorReports, 
+        Resource loaderLogs, ExitStatus transformerStatus, ExitStatus validatorStatus, ExitStatus loaderStatus) throws ReporterException;
 
 	public void reportGenericError(String errorMessage, Exception e) throws ReporterException;
 

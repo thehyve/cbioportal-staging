@@ -24,8 +24,10 @@ import java.util.stream.Collectors;
 import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,11 +53,14 @@ public class PublisherServiceImpl implements IPublisherService {
     IResourceProvider resourceProvider;
 
     @Autowired
+	private IDirectoryCreator directoryCreator;
+
+    @Autowired
     private ResourceUtils utils;
 
     private List<Resource> publishedFiles = new ArrayList<>();
 
-    public Map<String, Resource> publishFiles(Map<String, Resource> logFiles) throws PublisherException {
+    public Map<Study, Resource> publishFiles(Map<Study, Resource> logFiles) throws PublisherException {
 
         if (centralShareLocation == null) {
             logger.info("No central.share.location defined. Skipping publishing of log files.");
@@ -66,24 +71,25 @@ public class PublisherServiceImpl implements IPublisherService {
             throw new PublisherException("Argument 'logFiles' cannot be null.");
         }
 
-        Map<String, Resource> files = logFiles.entrySet().stream()
-            .collect(Collectors.toMap(Entry::getKey, ThrowingFunction.sneaky(e -> publishOneFile(e.getValue()))));
+        Map<Study, Resource> files = logFiles.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, ThrowingFunction.sneaky(e -> publishOneFile(e.getKey(), e.getValue()))));
 
         publishedFiles.addAll(files.values());
 
         return files;
     }
 
-    private Resource publishOneFile(Resource logFile) throws PublisherException {
+    private Resource publishOneFile(Study study, Resource logFile) throws PublisherException {
         try {
-            Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
-            String filePathRelative = logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
-            if (filePathRelative.lastIndexOf("/") > -1) {
-                filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/") + 1);
-            } else {
-                filePathRelative = "";
-            }
-            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimPathRight(centralShareLocation.getURL().toString()) + "/" + filePathRelative);
+            //Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
+            String intermediatePath = directoryCreator.getIntermediatePath(study);
+            // logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
+            // if (filePathRelative.lastIndexOf("/") > -1) {
+            //     filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/") + 1);
+            // } else {
+            //     filePathRelative = "";
+            // }
+            Resource remoteDestinationDir = resourceProvider.getResource(utils.trimPathRight(centralShareLocation.getURL().toString()) + "/" + intermediatePath);
             return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
         } catch (Exception e) {
             throw new PublisherException("There has been an error when getting the Central Share Location URL or copying it to the Log File Path.", e);

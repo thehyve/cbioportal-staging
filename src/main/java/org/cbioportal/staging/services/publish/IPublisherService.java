@@ -18,10 +18,11 @@ package org.cbioportal.staging.services.publish;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.PublisherException;
+import org.cbioportal.staging.services.resource.Study;
 import org.springframework.core.io.Resource;
 
 public interface IPublisherService {
 
-    public Map<String, Resource> publishFiles(Map<String, Resource> initialLogFiles) throws PublisherException;
+    public Map<Study, Resource> publishFiles(Map<Study, Resource> initialLogFiles) throws PublisherException;
 
 }

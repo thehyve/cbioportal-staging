@@ -63,18 +63,19 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
-        Study[] studies = TestUtils.studyList(new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null));
+        Study dummyStudy = new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null);
+        Study[] studies = TestUtils.studyList(dummyStudy);
 
-        Map<String, ExitStatus> loadingStatus = loader.load(studies);
+        Map<Study, ExitStatus> loadingStatus = loader.load(studies);
 
-        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
+        Map<Study, ExitStatus> expectedLoadingStatus = new HashMap<Study, ExitStatus>();
+        expectedLoadingStatus.put(dummyStudy, ExitStatus.SUCCESS);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(true, loader.areStudiesLoaded());
 
-        Map<String, Resource> logPaths = new HashMap<>();
-        logPaths.put("lgg_ucsf_2014 loading log", null);
+        Map<Study, Resource> logPaths = new HashMap<>();
+        logPaths.put(dummyStudy, null);
         assertEquals(logPaths, loader.getLogFiles());
     }
 
@@ -83,17 +84,18 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
-        Study[] studies = TestUtils.studyList(new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null));
+        Study dummyStudy = new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null);
+        Study[] studies = TestUtils.studyList(dummyStudy);
 
-        Map<String, ExitStatus> loadingStatus = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
+        Map<Study, ExitStatus> loadingStatus = loader.load(studies);
+        Map<Study, ExitStatus> expectedLoadingStatus = new HashMap<Study, ExitStatus>();
+        expectedLoadingStatus.put(dummyStudy, ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(false, loader.areStudiesLoaded());
 
-        Map<String, Resource> logPaths = new HashMap<>();
-        logPaths.put("lgg_ucsf_2014 loading log", null);
+        Map<Study, Resource> logPaths = new HashMap<>();
+        logPaths.put(dummyStudy, null);
         assertEquals(logPaths, loader.getLogFiles());
     }
 
@@ -102,22 +104,21 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS);
 
-        Study[] studies = TestUtils.studyList(
-            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
-            new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
-        );
+        Study dummyStudy = new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null);
+        Study dummyStudy2 = new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null);
+        Study[] studies = TestUtils.studyList(dummyStudy, dummyStudy2);
 
-        Map<String, ExitStatus> loadingStatus = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedLoadingStatus.put("study_2", ExitStatus.SUCCESS);
+        Map<Study, ExitStatus> loadingStatus = loader.load(studies);
+        Map<Study, ExitStatus> expectedLoadingStatus = new HashMap<Study, ExitStatus>();
+        expectedLoadingStatus.put(dummyStudy, ExitStatus.SUCCESS);
+        expectedLoadingStatus.put(dummyStudy2, ExitStatus.SUCCESS);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(true, loader.areStudiesLoaded());
 
-        Map<String, Resource> logPaths = new HashMap<>();
-        logPaths.put("lgg_ucsf_2014 loading log", null);
-        logPaths.put("study_2 loading log", null);
+        Map<Study, Resource> logPaths = new HashMap<>();
+        logPaths.put(dummyStudy, null);
+        logPaths.put(dummyStudy2, null);
         assertEquals(logPaths, loader.getLogFiles());
     }
 
@@ -126,22 +127,21 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.SUCCESS, ExitStatus.ERROR);
 
-        Study[] studies = TestUtils.studyList(
-            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
-            new Study("study_with_errors", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
-        );
+        Study dummyStudy = new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null);
+        Study dummyStudy2 = new Study("study_with_errors", null, null, TestUtils.createMockResource("file:/test/path2", 1), null);
+        Study[] studies = TestUtils.studyList(dummyStudy, dummyStudy2);
 
-        Map<String, ExitStatus> loadingStatus = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.SUCCESS);
-        expectedLoadingStatus.put("study_with_errors", ExitStatus.ERROR);
+        Map<Study, ExitStatus> loadingStatus = loader.load(studies);
+        Map<Study, ExitStatus> expectedLoadingStatus = new HashMap<Study, ExitStatus>();
+        expectedLoadingStatus.put(dummyStudy, ExitStatus.SUCCESS);
+        expectedLoadingStatus.put(dummyStudy2, ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(true, loader.areStudiesLoaded());
 
-        Map<String, Resource> logPaths = new HashMap<>();
-        logPaths.put("lgg_ucsf_2014 loading log", null);
-        logPaths.put("study_with_errors loading log", null);
+        Map<Study, Resource> logPaths = new HashMap<>();
+        logPaths.put(dummyStudy, null);
+        logPaths.put(dummyStudy2, null);
         assertEquals(logPaths, loader.getLogFiles());
     }
 
@@ -150,22 +150,21 @@ public class LoaderTest {
 
         when(loaderService.load(isA(Resource.class), any())).thenReturn(ExitStatus.ERROR);
 
-        Study[] studies = TestUtils.studyList(
-            new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null),
-            new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null)
-        );
+        Study dummyStudy = new Study("lgg_ucsf_2014", null, null, TestUtils.createMockResource("file:/test/path", 0), null);
+        Study dummyStudy2 = new Study("study_2", null, null, TestUtils.createMockResource("file:/test/path2", 1), null);
+        Study[] studies = TestUtils.studyList(dummyStudy, dummyStudy2);
 
-        Map<String, ExitStatus> loadingStatus = loader.load(studies);
-        Map<String, ExitStatus> expectedLoadingStatus = new HashMap<String, ExitStatus>();
-        expectedLoadingStatus.put("lgg_ucsf_2014", ExitStatus.ERROR);
-        expectedLoadingStatus.put("study_2", ExitStatus.ERROR);
+        Map<Study, ExitStatus> loadingStatus = loader.load(studies);
+        Map<Study, ExitStatus> expectedLoadingStatus = new HashMap<Study, ExitStatus>();
+        expectedLoadingStatus.put(dummyStudy, ExitStatus.ERROR);
+        expectedLoadingStatus.put(dummyStudy2, ExitStatus.ERROR);
         assertEquals(expectedLoadingStatus, loadingStatus);
 
         assertEquals(false, loader.areStudiesLoaded());
 
-        Map<String, Resource> logPaths = new HashMap<>();
-        logPaths.put("lgg_ucsf_2014 loading log", null);
-        logPaths.put("study_2 loading log", null);
+        Map<Study, Resource> logPaths = new HashMap<>();
+        logPaths.put(dummyStudy, null);
+        logPaths.put(dummyStudy2, null);
         assertEquals(logPaths, loader.getLogFiles());
     }
 }

@@ -51,15 +51,15 @@ public class Transformer {
     @Autowired
 	private IDirectoryCreator directoryCreator;
 
-    final private Map<String, Resource> logFiles = new HashMap<>();
+    final private Map<Study, Resource> logFiles = new HashMap<>();
     final private List<Study> validStudies = new ArrayList<>();
 
-    public Map<String, ExitStatus> transform(Study[] studies) throws ReporterException {
+    public Map<Study, ExitStatus> transform(Study[] studies) throws ReporterException {
 
         logFiles.clear();
         validStudies.clear();
 
-        Map<String, ExitStatus> statusStudies = new HashMap<String, ExitStatus>();
+        Map<Study, ExitStatus> statusStudies = new HashMap<Study, ExitStatus>();
 
         try {
             for (Study study: studies) {
@@ -72,7 +72,7 @@ public class Transformer {
                     transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
 
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
-                    logFiles.put(studyId + " transformation log", logFile);
+                    logFiles.put(study, logFile);
 
                     if (metaFileExists(untransformedFilesPath)) {
                         utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
@@ -90,7 +90,7 @@ public class Transformer {
                     Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
 
                 //Add status of the validation for the study
-                statusStudies.put(studyId, transformationStatus);
+                statusStudies.put(study, transformationStatus);
                 if (transformationStatus == ExitStatus.SUCCESS) {
                     validStudies.add(transformedStudy);
                     logger.info("Transformation of study "+studyId+" finished successfully.");
@@ -113,12 +113,12 @@ public class Transformer {
         return statusStudies;
     }
 
-    private boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
+    public boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
         Resource[] studyFiles = provider.list(originPath);
         return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
     }
 
-    public Map<String, Resource> getLogFiles() {
+    public Map<Study, Resource> getLogFiles() {
         return logFiles;
     }
 

@@ -25,4 +25,6 @@ public interface IDirectoryCreator {
 
     public Resource createTransformedStudyDir(Study study, Resource untransformedStudyDir) throws DirectoryCreatorException;
 
+    public String getIntermediatePath(Study study);
+
 }

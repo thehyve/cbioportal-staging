@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -112,11 +111,10 @@ public class IntegrationTestTransformationFailure {
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(Map.class),anyInt());
-        verify(emailServiceImpl, times(1)).reportTransformedStudies(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).reportValidationReport(any(Map.class),anyString(),any(Map.class));
-        verify(emailServiceImpl, never()).reportStudiesLoaded(any(Map.class),any(Map.class));
-        verify(emailServiceImpl, never()).reportGenericError(any(),any());
+        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(emailServiceImpl, never()).reportGenericError(any(), any());
+
     }
 
 }

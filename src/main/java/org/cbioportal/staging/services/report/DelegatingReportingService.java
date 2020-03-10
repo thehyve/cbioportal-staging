@@ -25,6 +25,9 @@ import javax.annotation.PostConstruct;
 
 import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.resource.Study;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
@@ -34,14 +37,17 @@ import org.springframework.stereotype.Component;
 @Primary
 public class DelegatingReportingService implements IReportingService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DelegatingReportingService.class);
+
 	@Autowired(required = false)
-	private List<IReportingService> delegates;
+    private List<IReportingService> delegates;
 
 	@PostConstruct
 	public void init() {
 		if (delegates == null) {
-			delegates = new ArrayList<>();
-		}
+            delegates = new ArrayList<>();
+        }
+        logger.debug("Reporting Service has found "+delegates.size()+" delegates.");
 	}
 
 	@Override
@@ -50,22 +56,12 @@ public class DelegatingReportingService implements IReportingService {
 	}
 
 	@Override
-	public void reportTransformedStudies(Map<String, ExitStatus> studiesTransformed, Map<String, Resource> filesPaths)
-			throws ReporterException {
-		delegates.stream().forEach(sneaky(e -> e.reportTransformedStudies(studiesTransformed, filesPaths)));
-	}
-
-	@Override
-	public void reportValidationReport(Map<String, ExitStatus> validatedStudies, String level,
-			Map<String, Resource> studyPaths) throws ReporterException {
-		delegates.stream().forEach(sneaky(e -> e.reportValidationReport(validatedStudies, level, studyPaths)));
-	}
-
-	@Override
-	public void reportStudiesLoaded(Map<String, ExitStatus> studiesLoaded, Map<String, Resource> filesPath)
-	throws ReporterException {
-		delegates.stream().forEach(sneaky(e -> e.reportStudiesLoaded(studiesLoaded, filesPath)));
-	}
+	public void reportSummary(Study study, Resource transformerLogs, Resource validatorLogs, Resource validatorReports, 
+    Resource loaderLogs, ExitStatus transformerStatus, ExitStatus validatorStatus, ExitStatus loaderStatus) throws ReporterException {
+        logger.debug("Reporting Service calling reportSummary.");
+        delegates.stream().forEach(sneaky(e -> e.reportSummary(study, transformerLogs, validatorLogs, validatorReports, loaderLogs,
+            transformerStatus, validatorStatus, loaderStatus)));
+    }
 
 	@Override
 	public void reportGenericError(String errorMessage, Exception e) throws ReporterException {

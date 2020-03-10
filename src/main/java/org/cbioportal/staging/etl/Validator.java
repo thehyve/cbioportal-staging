@@ -46,7 +46,8 @@ public class Validator {
     @Value("${validation.level:ERROR}")
     private String validationLevel;
 
-    private Map<String, Resource> logAndReportFiles = new HashMap<>();;
+    private Map<Study, Resource> logFiles = new HashMap<>();
+    private Map<Study, Resource> reportFiles = new HashMap<>();
     List<Study> validStudies = new ArrayList<>();
 
     private boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
@@ -66,13 +67,15 @@ public class Validator {
         }
     }
 
-    public Map<String, ExitStatus> validate(Study[] studies) throws ValidatorException {
+    public Map<Study, ExitStatus> validate(Study[] studies) throws ValidatorException {
 
-        logAndReportFiles.clear();
+        logFiles.clear();
+        reportFiles.clear();
         validStudies.clear();
 
-        Map<String, ExitStatus> validatedStudies = new HashMap<>();
-        logAndReportFiles = new HashMap<>();
+        Map<Study, ExitStatus> validatedStudies = new HashMap<>();
+        logFiles = new HashMap<>();
+        reportFiles = new HashMap<>();
         validStudies.clear();
 
         try {
@@ -85,11 +88,11 @@ public class Validator {
 
                 Resource logFile = utils.createFileResource(studyPath, studyId + "_validation_log.txt");
                 Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.html");
-                logAndReportFiles.put(studyId+" validation log", logFile);
-                logAndReportFiles.put(studyId+" validation report", reportFile);
+                logFiles.put(study, logFile);
+                reportFiles.put(study, reportFile);
 
                 ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
-                validatedStudies.put(studyId, exitStatus);
+                validatedStudies.put(study, exitStatus);
 
                 if (hasStudyPassed(exitStatus)) {
                     validStudies.add(study);
@@ -104,8 +107,12 @@ public class Validator {
 		return validatedStudies;
     }
 
-    public Map<String, Resource> getLogAndReportFiles() {
-        return logAndReportFiles;
+    public Map<Study, Resource> getLogFiles() {
+        return logFiles;
+    }
+
+    public Map<Study, Resource> getReportFiles() {
+        return reportFiles;
     }
 
     public Study[] getValidStudies() throws ValidatorException {
