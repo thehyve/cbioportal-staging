@@ -349,7 +349,11 @@ public class ResourceUtils {
         try {
             String base = trimPathRight(basePath.getURL().toString());
             Resource res = resourceResolver.getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")));
-            res.getFile().createNewFile();
+            File file = res.getFile();
+            if (file.exists()) {
+                file.delete();
+            }
+            file.createNewFile();
             return res;
         } catch (IOException e) {
             throw new ResourceUtilsException("Cannot create new file Resource: " + basePath.getDescription());
