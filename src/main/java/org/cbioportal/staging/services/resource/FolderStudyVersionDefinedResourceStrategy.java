@@ -33,6 +33,9 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
     @Autowired
     private ResourceUtils utils;
 
+    @Autowired
+    private IResourceProvider resourceProvider;
+
     @Value("${scan.location}")
     private Resource scanLocation;
 
@@ -45,7 +48,9 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
             String studyVersion = getStudyVersion(scanLocation);
             String studyId = getStudyId(scanLocation);
 
-            out.add(new Study(studyId, studyVersion, timestamp, scanLocation, resources));
+            Resource[] studyResources = resourceProvider.list(scanLocation, true, true);
+
+            out.add(new Study(studyId, studyVersion, timestamp, scanLocation, studyResources));
 
         } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + scanLocation, e);
