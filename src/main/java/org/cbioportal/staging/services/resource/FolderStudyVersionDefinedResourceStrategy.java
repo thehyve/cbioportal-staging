@@ -42,13 +42,15 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
     @Override
     public Study[] resolveResources(Resource[] resources) throws ResourceCollectionException {
 
+        // perform a recursive scan of the study folder
+        // the resources argument does not files inside dirs
+        Resource[] studyResources = resourceProvider.list(scanLocation, true, true);
+
         List<Study> out = new ArrayList<>();
         String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
             String studyVersion = getStudyVersion(scanLocation);
             String studyId = getStudyId(scanLocation);
-
-            Resource[] studyResources = resourceProvider.list(scanLocation, true, true);
 
             out.add(new Study(studyId, studyVersion, timestamp, scanLocation, studyResources));
 
