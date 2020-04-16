@@ -25,39 +25,25 @@ import org.springframework.stereotype.Component;
  * of the study folder.
  *
  */
-@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "definedversion")
+@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "versiondefined")
 @Component
 @Primary
-public class FolderStudyDefinedVersionResourceStrategy implements IStudyResourceStrategy {
-
-    private static final Logger logger = LoggerFactory.getLogger(FolderStudyVersionResourceStrategy.class);
+public class FolderStudyVersionDefinedResourceStrategy implements IStudyResourceStrategy {
 
     @Autowired
     private ResourceUtils utils;
 
     @Value("${scan.location}")
     private Resource scanLocation;
-    
-    @Value("${scan.extract.folders}")
-    private String studyId;
-
-    @PostConstruct
-    public void init() {
-        logger.debug("Activated FolderStudyDefinedVersionResourceResolver from spring profile.");
-    }
 
     @Override
     public Study[] resolveResources(Resource[] resources) throws ResourceCollectionException {
 
         List<Study> out = new ArrayList<>();
         String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
-        if (studyId == null) {
-            throw new ResourceCollectionException("The scan.extract.folders is not defined.");
-        } else if (studyId.indexOf(",") != -1) {
-            throw new ResourceCollectionException("The scan.extract.folders contains more than one value: "+studyId);
-        }
         try {
             String studyVersion = getStudyVersion(scanLocation);
+            String studyId = getStudyId(scanLocation);
 
             out.add(new Study(studyId, studyVersion, timestamp, scanLocation, resources));
 
@@ -71,6 +57,12 @@ public class FolderStudyDefinedVersionResourceStrategy implements IStudyResource
     private String getStudyVersion(Resource dir) throws ResourceUtilsException {
         String url = utils.trimPathRight(utils.getURL(dir).toString());
         return url.substring(url.lastIndexOf("/") + 1);
+    }
+
+    private String getStudyId(Resource dir) throws ResourceUtilsException {
+        String url = utils.trimPathRight(utils.getURL(dir).toString());
+        String[] parts = url.split("/");
+        return parts[parts.length -2];
     }
 
 }
