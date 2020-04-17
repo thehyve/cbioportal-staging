@@ -3,12 +3,8 @@ package org.cbioportal.staging.services.resource;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,10 +14,9 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * Recieves a list of directories and recursively extracts a list of
- * resources for each study. The files/resources are returned keyed
- * by study id. When available the study indentifier is extracted from
- * the meta_study.txt file. If not, study identifier is set to the name
+ * Recieves a directory and recursively extracts a list of
+ * resources for a single study. The files/resources are returned
+ * keyed by the study id. The study identifier is set to the name
  * of the study folder.
  *
  */
