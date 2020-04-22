@@ -15,105 +15,107 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.exceptions.ValidatorException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.etl.IValidatorService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Validator {
-	private static final Logger logger = LoggerFactory.getLogger(Validator.class);
-	
-	@Autowired
-	private EmailService emailService;
-	
-	@Autowired
-    private ValidationService validationService;
-    	
-	@Value("${etl.working.dir:false}")
-	private String etlWorkingDir;
-	
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
-	@Value("${central.share.location.web.address:}")
-	private String centralShareLocationWebAddress;
-	
-	@Value("${validation.level:ERROR}")
-	private String validationLevel;
-	
-	boolean hasStudyPassed(String study, String validationLevel, int exitStatus) {
-		if (validationLevel.equals("WARNING")) { //Load studies with no warnings and no errors
-			if (exitStatus == 0) {
-				return true;
-			}
-			return false;
-		} else if (validationLevel.equals("ERROR")) { //Load studies with only no errors
-			if (exitStatus == 0 || exitStatus == 3) {
-				return true;
-			}
-			return false;
-		} else {
-			throw new IllegalArgumentException("Validation level should be WARNING or ERROR. Please check the application.properties.");
-		}
-	}
-	
-	Map<String, File> validate(String date, Map<String, File> studyPaths, Map<String, String> filesPaths) throws IllegalArgumentException, Exception {
-        Map<String, File> studiesPassed = new HashMap<String, File>();
-        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-		if (centralShareLocationWebAddress.equals("")) {
-			centralShareLocationWebAddress = centralShareLocation;
-		}
-		try {
-			//Get studies from appropriate staging folder
-			Map<String,Integer> validatedStudies = new HashMap<String,Integer>();
-			for (String study : studyPaths.keySet()) {
-				logger.info("Starting validation of study "+study);
-				//Get the paths for the study and validate it
-				String reportName = study+"_validation_report.html";
-				String reportPath = studyPaths.get(study).getAbsolutePath()+"/"+reportName;
-				File logFile = new File(studyPaths.get(study)+"/"+study+"_validation_log.txt");
-				int exitStatus = validationService.validate(study, studyPaths.get(study).getAbsolutePath()+"/staging", reportPath, logFile, date);
-				filesPaths.put(study+" validation log", centralShareLocationWebAddress+"/"+date+"/"+logFile.getName());
-                filesPaths.put(study+" validation report", centralShareLocationWebAddress+"/"+date+"/"+reportName);
-				
-				//Put report and log file in the share location
-				String centralShareLocationPath = validationService.getCentralShareLocationPath(centralShareLocation, date);
-				validationService.copyToResource(new File(reportPath), centralShareLocationPath);
-				validationService.copyToResource(logFile, centralShareLocationPath);
-				
-				//Check if study has passed the validation threshold
-				if (hasStudyPassed(study, validationLevel, exitStatus)) {
-					logger.info("Study " + study + " has PASSED validation");
-					studiesPassed.put(study, studyPaths.get(study));
-				} else {
-					logger.warn("Study " + study + " has FAILED validation");
-				}
+    private static final Logger logger = LoggerFactory.getLogger(Validator.class);
 
-				//Add validation result for the email validation report
-				validatedStudies.put(study, exitStatus);
+    @Autowired
+    private IValidatorService validatorService;
 
-				logger.info("Validation of study "+study+" finished.");
-			}
-			emailService.emailValidationReport(validatedStudies, validationLevel, filesPaths);
-		} catch (ValidatorException e) {
-			//tell about error, continue with next study
-			logger.error(e.getMessage()+". The app will skip this study.");
-			try {
-				emailService.emailGenericError(e.getMessage()+". The app will skip this study.", e);
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
-			}
-		}
-		return studiesPassed;
-	}
+    @Autowired
+    private ResourceUtils utils;
+
+    @Value("${validation.level:ERROR}")
+    private String validationLevel;
+
+    private Map<Study, Resource> logFiles = new HashMap<>();
+    private Map<Study, Resource> reportFiles = new HashMap<>();
+    List<Study> validStudies = new ArrayList<>();
+
+    private boolean hasStudyPassed(ExitStatus exitStatus) throws ValidatorException {
+        if (validationLevel.equals("WARNING")) { // Load studies with no warnings and no errors
+            if (exitStatus == ExitStatus.SUCCESS) {
+                return true;
+            }
+            return false;
+        } else if (validationLevel.equals("ERROR")) { // Load studies with only no errors
+            if (exitStatus == ExitStatus.SUCCESS || exitStatus == ExitStatus.WARNING) {
+                return true;
+            }
+            return false;
+        } else {
+            throw new ValidatorException(
+                    "Validation level should be WARNING or ERROR. Please check the application.properties.");
+        }
+    }
+
+    public Map<Study, ExitStatus> validate(Study[] studies) throws ValidatorException {
+
+        logFiles.clear();
+        reportFiles.clear();
+        validStudies.clear();
+
+        Map<Study, ExitStatus> validatedStudies = new HashMap<>();
+        logFiles = new HashMap<>();
+        reportFiles = new HashMap<>();
+        validStudies.clear();
+
+        try {
+            for (Study study : studies) {
+
+                String studyId = study.getStudyId();
+
+                logger.info("Starting validation of study " + studyId);
+                Resource studyPath = study.getStudyDir();
+
+                Resource logFile = utils.createFileResource(studyPath, studyId + "_validation_log.txt");
+                Resource reportFile = utils.createFileResource(studyPath, studyId + "_validation_report.html");
+                logFiles.put(study, logFile);
+                reportFiles.put(study, reportFile);
+
+                ExitStatus exitStatus = validatorService.validate(studyPath, reportFile, logFile);
+                validatedStudies.put(study, exitStatus);
+
+                if (hasStudyPassed(exitStatus)) {
+                    validStudies.add(study);
+                    logger.info("Study "+studyId+" has passed validation.");
+                } else {
+                    logger.info("Study "+studyId+" has failed validation.");
+                }
+            }
+        } catch (ResourceUtilsException e) {
+            throw new ValidatorException("Error occured while validating studies.", e);
+        }
+		return validatedStudies;
+    }
+
+    public Map<Study, Resource> getLogFiles() {
+        return logFiles;
+    }
+
+    public Map<Study, Resource> getReportFiles() {
+        return reportFiles;
+    }
+
+    public Study[] getValidStudies() throws ValidatorException {
+        return validStudies.toArray(new Study[0]);
+    }
 }

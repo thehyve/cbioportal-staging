@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Hyve B.V.
+ * Copyright (c) 2020 The Hyve B.V.
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
@@ -15,18 +15,27 @@
  */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-import org.cbioportal.staging.app.ScheduledScanner;
+import org.cbioportal.staging.exceptions.ConfigurationException;
+import org.cbioportal.staging.exceptions.LoaderException;
+import org.cbioportal.staging.exceptions.ReporterException;
+import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.authorize.IAuthorizerService;
+import org.cbioportal.staging.services.command.IRestarter;
+import org.cbioportal.staging.services.etl.EtlUtils;
+import org.cbioportal.staging.services.publish.IPublisherService;
+import org.cbioportal.staging.services.report.IReportingService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,19 +45,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * Main ETL process.
- * 
+ *
  * @author pieter
  *
  */
 @Component
 public class ETLProcessRunner {
-	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+
+	private static final Logger logger = LoggerFactory.getLogger(ETLProcessRunner.class);
 
 	@Autowired
 	private Extractor extractor;
-	
-	@Autowired
-	private LocalExtractor localExtractor;
 
 	@Autowired
 	private Transformer transformer;
@@ -60,92 +67,127 @@ public class ETLProcessRunner {
 	private Loader loader;
 
 	@Autowired
-	private Restarter restarter;
-	
+	private IRestarter restarterService;
+
 	@Autowired
-	private Publisher publisher;
-	
-	@Value("${study.publish.command_prefix:null}")
-    private String studyPublishCommandPrefix;
-    
-    @Value("${central.share.location}")
-    private String centralShareLocation;
+    private IAuthorizerService authorizer;
 
-    @Value("${etl.working.dir:false}")
-	private String etlWorkingDir;
+    @Autowired
+    private IPublisherService publisher;
 
-	/**
-	 * Runs all the steps of the ETL process.
-	 * 
-	 * @param indexFile: index YAML file containing the names of the files to be "ETLed".
-	 * @throws Exception 
-	 */
-	public void run(Resource indexFile) throws Exception {
+    @Autowired
+	private IReportingService reportingService;
+
+	@Autowired
+    private ResourceUtils utils;
+
+    @Autowired
+	private EtlUtils etlUtils;
+
+	@Value("${study.authorize.command_prefix:}")
+    private String studyAuthorizeCommandPrefix;
+
+    @Value("${etl.working.dir:}")
+    private Resource etlWorkingDir;
+
+    @Value("${validation.level:ERROR}")
+	private String validationLevel;
+
+	Map<Study, ExitStatus> transformerExitStatus;
+	Map<Study, ExitStatus> validatorExitStatus;
+	Map<Study, ExitStatus> loaderExitStatus;
+
+	public void run(Study[] remoteResources) throws Exception {
 		try  {
 			startProcess();
+
+			if (etlWorkingDir  == null) {
+                throw new ConfigurationException("etl.working.dir not defined. Please check the application properties.");
+			} else {
+				utils.ensureDirs(etlWorkingDir);
+			}
+
             //E (Extract) step:
-            Map<String, File> studyPaths = new HashMap<String, File>();
-            if (etlWorkingDir.equals("false")) {
-                throw new Exception("When providing a yaml file instead of a directory, you need to define a working directory.");
-            } else {
-                studyPaths = extractor.run(indexFile);
-            }
-			String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-			//Execute Transforming, Validating and Loading steps:
-			runCommon(date, studyPaths);
-		}
-		finally
-		{
-			//end process / release lock:
-			endProcess();
-		}
-	}
-	
-	/**
-	 * Runs all the steps of the ETL process.
-	 * 
-	 * @param directories: list of strings with the directory names inside the scanLocation folder.
-	 * @throws Exception 
-	 */
-	public void run(ArrayList<File> directories) throws Exception {
-		try  {
-            startProcess();
-            //E (Extract) step:
-            String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-            Map<String, File> studyPaths = new HashMap<String, File>(localExtractor.extractInWorkingDir(directories, date));
-            if (etlWorkingDir.equals("false")) {
-                studyPaths = localExtractor.extractWithoutWorkingDir(directories);
-            }
-			
-			//Execute Transforming, Validating and Loading steps:
-			runCommon(date, studyPaths);
-		}
-		finally
-		{
-			//end process / release lock:
-			endProcess();
-		}
-	}
-	
-	private void runCommon(String date, Map<String, File> studyPaths) throws Exception {
-        Map<String, String> logPaths = new HashMap<String, String>();
-		boolean loadSuccessful = false;
-		//T (Transform) step:
-		Map<String, File> transformedStudiesPaths = transformer.transform(date, studyPaths, "command", logPaths);
-        //V (Validate) step:
-        if (transformedStudiesPaths.keySet().size() > 0) {
-            Map<String, File> validatedStudies = validator.validate(date, transformedStudiesPaths, logPaths);
-            //L (Load) step:
-            if (validatedStudies.size() > 0) {
-                loadSuccessful = loader.load(date, validatedStudies, logPaths);
-                if (loadSuccessful) {
-                    restarter.restart();
-                    if (!studyPublishCommandPrefix.equals("null")) {
-                        publisher.publishStudies(validatedStudies.keySet());
-                    }
+			Study[] localResources = extractor.run(remoteResources);
+
+			if (! extractor.errorFiles().isEmpty()) {
+				reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
+			}
+
+			transformerExitStatus = new HashMap<>();
+			validatorExitStatus = new HashMap<>();
+			loaderExitStatus = new HashMap<>();
+
+			//T (TRANSFORM) STEP:
+			Study[] transformedStudies;
+			if (etlUtils.doTransformation()) {
+				transformerExitStatus = transformer.transform(localResources);
+                publisher.publishFiles(transformer.getLogFiles());
+                transformedStudies = transformer.getValidStudies();
+			} else {
+                for (Study study : localResources) {
+                    transformerExitStatus.put(study, ExitStatus.SKIPPED);
                 }
+				transformedStudies = localResources;
+			}
+
+			//V (VALIDATE) STEP:
+			if (transformedStudies.length > 0) {
+                validatorExitStatus = validator.validate(transformedStudies);
+                publisher.publishFiles(validator.getLogFiles());
+                publisher.publishFiles(validator.getReportFiles());
+
+				Study[] studiesThatPassedValidation = validator.getValidStudies();
+
+				//L (LOAD) STEP:
+				if (studiesThatPassedValidation.length > 0) {
+                    loaderExitStatus = loader.load(studiesThatPassedValidation);
+                    publisher.publishFiles(loader.getLogFiles());
+
+					if (loader.areStudiesLoaded()) {
+                        restarterService.restart();
+						if (studyAuthorizeCommandPrefix != null && ! studyAuthorizeCommandPrefix.equals("")) {
+                            Set<String> studyIds = new HashSet<String>();
+                            for (Study study : validatorExitStatus.keySet()) {
+                                studyIds.add(study.getStudyId());
+                            }
+							authorizer.authorizeStudies(studyIds);
+						}
+					}
+				}
             }
-        }
+            reportSummary(localResources, transformer.getLogFiles(), validator.getLogFiles(), validator.getReportFiles(), loader.getLogFiles(),
+                transformerExitStatus, validatorExitStatus, loaderExitStatus);
+		} catch (ReporterException e) {
+			try {
+				logger.error("An error occurred during the transformation step. Error found: "+ e);
+				reportingService.reportGenericError("An error occurred during the transformation step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		} catch (ValidatorException e) {
+			try {
+				logger.error("An error occurred during the validation step. Error found: "+ e);
+				reportingService.reportGenericError("An error occurred during the validation step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		} catch (LoaderException e) {
+			try {
+				logger.error("An error occurred during the loading step. Error found: "+ e);
+				reportingService.reportGenericError("An error occurred during the loading step. Error found: ", e);
+			} catch (Exception e1) {
+				logger.error("The email could not be sent due to the error specified below.");
+				e1.printStackTrace();
+			}
+		}
+		finally
+		{
+			//end process / release lock:
+			endProcess();
+		}
 	}
 
 	/**
@@ -184,5 +226,52 @@ public class ETLProcessRunner {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    }
+
+    private void reportSummary(Study[] studies, Map<Study,Resource> transformerLogs, Map<Study,Resource> validatorLogs,
+    Map<Study,Resource> validatorReports, Map<Study,Resource> loaderLogs, Map<Study,ExitStatus> transformerStatus,
+    Map<Study,ExitStatus> validatorStatus, Map<Study,ExitStatus> loaderStatus) throws ReporterException {
+
+        for (Study study : studies) {
+            logger.debug("ETL calling the Reporting Service...");
+            reportingService.reportSummary(study, getStudyLogs(study.getStudyId(), transformerLogs), getStudyLogs(study.getStudyId(),validatorLogs),
+            getStudyLogs(study.getStudyId(), validatorReports), getStudyLogs(study.getStudyId(),loaderLogs),
+            getStudyStatus(study.getStudyId(), transformerStatus), getStudyStatus(study.getStudyId(), validatorStatus),
+            getStudyStatus(study.getStudyId(), loaderStatus));
+        }
+
+    }
+
+    private Resource getStudyLogs(String studyId, Map<Study, Resource> info) {
+        Resource studyLogs = null;
+        for (Study study : info.keySet()) {
+            if (study.getStudyId().equals(studyId)) {
+                studyLogs = info.get(study);
+            }
+        }
+        return studyLogs;
+    }
+
+    private ExitStatus getStudyStatus(String studyId, Map<Study, ExitStatus> info) {
+        ExitStatus studyStatus = null;
+        for (Study study : info.keySet()) {
+            if (study.getStudyId().equals(studyId)) {
+                studyStatus = info.get(study);
+            }
+        }
+        return studyStatus;
+    }
+
+	public Map<Study, ExitStatus> getTransformerExitStatus() {
+		return transformerExitStatus;
 	}
+
+	public Map<Study, ExitStatus> getValidatorExitStatus() {
+		return validatorExitStatus;
+	}
+
+	public Map<Study, ExitStatus> getLoaderExitStatus() {
+		return loaderExitStatus;
+	}
+
 }

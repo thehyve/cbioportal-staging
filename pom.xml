@@ -2,7 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cbioportal.staging</groupId>
 	<artifactId>cbioportal-staging</artifactId>
@@ -14,42 +13,69 @@
 
 	<properties>
 		<jdk.version>1.8</jdk.version>
-		<junit.version>4.12</junit.version>
+		<test.cbioportal.docker.image>cbioportal/cbioportal:3.1.4</test.cbioportal.docker.image>
+		<test.ftp.host>sftp</test.ftp.host>
+		<test.db.host>cbioDB</test.db.host>
+		<test.db.user>cbio</test.db.user>
+		<test.db.password>P@ssword1</test.db.password>
+		<test.db.portal_db_name>cbioportal</test.db.portal_db_name>
+		<test.working.dir>/tmp/staging-integration-test/</test.working.dir>
+		<test.home>${basedir}/src/test/resources/</test.home>
 	</properties>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.9.RELEASE</version>
+		<version>2.2.4.RELEASE</version>
 	</parent>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-aws</artifactId>
-				<version>1.2.1.RELEASE</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<dependencies>
-		<!-- Unit Test -->
+
+		<!-- Development -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>2.0.5</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>2.0.5</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.pivovarit</groupId>
+			<artifactId>throwing-function</artifactId>
+			<version>1.5.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-aws</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-integration</artifactId>
+		</dependency>
+		
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+		<dependency>
+			<groupId>org.springframework.integration</groupId>
+			<artifactId>spring-integration-sftp</artifactId>
+			<version>5.2.4.RELEASE</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
@@ -73,16 +99,15 @@
 			<version>2.6</version>
 		</dependency>
 
-
+		<!-- html report parsing and generation -->
 		<dependency>
-			<groupId>javax.mail</groupId>
-			<artifactId>mail</artifactId>
-			<version>1.4.7</version>
-			<scope>provided</scope>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.12.1</version>
 		</dependency>
 
-		<!-- Attention: Be sure nothing pulls in an old dependency with groupId 
-			"freemarker" (without the "org."), because then you will end up with two 
+		<!-- Attention: Be sure nothing pulls in an old dependency with groupId
+			"freemarker" (without the "org."), because then you will end up with two
 			freemarker.jar-s and unpredictable behavior! -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
@@ -117,6 +142,10 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<systemPropertyVariables>
+						<property1>test</property1>
+						<property2>${my.value}</property2>
+					</systemPropertyVariables>
 					<executable>true</executable>
 				</configuration>
 			</plugin>
@@ -132,12 +161,114 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
+					<skipTests>${skipUnitTests}</skipTests>
 					<useSystemClassLoader>false</useSystemClassLoader>
 					<excludes>
 						<exclude>${cbioportal-staging.test.excludes}</exclude>
+						<exclude>**/IntegrationTest*.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+
+		<profile>
+			<id>aws</id>
+				<dependencyManagement>
+					<dependencies>
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-aws</artifactId>
+							<version>2.2.1.RELEASE</version>
+							<type>pom</type>
+							<scope>import</scope>
+						</dependency>
+					</dependencies>
+				</dependencyManagement>
+				<dependencies>
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-aws</artifactId>
+					</dependency>
+				</dependencies>
+		</profile>
+
+		<profile>
+			<id>integration-test</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>exec-maven-plugin</artifactId>
+						<groupId>org.codehaus.mojo</groupId>
+						<version>1.6.0</version>
+						<executions>
+							<execution>
+								<id>start-docker-containers</id>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>src/test/resources/local_database/setup.sh</executable>
+									<environmentVariables>
+										<FTP_HOST>${test.ftp.host}</FTP_HOST>
+										<DB_HOST>${test.db.host}</DB_HOST>
+										<DB_USER>${test.db.user}</DB_USER>
+										<DB_PASSWORD>${test.db.password}</DB_PASSWORD>
+										<DB_PORTAL_DB_NAME>${test.db.portal_db_name}</DB_PORTAL_DB_NAME>
+										<WORKING_DIR>${test.working.dir}</WORKING_DIR>
+										<TEST_HOME>${test.home}</TEST_HOME>
+										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>
+										<MYSQL_DUMP>/tmp/mysql.dump</MYSQL_DUMP>
+									</environmentVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>stop-docker-containers</id>
+								<phase>post-integration-test</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>src/test/resources/local_database/cleanup.sh</executable>
+									<environmentVariables>
+										<FTP_HOST>${test.ftp.host}</FTP_HOST>
+										<DB_HOST>${test.db.host}</DB_HOST>
+										<DB_USER>${test.db.user}</DB_USER>
+										<TEST_CBIOPORTAL_DOCKER_IMAGE>${test.cbioportal.docker.image}</TEST_CBIOPORTAL_DOCKER_IMAGE>
+										<MYSQL_DUMP>/tmp/mysql.dump</MYSQL_DUMP>
+									</environmentVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>3.0.0-M4</version>
+						<!--
+							Make failsafe and spring-boot repackage play nice together,
+							see https://github.com/spring-projects/spring-boot/issues/6254
+						-->
+						<configuration>
+							<classesDirectory>${project.build.outputDirectory}</classesDirectory>
+							<includes>
+								<include>**/IntegrationTest*.java</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>

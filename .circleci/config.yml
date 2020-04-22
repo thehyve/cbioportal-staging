@@ -1,63 +1,77 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
+version: 2.1
+orbs:
+  maven: circleci/maven@0.0.12
+
 defaults: &defaults
-    working_directory: /tmp/repo
-    docker:
-        # specify the version you desire here
-        - image: circleci/openjdk:8-jdk
+  working_directory: /tmp/repo
 
-version: 2
 jobs:
-    install:
-        <<: *defaults
-        steps:
-             - checkout
-             # this is needed because we are using a virtual machine for the end to end tests below
-             - persist_to_workspace:
-                 root: /tmp
-                 paths:
-                     - repo
+  install:
+    <<: *defaults
+    docker:
+    - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - repo
 
-    end_to_end_tests_localdb:
-        working_directory: /tmp/repo
-        machine: #run as a virtual machine so we can start docker containers
-            enabled: true
-            image: ubuntu-1604:201903-01
-        environment:
-            E2E_CBIOPORTAL_HOST_NAME: cbioportal
-            CBIOPORTAL_URL: http://$E2E_CBIOPORTAL_HOST_NAME:8081
-            PORTAL_HOME: /tmp/repo
-            TEST_HOME: /tmp/repo/src/test/resources/local_database
-            DB_HOST: cbioDB
-            DB_USER: cbio
-            DB_PASSWORD: P@ssword1
-            DB_PORTAL_DB_NAME: cbioportal
-        steps:
-            - attach_workspace:
-                at: /tmp/
-            - run:
-                name: update apt-get
-                command: sudo apt-get update
-            - run:
-                name: install maven
-                command: sudo apt-get install maven
-            - run:
-                name: setup cbioportal docker containers
-                command: |
-                    cd /tmp/repo/src/test/resources/local_database/ && \
-                    ./setup_dockers.sh
-            - run: 
-                name: 
-                command: mvn clean install
-        when: always
+  integration-test:
+    <<: *defaults
+    machine: #run as a virtual machine so we can start docker containers
+      image: ubuntu-1604:201903-01
+    steps:
+      - attach_workspace:
+          at: /tmp/
+      - run:
+          name: Update apt-get
+          command: sudo apt-get update
+      - run:
+          name: Install maven
+          command: sudo apt-get install maven
+      - run:
+          # needed to get python3 on the path (https://discuss.circleci.com/t/pyenv-pyvenv-command-not-found/4087/2)
+          name: Add python3 to path [corrects bug in circle ci image and may be removed in the future]
+          command: pyenv local 3.5.2 && virtualenv venv
+      - run:
+          name: Generate checksum of the migration script
+          environment:
+            TEST_CBIOPORTAL_DOCKER_IMAGE: cbioportal/cbioportal:3.1.4
+          command: /tmp/repo/src/test/resources/local_database/db_content_fingerprint.sh > /tmp/db_data_md5key
+      - restore_cache:
+          keys:
+            - v3-database-files-{{ checksum "/tmp/db_data_md5key" }}
+      - restore_cache:
+          keys:
+            - maven-repo-v1-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - maven-repo-v1-{{ .Branch }}-
+            - maven-repo-v1-
+      - run:
+          name: Run integration tests
+          command: mvn clean verify -P integration-test -DskipUnitTests=true
+      - run:
+          name: Change owner of MySQL database files (needed by cache)
+          command: |         
+              sudo chmod -R 777 /tmp/mysql_data_integration_test && \
+              sudo chown -R circleci:circleci /tmp/mysql_data_integration_test
+      - save_cache:
+          paths:
+          - /tmp/mysql_data_integration_test
+          key: v3-database-files-{{ checksum "/tmp/db_data_md5key" }}
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: maven-repo-v1-{{ .Branch }}-{{ checksum "pom.xml" }}
 
 workflows:
-    version: 2
-    install_and_test:
-        jobs:
-            - install
-            - end_to_end_tests_localdb:
-                requires:
-                    - install
+  version: 2
+  maven_unit_test:
+    jobs:
+    - maven/test
+  maven_integration_test:
+    jobs:
+      - install
+      - integration-test:
+          requires:
+              - install

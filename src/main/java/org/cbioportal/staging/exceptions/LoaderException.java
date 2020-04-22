@@ -15,22 +15,18 @@
 */
 package org.cbioportal.staging.exceptions;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 public class LoaderException extends Exception {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -5072243529310767969L;
-	
+
 	public LoaderException()
 	{
 	}
 	public LoaderException(String message, Exception e)
 	{
-		super(message);
+		super(message, e);
 	}
 	public LoaderException(String message)
 	{

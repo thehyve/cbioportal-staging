@@ -15,134 +15,124 @@
 */
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Stream;
 
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.junit.Before;
-import org.junit.Rule;
+import org.cbioportal.staging.TestUtils;
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
+import org.cbioportal.staging.exceptions.ExtractionException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
+import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
+import org.cbioportal.staging.services.resource.filesystem.IFileSystemGateway;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {org.cbioportal.staging.etl.Extractor.class,
-        org.cbioportal.staging.etl.EmailServiceMockupImpl.class})
-@SpringBootTest
-@Import(MyTestConfiguration.class)
-
+@RunWith(SpringRunner.class)
+@SpringBootTest(
+	classes = { Extractor.class, ResourceUtils.class, FileSystemResourceProvider.class }
+)
 public class ExtractorTest {
 
 	@Autowired
-    private Extractor extractor;
-    	
-	@Autowired
-	private EmailServiceMockupImpl emailService;
-	
-	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
-	
-	@Before
-    public void setUp() throws Exception {
-        emailService.reset();
-    }
-	
-	@Rule
-    public TemporaryFolder etlWorkingDir = new TemporaryFolder();
+	private Extractor extractor;
+
+	@SpyBean
+	private FileSystemResourceProvider provider;
+
+	@MockBean
+	private IDirectoryCreator directoryCreator;
+
+	@MockBean
+	private IFileSystemGateway gateway;
 
 	@Test
-	public void filesFoundAndNotFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		ReflectionTestUtils.setField(extractor, "timeRetry", 0);
+	public void testRun_success() throws DirectoryCreatorException, ResourceCollectionException, IOException,
+			ExtractionException, ResourceUtilsException {
 
-		//Run extractor step:
-        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_1.yaml");
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-		Map<String, File> result = extractor.run(indexFile);
+		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
+		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
 
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(true, emailService.isEmailStudyFileNotFoundSent()); //Email is sent since a file does not exist
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-        //Build the expected outcome and check that is the same as the function output
-		Map<String, File> expectedResult = new HashMap<String, File>();
-		expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
-		assertEquals(expectedResult, result);
-    }
+		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
+		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
 
-	@Test
-	public void allFilesFoundInYaml() throws IOException, InterruptedException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
-        Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_2.yaml");
-        String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-		Map<String, File> result = extractor.run(indexFile);
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
 
-		//check that no emails are sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(false, emailService.isEmailGenericErrorSent());
-		
-        //Build the expected outcome and check that is the same as the function output
-        Map<String, File> expectedResult = new HashMap<String, File>();
-        expectedResult.put("study1", new File(etlWorkingDir.getRoot().toString()+"/"+date+"/study1"));
-		assertEquals(expectedResult, result);
+		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
+		Resource localFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
+		doAnswer(invocation -> {
+            String fileName = invocation.getArgument(1, Resource.class).getFilename();
+            if (fileName.equals("file1.txt")) {
+                return localFile1;
+			}
+			if (fileName.equals("file2.txt")) {
+                return localFile2;
+			}
+            return null;
+        }).when(provider).copyFromRemote(isA(Resource.class), isA(Resource.class));
+
+		Study[] extractedResources = extractor.run(dummyStudies);
+
+		assertTrue(extractor.errorFiles().isEmpty());
+		assertTrue(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
+
+		Study extractedStudy = extractedResources[0];
+		assertTrue(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
+		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
+
 	}
-	
-	@Test
-	public void incorrectYaml() throws InterruptedException, IOException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_3.yaml");
-		extractor.run(indexFile);
 
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
-	}
-	
 	@Test
-	public void notFoundYaml() throws InterruptedException, IOException, ConfigurationException {
-		ReflectionTestUtils.setField(extractor, "emailService", emailService);
-		ReflectionTestUtils.setField(extractor, "scanLocation", "file:src/test/resources/extractor_tests");
-		ReflectionTestUtils.setField(extractor, "etlWorkingDir", etlWorkingDir.getRoot());
-		
-		Resource indexFile =  this.resourcePatternResolver.getResource("file:src/test/resources/extractor_tests/list_of_studies_4.yaml");
-		extractor.run(indexFile);
+	public void testRun_fileFail()
+			throws DirectoryCreatorException, ResourceCollectionException, IOException, ExtractionException,
+			ResourceUtilsException {
 
-		//check that the correct email is sent
-		assertEquals(false, emailService.isEmailStudyErrorSent());
-		assertEquals(false, emailService.isEmailStudyFileNotFoundSent());
-		assertEquals(false, emailService.isEmailValidationReportSent());
-		assertEquals(false, emailService.isEmailStudiesLoadedSent());
-		assertEquals(true, emailService.isEmailGenericErrorSent()); //Email is sent since there is a "generic" error
+		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
+		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
+
+		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
+		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
+
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
+
+		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
+		doAnswer(invocation -> {
+            String fileName = invocation.getArgument(1, Resource.class).getFilename();
+            if (fileName.equals("file1.txt")) {
+                return localFile1;
+			}
+            return null;
+        }).when(provider).copyFromRemote(isA(Resource.class), isA(Resource.class));
+
+		Study[] extractedResources = extractor.run(dummyStudies);
+
+		assertTrue(extractor.errorFiles().containsKey("dummy-study"));
+		assertTrue(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
+		assertTrue(extractedResources.length == 0);
+		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
+
 	}
+
+	@Test(expected = ExtractionException.class)
+	public void testRun_nullResources() throws ExtractionException {
+		extractor.run(null);
+	}
+
 }

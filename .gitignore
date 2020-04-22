@@ -2,5 +2,8 @@
 /.settings/
 /.classpath
 /.project
-src/main/resources/application.properties
+/.vscode
 .DS_Store
+src/main/resources/custom.properties
+/.idea/
+*.iml

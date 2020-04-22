@@ -15,97 +15,73 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.LoaderService;
-import org.cbioportal.staging.services.ValidationService;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.etl.ILoaderService;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Loader {
-	private static final Logger logger = LoggerFactory.getLogger(Loader.class);
-	
-	@Autowired
-	private EmailService emailService;
-	
-	@Autowired
-    private LoaderService loaderService;
-    
+    private static final Logger logger = LoggerFactory.getLogger(Loader.class);
+
     @Autowired
-    private ValidationService validationService;
-    	
-	@Value("${etl.working.dir:${java.io.tmpdir}}")
-	private File etlWorkingDir;
+    private ILoaderService loaderService;
 
-	@Value("${central.share.location}")
-	private String centralShareLocation;
-	
-	@Value("${central.share.location.web.address:}")
-    private String centralShareLocationWebAddress;
-    
-	
-	boolean load(final String date, final Map<String, File> studyPaths, final Map<String, String> filesPath)
-            throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException,
-            TemplateException, RuntimeException, LoaderException {
-        final Map<String, String> statusStudies = new HashMap<String, String>();
-        int studiesNotLoaded = 0;
-        //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-        if (centralShareLocationWebAddress.equals("")) {
-            centralShareLocationWebAddress = centralShareLocation;
-        }
-        for (final String study : studyPaths.keySet()) {
-            logger.info("Starting loading of study " + study + ". This can take some minutes.");
-            final File studyPath = new File(studyPaths.get(study) + "/staging");
-            int loadingStatus = -1;
-            // Create loading log file
-            final String logName = study + "_loading_log.txt";
-            final File logFile = new File(studyPaths.get(study) + "/" + logName);
-            try {
-                loadingStatus = loaderService.load(study, studyPath, logFile);
-            } catch (final RuntimeException e) {
-                throw new RuntimeException(e);
-            } catch (final Exception e) {
-                // tell about error, continue with next study
-                logger.error(e.getMessage() + ". The app will skip this study.");
-                e.printStackTrace();
-            } finally {
-                // Put report and log file in the share location
-                final String centralShareLocationPath = validationService
-                        .getCentralShareLocationPath(centralShareLocation, date);
-                validationService.copyToResource(logFile, centralShareLocationPath);
-                filesPath.put(study+" loading log", centralShareLocationWebAddress+"/"+date+"/"+logName);	
+    @Autowired
+    private ResourceUtils utils;
 
+    private boolean areStudiesLoaded;
+
+    final private Map<Study, Resource> logFiles = new HashMap<>();
+
+    Map<Study, ExitStatus> load(final Study[] studies) throws LoaderException {
+
+        areStudiesLoaded = false;
+        logFiles.clear();
+
+        final Map<Study, ExitStatus> loadResults = new HashMap<Study, ExitStatus>();
+        try {
+            for (final Study study: studies) {
+
+                String studyId = study.getStudyId();
+
+                logger.info("Starting loading of study " + studyId + ". This can take some minutes.");
+                final Resource studyPath = study.getStudyDir();
+                Resource logFile;
+                logFile = utils.createFileResource(studyPath, studyId + "_loading_log.txt");
+                logFiles.put(study, logFile);
+                ExitStatus loadingStatus = loaderService.load(studyPath, logFile);
                 //Add loading result for the email loading report
-                if (loadingStatus == 0) {
-                    statusStudies.put(study, "SUCCESSFULLY LOADED");
-                    logger.info("Loading of study "+study+" finished successfully.");
+                if (loadingStatus == ExitStatus.SUCCESS) {
+                    loadResults.put(study, ExitStatus.SUCCESS);
+                    areStudiesLoaded = true;
+                    logger.info("Loading of study "+studyId+" finished successfully.");
                 } else {
-                    statusStudies.put(study, "ERRORS");
-                    studiesNotLoaded += 1;
-                    logger.error("Loading process of study "+study+" failed.");
+                    loadResults.put(study, ExitStatus.ERROR);
+                    logger.error("Loading process of study "+studyId+" failed.");
                 }
-			}
+            }
+        } catch (ResourceUtilsException e) {
+            throw new LoaderException("The Loader could not create a log file", e);
         }
-        
-        emailService.emailStudiesLoaded(statusStudies, filesPath);
-        //Return false if no studies have been loaded
-        if (studyPaths.keySet().size() == studiesNotLoaded) {
-            return false;
-        } 
-		return true;
+        return loadResults;
+    }
+
+    Map<Study, Resource> getLogFiles() {
+        return logFiles;
+    }
+
+    boolean areStudiesLoaded() {
+        return areStudiesLoaded;
 	}
 }

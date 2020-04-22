@@ -15,132 +15,114 @@
 */
 package org.cbioportal.staging.etl;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import org.cbioportal.staging.exceptions.ReporterException;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
+import org.cbioportal.staging.services.etl.ITransformerService;
+import org.cbioportal.staging.services.resource.IResourceProvider;
+import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import org.apache.commons.io.FileUtils;
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.TransformerException;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.TransformerService;
-import org.cbioportal.staging.services.ValidationService;
-
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
 
 @Component
 public class Transformer {
-	private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
+    private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-	@Value("${skip.transformation:false}")
-    private boolean skipTransformation;
-    
-    @Value("${central.share.location}")
-    private String centralShareLocation;
-
-	@Value("${central.share.location.web.address:}")
-    private String centralShareLocationWebAddress;
-	
-	@Autowired
-	private EmailService emailService;
-	
-	@Autowired
-    private TransformerService transformerService;
-    
     @Autowired
-	private ValidationService validationService;
+    private ITransformerService transformerService;
 
-	boolean skipTransformation(File originPath) {
-		File metaStudyFile = new File(originPath+"/meta_study.txt");
-		if (skipTransformation || metaStudyFile.exists() && metaStudyFile.isFile()) {
-			return true;
-		}
-		return false;
-	}
+    @Autowired
+    private ResourceUtils utils;
 
-	Map<String, File> transform(String date, Map<String, File> studyPaths, String transformationCommand,  Map<String, String> filesPaths) throws InterruptedException, ConfigurationException, IOException, TemplateNotFoundException, MalformedTemplateNameException, ParseException, TemplateException {
-        Map<String, Integer> statusStudies = new HashMap<String, Integer>();
-        Map<String, File> transformedStudies = new HashMap<String, File>();
-		for (String study : studyPaths.keySet()) {
-            File studyOriginPath = studyPaths.get(study);
-            File finalPath = new File(studyOriginPath+"/staging"); //TODO: Add timestamp if no working dir
-            if (!finalPath.exists()) {
-                finalPath.mkdir();
-            }
-            //Set the centralShareLocationWebAddress to the centralShareLocation path if no address is available
-            if (centralShareLocationWebAddress.equals("")) {
-                centralShareLocationWebAddress = centralShareLocation;
-            }
-            int transformationStatus = -1;  
-            //Create transformation log file
-            String logName = study+"_transformation_log.txt";
-            File logFile = new File(studyOriginPath+"/"+logName);
-			try {
-				if (skipTransformation(studyOriginPath)) {
-                    FileUtils.copyDirectory(studyOriginPath, finalPath);
-                    transformedStudies.put(study, studyOriginPath);
-				} else {
-					transformationStatus = transformerService.transform(studyOriginPath, finalPath, logFile);
-				}
-			} catch (TransformerException e) {
-				//tell about error, continue with next study
-				logger.error(e.getMessage()+". The app will skip this study.");
-				e.printStackTrace();
-				try {
-					emailService.emailStudyError(study, e);
-				} catch (Exception e1) {
-					logger.error("The email could not be sent due to the error specified below.", e1);
-					e1.printStackTrace();
-				}
-			} finally {
-                //Only copy the files if the transformation has been performed
-                if (!skipTransformation(studyOriginPath)) {
-                    String centralShareLocationPath = centralShareLocation+"/"+date;
-                    if (!centralShareLocationPath.startsWith("s3:")) {
-                        File cslPath = new File(centralShareLocation+"/"+date);
-                        if (centralShareLocationPath.startsWith("file:")) {
-                            cslPath = new File(centralShareLocationPath.replace("file:", ""));
-                        }
-                        logger.info("PATH TO BE CREATED: "+cslPath.getAbsolutePath());
-                        if (!cslPath.exists()) {
-                            cslPath.mkdirs();
-                        }
-                    }
-                    validationService.copyToResource(logFile, centralShareLocationPath);
-                    filesPaths.put(study+" transformation log", centralShareLocationWebAddress+"/"+date+"/"+logName);
-                    //Add transformation status for the email loading report
-                    statusStudies.put(study, transformationStatus);
-                    if (transformationStatus == 0) {
-                        logger.info("Transformation of study "+study+" finished successfully.");
-                    } else if (transformationStatus == 3) {
-                        logger.info("Transformation of study "+study+" finished successfully with warnings.");
+    @Autowired
+    private IResourceProvider provider;
+
+    @Autowired
+	private IDirectoryCreator directoryCreator;
+
+    final private Map<Study, Resource> logFiles = new HashMap<>();
+    final private List<Study> validStudies = new ArrayList<>();
+
+    public Map<Study, ExitStatus> transform(Study[] studies) throws ReporterException {
+
+        logFiles.clear();
+        validStudies.clear();
+
+        Map<Study, ExitStatus> statusStudies = new HashMap<Study, ExitStatus>();
+
+        try {
+            for (Study study: studies) {
+
+                String studyId = study.getStudyId();
+                ExitStatus transformationStatus = ExitStatus.SUCCESS;
+                Resource transformedFilesPath;
+                try {
+                    Resource untransformedFilesPath = study.getStudyDir();
+                    transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
+
+                    Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
+                    logFiles.put(study, logFile);
+
+                    if (metaFileExists(untransformedFilesPath)) {
+                        utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
+                        transformationStatus = ExitStatus.SKIPPED;
                     } else {
-                        logger.error("Transformation process of study "+study+" failed.");
+                        transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
                     }
+
+                } catch (Exception e) {
+                    throw new ReporterException(e);
                 }
-            }	
-        }
-        //Only send the email if at least one transformation has been done
-        if (filesPaths.size() > 0) {
-            emailService.emailTransformedStudies(statusStudies, filesPaths);
-        }
-        logger.info("Transformation step finished.");
-        
-        //Return the list of the successfully transformed studies to pass to the validator
-        for (Map.Entry<String, Integer> entry : statusStudies.entrySet()) {
-            if (entry.getValue().equals(0) || entry.getValue().equals(3)) {
-                transformedStudies.put(entry.getKey(), studyPaths.get(entry.getKey()));
+
+                Resource[] resources;
+                    resources = provider.list(transformedFilesPath);
+                    Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
+
+                //Add status of the validation for the study
+                statusStudies.put(study, transformationStatus);
+                if (transformationStatus == ExitStatus.SUCCESS) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Transformation of study "+studyId+" finished successfully.");
+                } else if (transformationStatus == ExitStatus.WARNING) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
+                } else if (transformationStatus == ExitStatus.SKIPPED) {
+                    validStudies.add(transformedStudy);
+                    logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
+                } else {
+                    logger.error("Transformation process of study "+studyId+" failed.");
+                }
             }
+
+        } catch (ResourceCollectionException e) {
+            throw new ReporterException(e);
         }
-        return transformedStudies;
+
+        logger.info("Transformation step finished.");
+        return statusStudies;
+    }
+
+    public boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
+        Resource[] studyFiles = provider.list(originPath);
+        return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
+    }
+
+    public Map<Study, Resource> getLogFiles() {
+        return logFiles;
+    }
+
+    public Study[] getValidStudies() {
+        return validStudies.toArray(new Study[0]);
     }
 }

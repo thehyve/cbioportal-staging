@@ -15,29 +15,13 @@
 */
 package org.cbioportal.staging.exceptions;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 public class TransformerException extends Exception
 {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8901822768870101717L;
+	private static final long serialVersionUID = -2926858148489247426L;
 
-	public TransformerException()
-	{
-	}
-	public TransformerException(String message, IOException e)
-	{
-		super(message);
-	}
-	
-	public TransformerException(String message, FileNotFoundException e)
-	{
-		super(message);
-	}
-	public TransformerException(String message) {
-		super (message);
-	}
+	public TransformerException() {super();}
+	public TransformerException(String message, Exception e) {super(message, e);}
+	public TransformerException(String message) {super(message);}
+	public TransformerException(Exception e) {super(e);}
+
 }

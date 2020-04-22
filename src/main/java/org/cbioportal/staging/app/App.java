@@ -28,9 +28,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages={"org.cbioportal.staging"})
 @EnableScheduling
-public class App 
+public class App
 {
-    private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main( String[] args )
     {

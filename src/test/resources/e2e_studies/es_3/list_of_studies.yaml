@@ -1,0 +1,4 @@
+test_study_es_3:
+  - test_study_es_3/data_samples.txt
+  - test_study_es_3/meta_samples.txt
+  - test_study_es_3/meta_study.txt

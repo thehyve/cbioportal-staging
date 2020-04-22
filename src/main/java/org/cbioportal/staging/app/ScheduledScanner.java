@@ -15,129 +15,97 @@
 */
 package org.cbioportal.staging.app;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.cbioportal.staging.etl.ETLProcessRunner;
-import org.cbioportal.staging.services.EmailService;
-import org.cbioportal.staging.services.ScheduledScannerService;
+import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.ExitStatus;
+import org.cbioportal.staging.services.report.IReportingService;
+import org.cbioportal.staging.services.resource.IResourceCollector;
+import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
+import org.cbioportal.staging.services.resource.Study;
+import org.cbioportal.staging.services.scanner.IScheduledScannerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 /**
  * Main app class to run the staging and loading process as a background service
  *
  */
 
-
 @Component
-public class ScheduledScanner 
-{
+public class ScheduledScanner {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledScanner.class);
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-	@Value("${scan.location}")
-	private String scanLocation;
-	
-	@Value("${scan.extract.folders: *}")
-	private String scanExtractFolders;
+	@Value("${scan.cron:* * * * * *}")
+	private String scanCron;
+
+	@Value("${scan.location:}")
+	private Resource scanLocation;
 
 	@Value("${scan.cron.iterations:-1}")
 	private Integer scanIterations;
 	private int nrIterations = 0;
 
+	@Value("${scan.ignore.appendonsuccess:false}")
+	private boolean ignoreAppend;
+
 	@Autowired
-	private ResourcePatternResolver resourcePatternResolver;
+	private IResourceCollector resourceCollector;
+
+	@Autowired
+	private IScheduledScannerService scheduledScannerService;
+
+	@Autowired
+	private IReportingService reporingService;
+
 	@Autowired
 	private ETLProcessRunner etlProcessRunner;
-	@Autowired
-	EmailService emailService;
-	
-	@Autowired
-	ScheduledScannerService scheduledScannerService;
-	
-	private String S3PREFIX = "s3:";
-	
-	@Scheduled(cron = "${scan.cron}")
-	public boolean scan() {
-		try {
-			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()) );
-			nrIterations++;
-			if (scanLocation.startsWith(S3PREFIX)) {
-				logger.info("Scanning location for the newest yaml file: " + scanLocation);
-				Resource[] allFilesInFolder =  this.resourcePatternResolver.getResources(scanLocation + "/list_of_studies*.yaml");
-				logger.info("Found "+ allFilesInFolder.length + " index files");
-		
-				if (allFilesInFolder.length == 0) {
-					checkIfShouldExit(nrIterations, scanIterations);
-					return false;
-				}
-		
-				Resource mostRecentFile = allFilesInFolder[0];
-				for (Resource resource : allFilesInFolder) {
-		
-					if (resource.lastModified() > mostRecentFile.lastModified()) {
-						mostRecentFile = resource;
-					}
-				}
-				logger.info("Selected most recent one: "+ mostRecentFile.getFilename());
-		
-				// trigger ETL process:
-				etlProcessRunner.run(mostRecentFile);
-			} else {
-				logger.info("Scanning location to find folders: " + scanLocation);
-				List<String> subsetToExtract = Arrays.asList(scanExtractFolders.split(","));
-				Resource scanLocationResource = resourcePatternResolver.getResource(scanLocation);
-				File scanLocationPath = scanLocationResource.getFile();
-				ArrayList<File> directories = new ArrayList<File>();
-				for (File file : scanLocationPath.listFiles()) {
-					if (file.isDirectory()) {
-						if (scanExtractFolders.trim().equals("*") || subsetToExtract.contains(file.getName())) {
-							logger.info("Folder found: "+file.getName());
-							directories.add(file);
-						} else {
-							logger.info("Folder skipped: "+file.getName());
-						}
-					}
-				}
-				if (directories.size() == 0) {
-					checkIfShouldExit(nrIterations, scanIterations);
-					return false;
-				}
 
-				// trigger ETL process:
-				etlProcessRunner.run(directories);
+	@Autowired
+	private ResourceIgnoreSet resourceIgnoreSet;
+
+	@Scheduled(cron = "${scan.cron:* * * * * *}")
+	public boolean scan() {
+
+		if (scanLocation == null) {
+			logger.info("No scan.location property is defined. Exiting...");
+			scheduledScannerService.stopApp();
+		}
+
+		try {
+			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()));
+			nrIterations++;
+
+			logger.info("Started fetching of resources.");
+			Study[] resourcesPerStudy = resourceCollector.getResources(scanLocation);
+
+			if (resourcesPerStudy.length == 0) {
+				return shouldStopApp();
 			}
-	
-			checkIfShouldExit(nrIterations, scanIterations);
-			
-		} catch (AmazonS3Exception e) {
-			try {
-				logger.error("The bucket cannot be reached. Please check the scan.location provided in the application.properties.");
-				emailService.emailGenericError("The bucket cannot be reached. Please check the scan.location provided in the application.properties.", e);
-			} catch (Exception e1) {
-				logger.error("The email could not be sent due to the error specified below.");
-				e1.printStackTrace();
-			} finally {
-				e.printStackTrace();
-				scheduledScannerService.stopApp();
-			}
+
+			logger.info("Started ETL process for studies: ", Stream.of(resourcesPerStudy).map(Study::getStudyId).collect(Collectors.joining(", ")));
+
+			etlProcessRunner.run(resourcesPerStudy);
+
+			if (ignoreAppend)
+				addToIgnoreFile(etlProcessRunner.getLoaderExitStatus(), resourcesPerStudy);
+
 		} catch (Exception e) {
 			try {
-				logger.error("An error not expected occurred. Stopping process... Error found: " + e);
-				emailService.emailGenericError("An error not expected occurred. Stopping process... Error found: ", e);
+				logger.error("An error not expected occurred. Stopping process... Error found: " + e.getMessage());
+				reporingService.reportGenericError("An error not expected occurred. Stopping process... \n\nError found: \n" + e.getMessage(), e);
 			} catch (Exception e1) {
 				logger.error("The email could not be sent due to the error specified below.");
 				e1.printStackTrace();
@@ -146,22 +114,43 @@ public class ScheduledScanner
 				scheduledScannerService.stopApp();
 			}
 		}
-		//return true if a process was triggered
-		return true;
+
+		return shouldStopApp();
 	}
 
-	/**
-	 * Checks if nrIterations reached the configured max and
-	 * triggers System.exit if this is the case.
-	 * 
-	 * @param nrIterations
-	 * @param max
-	 */
-	private void checkIfShouldExit(int nrIterations, int max) {
-		if (max != -1 && nrIterations >= max) {
-			logger.info("==>>>>> Reached configured number of iterations (" + max + "). Exiting... <<<<<==");
+	private void addToIgnoreFile(Map<Study,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
+
+		List<String> successStudyIds = loaderStatus.entrySet().stream()
+			.filter(e -> e.getValue() == ExitStatus.SUCCESS)
+			.map(e -> e.getKey().getStudyId())
+			.collect(Collectors.toList());
+
+		List<Study> successStudies = Stream.of(resourcesPerStudy)
+			.filter(s -> successStudyIds.contains(s.getStudyId()))
+			.collect(Collectors.toList());
+
+		successStudies.stream().forEach(s -> {
+			try {
+				resourceIgnoreSet.appendResources(s.getResources());
+			} catch (ResourceCollectionException ex) {
+				throw new RuntimeException(ex);
+			}
+		});
+	}
+
+	private boolean shouldStopApp() {
+		// When scanning every second, we assume that the scanner should run
+		// only once. The appl is closed when the patter is '* * * * * *'.
+		if (scanCron.equals("* * * * * *")) {
+			logger.info("Closing the app after running one time. When scheduled scanning " +
+			"is needed set the scan.cron property to a value different from '* * * * * *'");
 			scheduledScannerService.stopAppWithSuccess();
 		}
+		if (scanIterations != -1 && nrIterations >= scanIterations) {
+			logger.info("==>>>>> Reached configured number of iterations (" + scanIterations + "). Exiting... <<<<<==");
+			scheduledScannerService.stopAppWithSuccess();
+		}
+		return true;
 	}
 
 }
