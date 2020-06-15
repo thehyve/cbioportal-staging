@@ -29,7 +29,7 @@ import org.cbioportal.staging.services.etl.LoaderServiceImpl;
 import org.cbioportal.staging.services.etl.TransformerServiceImpl;
 import org.cbioportal.staging.services.etl.ValidatorServiceImpl;
 import org.cbioportal.staging.services.publish.PublisherServiceImpl;
-import org.cbioportal.staging.services.report.EmailReportingService;
+import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -55,11 +55,11 @@ public class IntegrationTestSuccess {
     @Autowired
     private ScheduledScanner scheduledScanner;
 
-    @SpyBean
-    private EmailReportingService emailServiceImpl;
-
     @MockBean
     private IRestarter restarterService;
+
+    @MockBean
+    private IReportingService reportingService;
 
     @SpyBean
     private PublisherServiceImpl publisherService;
@@ -104,9 +104,9 @@ public class IntegrationTestSuccess {
         verify(ignoreSet, times(1)).appendResources(any());
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
-        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
-        verify(emailServiceImpl, never()).reportGenericError(any(), any());
+        verify(reportingService, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(reportingService, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(reportingService, never()).reportGenericError(any(), any());
 
         // check files have been published
         publisherService.getPublishedFiles().stream()
