@@ -29,7 +29,7 @@ import org.cbioportal.staging.services.etl.LoaderServiceImpl;
 import org.cbioportal.staging.services.etl.TransformerServiceImpl;
 import org.cbioportal.staging.services.etl.ValidatorServiceImpl;
 import org.cbioportal.staging.services.publish.PublisherServiceImpl;
-import org.cbioportal.staging.services.report.EmailReportingService;
+import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.junit.After;
 import org.junit.Test;
@@ -60,7 +60,7 @@ import freemarker.template.TemplateNotFoundException;
 public class IntegrationTestTransformationFailure {
 
     @MockBean
-    private EmailReportingService emailServiceImpl;
+    private IReportingService reportingService;
 
     @MockBean
     private IRestarter restarterService;
@@ -111,9 +111,9 @@ public class IntegrationTestTransformationFailure {
         verify(ignoreSet, never()).appendResources(any(Resource[].class));
         verify(authorizerService, never()).authorizeStudies(anySet());
 
-        verify(emailServiceImpl, never()).reportStudyFileNotFound(any(), anyInt());
-        verify(emailServiceImpl, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
-        verify(emailServiceImpl, never()).reportGenericError(any(), any());
+        verify(reportingService, never()).reportStudyFileNotFound(any(), anyInt());
+        verify(reportingService, times(1)).reportSummary(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(reportingService, never()).reportGenericError(any(), any());
 
     }
 

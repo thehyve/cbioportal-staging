@@ -44,6 +44,7 @@ Build status: [![dockerhub](https://img.shields.io/docker/build/thehyve/cbioport
     - [Debug settings](#debug-settings)
     - [Update cbioportal version used for integration tests](#update-cbioportal-version-used-for-integration-tests)
     - [Other](#other)
+  - [Debug of integration tests](#debug-of-integration-tests)
 
 <!-- /code_chunk_output -->
 
@@ -356,3 +357,12 @@ Update to the same Dockerhub image reference (e.g., _cbioportal/cbioportal-3.1.4
 otherwise leave it empty (or comment it out). The staging app will append the
 `study id` and the `study.curator.emails` to this command.
 - `server.alias`: recognizable name for the server, appears in the emails, e.g. `DEV`.
+
+## Debug of integration tests
+
+To debug integration tests, you need first to change the `TEST_HOME` varible in `dev_setup.sh`. Then, execute the script to build the test database:
+```
+./src/test/resources/local_database/dev_setup.sh
+```
+
+After building the database, you can set breakpoints and run/debug the integration tests.
