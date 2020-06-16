@@ -49,10 +49,8 @@ public class ValidatorServiceImpl implements IValidatorService {
 
 			Resource portalInfoFolder = utils.createDirResource(studyPath, "portalInfo");
 
-			ProcessBuilder validationCmd = commandBuilder.buildValidatorCommand(studyPath, portalInfoFolder, reportFile);
-			ProcessBuilder portalInfoCmd = commandBuilder.buildPortalInfoCommand(portalInfoFolder);
-
 			logger.info("Dumping portalInfo...");
+			ProcessBuilder portalInfoCmd = commandBuilder.buildPortalInfoCommand(portalInfoFolder);
 			logger.info("Executing command: " + String.join(" ", portalInfoCmd.command()));
 			Process pInfo = portalInfoCmd.start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
@@ -68,6 +66,7 @@ public class ValidatorServiceImpl implements IValidatorService {
 			logger.info("Dump portalInfo finished. Continuing validation...");
 
 			// Apply validation command
+			ProcessBuilder validationCmd = commandBuilder.buildValidatorCommand(studyPath, portalInfoFolder, reportFile);
 			logger.info(
 					"Starting validation. Report will be stored in: " + utils.getFile(reportFile).getAbsolutePath());
 			logger.info("Executing command: " + String.join(" ", validationCmd.command()));
@@ -93,9 +92,9 @@ public class ValidatorServiceImpl implements IValidatorService {
 		} catch (InterruptedException e) {
             throw new ValidatorException("The validation process has been interrupted by another process.", e);
         } catch (ResourceUtilsException e) {
-            throw new ValidatorException();
+            throw new ValidatorException("ResourceUtilsException", e);
         } catch (CommandBuilderException e) {
-            throw new ValidatorException();
+            throw new ValidatorException("CommandBuilderException", e);
         }
 	}
 

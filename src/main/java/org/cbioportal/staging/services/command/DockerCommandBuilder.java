@@ -16,10 +16,13 @@
 package org.cbioportal.staging.services.command;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -74,6 +77,9 @@ public class DockerCommandBuilder implements ICommandBuilder {
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
             String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
+            
+            //parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
+            Properties cbioProperties = utils.parsePropertiesFile(propertiesFilePath);
 
             //docker command:
             ProcessBuilder validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
@@ -81,7 +87,9 @@ public class DockerCommandBuilder implements ICommandBuilder {
             "-v", reportFilePath + ":/outreport.html",
             "-v", portalInfoPath + ":/portalinfo:ro",
             "-v", propertiesFilePath + ":/cbioportal/portal.properties:ro", cbioportalDockerImage,
-            "validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
+            "validateData.py", "-p", "/portalinfo", "-s", "/study", "-ncbi", cbioProperties.getProperty("ncbi.build"), 
+                "-species", cbioProperties.getProperty("species"), "-ucsc", cbioProperties.getProperty("ucsc.build"), 
+                "--html=/outreport.html");
 
             return validationCmd;
         } catch (IOException e) {

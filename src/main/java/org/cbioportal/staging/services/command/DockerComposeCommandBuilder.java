@@ -57,6 +57,8 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
             String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
 
+            //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
+
             //docker command:
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
             "-v", studyDirPath + ":/study:ro",

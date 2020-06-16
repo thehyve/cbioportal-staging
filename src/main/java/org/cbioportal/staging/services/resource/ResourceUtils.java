@@ -2,9 +2,11 @@ package org.cbioportal.staging.services.resource;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -13,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -550,6 +553,22 @@ public class ResourceUtils {
         pathStr = trimPathLeft(stripResourceTypePrefix(pathStr)).replaceFirst(host, "");
 
         return "/" + trimPathLeft(pathStr);
+    }
+
+    public Properties parsePropertiesFile(String propertiesPath) throws ResourceUtilsException {
+
+        try (InputStream input = new FileInputStream(propertiesPath)) {
+
+            Properties prop = new Properties();
+
+            // load a properties file
+            prop.load(input);
+
+            return prop;
+
+        } catch (IOException ex) {
+            throw new ResourceUtilsException("Properties file could not be parsed.", ex);
+        }
     }
 
 }
