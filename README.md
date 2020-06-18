@@ -260,6 +260,7 @@ files are not removed from the `scan.location`.
 - `transformation.command.script.docker.image`: if the transformation command runs in Docker, add here the Docker image name. The app will call the script in the path provided in `transformtion.command.script`. If your command is executed at the entrypoint, you can comment `transformation.command.script` out.
 - `transformation.skip`: set this parameter to `true` if you want to skip the transformation step.
 - `transformation.directory`: resource path to directory where transformed study files are placed after transformation. When not set, transformed files are placed in the 'staging' subdirectory of study folders in the `etl.working.dir`.
+- `transformation.metafile.check`: set this parameter to to `false` if you want to transform also studies containing a meta_study.txt file (skipped by default even if `transformation.skip` is `false`).
 
 ### Validation and Loader settings
 

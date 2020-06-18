@@ -32,12 +32,16 @@ import org.cbioportal.staging.services.resource.Study;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Transformer {
     private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
+
+    @Value("${transformation.metafile.check:true}")
+    private boolean transformationMetaFileCheck;
 
     @Autowired
     private ITransformerService transformerService;
@@ -74,7 +78,7 @@ public class Transformer {
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
                     logFiles.put(study, logFile);
 
-                    if (metaFileExists(untransformedFilesPath)) {
+                    if (transformationMetaFileCheck && metaFileExists(untransformedFilesPath)) {
                         utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
                         transformationStatus = ExitStatus.SKIPPED;
                     } else {

@@ -50,6 +50,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { Transformer.class, TransformerServiceImpl.class, ResourceUtils.class,
@@ -97,8 +98,9 @@ public class TransformerTest {
     }
 
     @Test
-    public void testTransform_studyWithMetaStudyFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException, DirectoryCreatorException {
+    public void testTransform_studyWithMetaStudyFile_checkMetaFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException, DirectoryCreatorException {
 
+        ReflectionTestUtils.setField(transformer, "transformationMetaFileCheck", true);
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         // when(directoryCreator.createTransformedStudyDir(isA(Study.class),isA(Resource.class))).thenReturn(studyFiles[0]);
@@ -113,6 +115,28 @@ public class TransformerTest {
         verify(utils, times(1)).copyDirectory(any(),any());
         verify(transformerService, never()).transform(isA(Resource.class),isA(Resource.class),isA(Resource.class));
         assertTrue(exitStatus.containsKey(dummyStudy) && exitStatus.get(dummyStudy) == ExitStatus.SKIPPED);
+        assertTrue(transformer.getLogFiles().containsKey(dummyStudy));
+        assertTrue(TestUtils.has(transformer.getValidStudies(), dummyStudy.getStudyId()));
+    }
+
+    @Test
+    public void testTransform_studyWithMetaStudyFile_noCheckMetaFile() throws ResourceCollectionException, TransformerException, ReporterException, ConfigurationException, IOException, ResourceUtilsException, DirectoryCreatorException {
+
+        ReflectionTestUtils.setField(transformer, "transformationMetaFileCheck", false);
+        // mock provider.list() -> return resource list that contains a meta_study file
+        Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
+        // when(directoryCreator.createTransformedStudyDir(isA(Study.class),isA(Resource.class))).thenReturn(studyFiles[0]);
+        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        // when(transformer.metaFileExists(null)).thenReturn(false);
+
+		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
+
+
+        Map<Study, ExitStatus> exitStatus = transformer.transform(new Study[] {dummyStudy});
+
+        verify(utils, never()).copyDirectory(any(),any());
+        verify(transformerService, times(1)).transform(any(),any(),any()); //Skips the checking of the meta file so it attempts to transform
+        assertTrue(exitStatus.containsKey(dummyStudy) && exitStatus.get(dummyStudy) == ExitStatus.SUCCESS); //Returns SUCCESS due to the mock
         assertTrue(transformer.getLogFiles().containsKey(dummyStudy));
         assertTrue(TestUtils.has(transformer.getValidStudies(), dummyStudy.getStudyId()));
     }
