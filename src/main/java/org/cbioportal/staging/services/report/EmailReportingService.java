@@ -15,6 +15,9 @@
 */
 package org.cbioportal.staging.services.report;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -97,11 +100,41 @@ public class EmailReportingService implements IReportingService {
 
 		String message = messageUtils.messageSummaryStudies(
 			"summary_email.ftl", study, serverAlias, transformerStatus,
-			transformerLog, validatorStatus, validatorLog, validatorReport,
-			loaderStatus, loaderLog
+			null, validatorStatus, null, null,
+			loaderStatus, null
 		);
 
-		sendMail(debugMode? getEmailAddressesCurators() : getEmailAddressesAll(), subject, message);
+		try {
+			logger.debug("Email Service: MESSAGE=" + message);
+
+			MimeMessage msg = javaMailSender.createMimeMessage();
+
+			MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+			helper.setTo(debugMode? getEmailAddressesCurators() : getEmailAddressesAll());
+			helper.setFrom(mailFrom, "cBioPortal staging app");
+			helper.setSubject(subject);
+			helper.setText(message, true);
+			helper.setSentDate(new Date());
+			if (transformerLog != null) {
+				helper.addAttachment(study.getStudyId()+"_transformerLog.txt", transformerLog);
+			}
+			if (validatorLog != null) {
+				helper.addAttachment(study.getStudyId()+"_validatorLog.txt", validatorLog);
+			}
+			if (validatorReport != null) {
+				helper.addAttachment(study.getStudyId()+"_validatorReport.html", validatorReport);
+			}
+			if (loaderLog != null) {
+				helper.addAttachment(study.getStudyId()+"_loaderLog.txt", loaderLog);
+			}
+
+            logger.debug("Email service: trying to send reportSummary ...");
+			javaMailSender.send(msg);
+            logger.debug("Email service: reportSummary has been sent");
+		} catch(Exception me) {
+			logger.error(me.getMessage(), me);
+			throw new ReporterException("Error while sending email.", me);
+		}
 	}
 
 	public void reportGenericError(String errorMessage, Exception e) throws ReporterException {
