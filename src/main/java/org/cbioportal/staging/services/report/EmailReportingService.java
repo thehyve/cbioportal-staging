@@ -100,8 +100,8 @@ public class EmailReportingService implements IReportingService {
 
 		String message = messageUtils.messageSummaryStudies(
 			"summary_email.ftl", study, serverAlias, transformerStatus,
-			null, validatorStatus, null, null,
-			loaderStatus, null
+			transformerLog, validatorStatus, validatorLog, validatorReport,
+			loaderStatus, loaderLog
 		);
 
 		try {
