@@ -1,18 +1,17 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.PostConstruct;
-
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * ResourceFilterImpl
@@ -40,7 +39,6 @@ public class DefaultResourceFilter implements IResourceFilter {
 
     @PostConstruct
     public void init() {
-        scanExtractFolders = scanExtractFolders.replaceAll("\\s+", "");
         includedDirs = Stream.of(scanExtractFolders.split(","))
             .map(e -> utils.trimPathRight(e))
             .map(e -> utils.trimPathLeft(e))
@@ -69,8 +67,10 @@ public class DefaultResourceFilter implements IResourceFilter {
             resource -> {
                 try {
 
+                    String scanLocationPath = utils.stripResourceTypePrefix(utils.getURL(scanLocation).toString());
                     String path = utils.getURL(resource).toString();
-                    String pathMinusScanLocation = utils.trimPathLeft(path.replace(utils.getURL(scanLocation).toString(), ""));
+                    String pathMinusType = utils.stripResourceTypePrefix(path);
+                    String pathMinusScanLocation = utils.trimPathLeft(pathMinusType.replace(scanLocationPath, ""));
 
                     boolean inIgnoreFile = ! resourceIgnoreSet.isEmpty()
                                             && (resourceIgnoreSet.contains(path)

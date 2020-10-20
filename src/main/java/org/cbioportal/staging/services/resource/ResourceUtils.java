@@ -25,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.resource.ftp.FtpResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
@@ -136,7 +137,14 @@ public class ResourceUtils {
      */
     public Resource[] extractDirs(Resource[] resources) {
         return Stream.of(resources)
-            .filter(ThrowingPredicate.unchecked(n -> n.getFile().isDirectory()))
+            .filter(ThrowingPredicate.unchecked(
+                    n -> {
+                        if (n.isFile())
+                            return n.getFile().isDirectory();
+                        if (n instanceof FtpResource)
+                            return ((FtpResource) n).isDirectory();
+                        return false;
+                    }))
             .toArray(Resource[]::new);
     }
 

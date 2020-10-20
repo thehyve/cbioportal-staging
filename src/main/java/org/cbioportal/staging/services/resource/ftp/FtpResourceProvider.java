@@ -70,8 +70,8 @@ public class FtpResourceProvider implements IResourceProvider {
                 remoteFilesStream = remoteFilesStream.filter(ThrowingPredicate.sneaky(e -> ! e.isDirectory()));
 
             return remoteFilesStream
-                .map(ThrowingFunction.sneaky(e -> utils.createRemoteURL("ftp", ftpHost, e)))
-                .map(ThrowingFunction.sneaky(r -> new FtpResource(ftpHost, r, ftpGateway, utils)))
+                .map(ThrowingFunction.sneaky(e ->
+                        new FtpResource(ftpHost, utils.createRemoteURL("ftp", ftpHost, e), e.isDirectory(), ftpGateway, utils) ))
                 .toArray(Resource[]::new);
 
         } catch (Exception e) {

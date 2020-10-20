@@ -1,13 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.PostConstruct;
-
+import com.pivovarit.function.ThrowingFunction;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.slf4j.Logger;
@@ -17,6 +10,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -53,8 +53,9 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
         String studyPath = "";
         String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
-
-            logger.info("Looking for study directories...");
+            List<String> paths = Stream.of(resources)
+                    .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
+                    .collect(Collectors.toList());
 
             Resource[] studyDirs = utils.extractDirs(resources);
 
