@@ -13,6 +13,7 @@ public class FtpResource extends UrlResource {
     private IFtpGateway gateway;
     private ResourceUtils utils;
     private String hostName;
+    private boolean isDirectory = false;
 
     public FtpResource(String hostName, String url, IFtpGateway gateway, ResourceUtils utils) throws MalformedURLException {
         super(url);
@@ -28,6 +29,22 @@ public class FtpResource extends UrlResource {
         this.hostName = hostName;
     }
 
+    public FtpResource(String hostName, URL url, boolean isDirectory, IFtpGateway gateway, ResourceUtils utils) throws MalformedURLException {
+        super(url);
+        this.gateway = gateway;
+        this.utils = utils;
+        this.hostName = hostName;
+        this.isDirectory = isDirectory;
+    }
+
+    public FtpResource(String hostName, String url, boolean isDirectory, IFtpGateway gateway, ResourceUtils utils) throws MalformedURLException {
+        super(url);
+        this.gateway = gateway;
+        this.utils = utils;
+        this.hostName = hostName;
+        this.isDirectory = isDirectory;
+    }
+
     @Override
     public InputStream getInputStream() throws IOException {
         try {
@@ -37,4 +54,7 @@ public class FtpResource extends UrlResource {
         }
     }
 
+    public boolean isDirectory() {
+        return isDirectory;
+    }
 }
