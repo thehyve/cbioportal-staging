@@ -78,10 +78,13 @@ public class Transformer {
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
                     logFiles.put(study, logFile);
 
+                    logger.info('Reaches if/else')
                     if (transformationMetaFileCheck && metaFileExists(untransformedFilesPath)) {
+                        logger.info('metafile check')
                         utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
                         transformationStatus = ExitStatus.SKIPPED;
                     } else {
+                        logger.info('transform function')
                         transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
                     }
 
