@@ -75,6 +75,7 @@ public class Transformer {
                     Resource untransformedFilesPath = study.getStudyDir();
                     transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
 
+                    logger.info("untransformedFilesPath:"+untransformedFilesPath.toString());
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
                     logFiles.put(study, logFile);
 
@@ -121,6 +122,7 @@ public class Transformer {
     }
 
     public boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
+        logger.info("originPath:"+originPath.toString());
         Resource[] studyFiles = provider.list(originPath);
         return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
     }
