@@ -50,7 +50,7 @@ public class Transformer {
     private ResourceUtils utils;
 
     @Autowired
-    private IResourceProvider;
+    private IResourceProvider provider;
 
     @Autowired
 	private IDirectoryCreator directoryCreator;
