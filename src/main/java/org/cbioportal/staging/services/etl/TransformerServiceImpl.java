@@ -54,9 +54,13 @@ public class TransformerServiceImpl implements ITransformerService {
     public List<String> parseCommandScript() throws TransformerException {
         try {
             List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
+            logger.info("Command: "+ command.toString());
+
             Resource script = resourceResolver.getResource(command.get(0));
             script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
                                                 // dir
+
+            logger.info("Script: "+ script.toString());
 
             if (!script.exists()) {
                 throw new TransformerException(
