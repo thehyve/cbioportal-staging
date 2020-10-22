@@ -19,10 +19,15 @@ import org.springframework.core.io.Resource;
 import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Component
 @ConditionalOnProperty(value="scan.location.type", havingValue ="sftp")
 @Primary
 public class FtpResourceProvider implements IResourceProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(FtpResourceProvider.class);
 
     @Value("${ftp.host}")
     private String ftpHost;
