@@ -56,7 +56,10 @@ public class FtpResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive, boolean excludeDirs) throws ResourceCollectionException {
 
         try {
+            logger.info("FTP RESOURCE PROVIDER dir:" +dir.toString());
             String remoteDir = utils.remotePath(ftpHost, dir.getURL());
+
+            logger.info("FTP RESOURCE PROVIDER remoteDir:" +remoteDir.toString());
 
             List<SftpFileInfo> remoteFiles;
             if (recursive) {
@@ -64,6 +67,8 @@ public class FtpResourceProvider implements IResourceProvider {
             } else {
                 remoteFiles = ftpGateway.lsDir(remoteDir);
             }
+
+            logger.info("FTP RESOURCE PROVIDER remoteFiles:" +remoteFiles.toString());
 
             Stream<SftpFileInfo> remoteFilesStream = remoteFiles.stream();
             if (excludeDirs)
