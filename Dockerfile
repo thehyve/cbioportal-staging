@@ -31,6 +31,9 @@ ARG mvnprofiles=''
 RUN mvn clean install $mvnprofiles
 RUN mv $STAGING_HOME/target/cbioportal-staging-*.jar $STAGING_HOME/target/cbioportal-staging.jar
 
+# install python dependencies for transformation code
+RUN pip3 install -r $STAGING_HOME/transformation_requirements.txt
+
 # service to be started with default properties (can be overridden in docker run),
 # taking also custom properties, if given at default -v location
 ENTRYPOINT ["/cbioportal-staging/target/cbioportal-staging.jar", "--spring.config.location=file:///custom/custom.properties"]
