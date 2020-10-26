@@ -62,7 +62,6 @@ public class DirectoryCreatorTest {
 	@Before
 	public void init() {
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "job");
-		ReflectionTestUtils.setField(directoryCreator, "versionFormat", "version");
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
@@ -106,7 +105,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void etlWorkingDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "studyversion");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(false);
@@ -124,8 +123,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void etlWorkingDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "studyversion");
-		ReflectionTestUtils.setField(directoryCreator, "versionFormat", "timestamp");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "id");
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(false);
@@ -184,7 +182,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void transformationDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "studyversion");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
 
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
@@ -201,8 +199,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void transformationDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "studyversion");
-		ReflectionTestUtils.setField(directoryCreator, "versionFormat", "timestamp");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "id");
 
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);

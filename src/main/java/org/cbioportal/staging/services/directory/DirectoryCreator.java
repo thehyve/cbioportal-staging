@@ -40,9 +40,6 @@ public class DirectoryCreator implements IDirectoryCreator {
     @Value("${etl.dir.format:job}")
     private String dirFormat;
 
-    @Value("${etl.dir.version.format:version}")
-    private String versionFormat;
-
     @Override
     public Resource createStudyExtractDir(Study study) throws DirectoryCreatorException {
         try {
@@ -88,14 +85,15 @@ public class DirectoryCreator implements IDirectoryCreator {
         }
     }
 
-    public String getIntermediatePath(Study study) {
-        // by job timestamp --> studies
-        if (dirFormat.equals("job")) {
+    public String getIntermediatePath(Study study) throws DirectoryCreatorException{
+        if (dirFormat.equals("job")) { // by job: timestamp/study_id
             return study.getTimestamp() + "/" + study.getStudyId();
+        } else if (dirFormat.equals("id")) { // by id: study_id/timestamp
+            return study.getStudyId() + "/" + study.getTimestamp();
+        } else if (dirFormat.equals("version")) { // by version: study_id/version
+            return study.getStudyId() + "/" + study.getVersion();
+        } else {
+            throw new DirectoryCreatorException("Value of etl.dir.format is not 'job', 'id', or 'version'. Value: "+dirFormat);
         }
-
-        // by study --> version/timestamp
-        String versionLabel = versionFormat.equals("version")? study.getVersion() : study.getTimestamp();
-        return study.getStudyId() + "/" + versionLabel;
     }
 }

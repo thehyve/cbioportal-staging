@@ -62,7 +62,7 @@ public class LogMessageUtils {
 	public String messageSummaryStudies(String template, Study study, String serverAlias,
         ExitStatus transformerStatus, Resource transformerLog, ExitStatus validatorStatus, Resource validatorLog, 
         Resource validatorReport, ExitStatus loaderStatus, Resource loaderLog) throws ReporterException {
-
+        try {
             String intermediatePath = directoryCreator.getIntermediatePath(study);
             String transformerLogPath = "";
             if (transformerLog != null) {
@@ -105,7 +105,6 @@ public class LogMessageUtils {
                 studyVersion = study.getVersion();
             }
 
-        try {
 			Template t = freemarkerConfig.getTemplate(template);
 			Map<String, Object> messageParams = new HashMap<String, Object>();
             messageParams.put("studyId", study.getStudyId());
