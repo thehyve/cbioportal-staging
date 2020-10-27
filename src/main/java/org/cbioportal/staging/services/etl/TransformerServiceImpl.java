@@ -109,8 +109,9 @@ public class TransformerServiceImpl implements ITransformerService {
             utils.ensureDirs(transformedFilesPath);
 
             // Build transformation command
-            Stream.of("-i", utils.getFile(untransformedFilesPath).getAbsolutePath(), "-o",
-                    utils.getFile(transformedFilesPath).getAbsolutePath()).forEach(e -> command.add(e));
+            String inPath = utils.getFile(untransformedFilesPath).getAbsolutePath().replaceAll(" ", "\\ ");
+            String outPath = utils.getFile(transformedFilesPath).getAbsolutePath().replaceAll(" ", "\\ ");
+            Stream.of("-i", inPath, "-o", outPath).forEach(e -> command.add(e));
 
             // Run transformation command
             ProcessBuilder transformation = new ProcessBuilder(command);
