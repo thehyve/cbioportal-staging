@@ -43,14 +43,6 @@ import org.springframework.stereotype.Component;
 public class Transformer {
     private static final Logger logger = LoggerFactory.getLogger(Transformer.class);
 
-    @Configuration
-    public static class TransformerConfiguration {
-        @Bean
-        public FileSystemResourceProvider fileSystemResourceProvider() {
-            return new FileSystemResourceProvider();
-        }
-    }
-
     @Value("${transformation.metafile.check:true}")
     private boolean transformationMetaFileCheck;
 

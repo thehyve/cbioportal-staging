@@ -17,10 +17,10 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
+//@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
 public class LocalFileSystemService {
 
-    @ServiceActivator(inputChannel = "resource.ls")
+    @ServiceActivator(inputChannel = "local.resource.ls")
     public List<File> ftpGatewayLs(String directory) {
         try {
             return Files.list(Paths.get(directory)).filter(Files::isRegularFile).map(Path::toFile)
@@ -30,7 +30,7 @@ public class LocalFileSystemService {
         }
     }
 
-    @ServiceActivator(inputChannel = "resource.ls.dir")
+    @ServiceActivator(inputChannel = "local.resource.ls.dir")
     public List<File> ftpGatewayLsDir(String directory) {
         try {
             return Files.list(Paths.get(directory)).map(Path::toFile).collect(Collectors.toList());
@@ -39,7 +39,7 @@ public class LocalFileSystemService {
         }
     }
 
-    @ServiceActivator(inputChannel = "resource.ls.dir.recur")
+    @ServiceActivator(inputChannel = "local.resource.ls.dir.recur")
     public List<File> ftpGatewayLsDirRecur(String directory) {
         try {
             return Files.walk(Paths.get(directory)).map(Path::toFile).collect(Collectors.toList());
@@ -49,7 +49,7 @@ public class LocalFileSystemService {
 
     }
 
-    @ServiceActivator(inputChannel = "resource.get.stream")
+    @ServiceActivator(inputChannel = "local.resource.get.stream")
     public InputStream ftpGatewayGetStream(String file) {
         try {
             return new FileInputStream(file);
@@ -58,7 +58,7 @@ public class LocalFileSystemService {
         }
     }
 
-    @ServiceActivator(inputChannel = "resource.put")
+    @ServiceActivator(inputChannel = "local.resource.put")
     public String ftpGatewayPut(Message<byte[]> message) {
         byte[] contents = message.getPayload();
         String destinationDir = (String) message.getHeaders().get("dest.dir");
@@ -72,7 +72,7 @@ public class LocalFileSystemService {
         }
     }
 
-    @ServiceActivator(inputChannel = "resource.rm")
+    @ServiceActivator(inputChannel = "local.resource.rm")
     public Boolean ftpGatewayRm(String file) {
         Path filePath = Paths.get(file);
         try {

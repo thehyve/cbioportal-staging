@@ -20,12 +20,7 @@ import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(value = "scan.location.type", havingValue = "filesystem")
 public class FileSystemResourceProvider implements IResourceProvider {
-
-    @Configuration
-    @IntegrationComponentScan("org.cbioportal.staging.services.resource.filesystem")
-    public static class TransformerConfiguration {}
 
     @Autowired
     protected ResourceUtils utils;

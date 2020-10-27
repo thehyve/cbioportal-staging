@@ -56,7 +56,7 @@ public class TransformerServiceImpl implements ITransformerService {
             List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
             Resource script = resourceResolver.getResource(command.get(0));
             script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
-                                                // dir
+                                                  // dir
 
             if (!script.exists()) {
                 throw new TransformerException(
@@ -116,7 +116,9 @@ public class TransformerServiceImpl implements ITransformerService {
             ProcessBuilder transformation = new ProcessBuilder(command);
             logger.info("Executing command: " + String.join(" ", transformation.command()));
             transformation.redirectErrorStream(true);
+            logger.info("Step 1");
             transformation.redirectOutput(Redirect.appendTo(utils.getFile(logFile)));
+            logger.info("Step 2");
             Process transformationProcess = transformation.start();
 
             transformationProcess.waitFor();

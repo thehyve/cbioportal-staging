@@ -19,9 +19,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.stereotype.Component;
 
+@Primary
 @Component
 @ConditionalOnProperty(value="scan.location.type", havingValue ="sftp")
-@Primary
 public class FtpResourceProvider implements IResourceProvider {
 
     @Value("${ftp.host}")
