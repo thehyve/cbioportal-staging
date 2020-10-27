@@ -1,30 +1,12 @@
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
 import org.cbioportal.staging.app.App;
 import org.cbioportal.staging.app.ScheduledScanner;
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.LoaderException;
-import org.cbioportal.staging.exceptions.PublisherException;
-import org.cbioportal.staging.exceptions.ReporterException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.exceptions.RestarterException;
-import org.cbioportal.staging.exceptions.TransformerException;
-import org.cbioportal.staging.exceptions.ValidatorException;
+import org.cbioportal.staging.exceptions.*;
 import org.cbioportal.staging.services.authorize.AuthorizerServiceImpl;
 import org.cbioportal.staging.services.command.IRestarter;
 import org.cbioportal.staging.services.etl.LoaderServiceImpl;
@@ -47,10 +29,14 @@ import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
