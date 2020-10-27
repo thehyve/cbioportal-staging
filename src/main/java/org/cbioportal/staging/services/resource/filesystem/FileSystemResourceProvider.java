@@ -11,14 +11,21 @@ import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(value = "scan.location.type", havingValue = "filesystem")
 public class FileSystemResourceProvider implements IResourceProvider {
+
+    @Configuration
+    @IntegrationComponentScan("org.cbioportal.staging.services.resource.filesystem")
+    public static class TransformerConfiguration {}
 
     @Autowired
     protected ResourceUtils utils;
