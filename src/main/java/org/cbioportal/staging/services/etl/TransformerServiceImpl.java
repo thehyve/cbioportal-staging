@@ -109,9 +109,8 @@ public class TransformerServiceImpl implements ITransformerService {
             utils.ensureDirs(transformedFilesPath);
 
             // Build transformation command
-            String inPath = utils.getFile(untransformedFilesPath).getAbsolutePath().replaceAll(" ", "\\ ");
-            String outPath = utils.getFile(transformedFilesPath).getAbsolutePath().replaceAll(" ", "\\ ");
-            Stream.of("-i", inPath, "-o", outPath).forEach(e -> command.add(e));
+            Stream.of("-i", utils.getFile(untransformedFilesPath).getAbsolutePath(),
+                    "-o", utils.getFile(transformedFilesPath).getAbsolutePath()).forEach(e -> command.add(e));
 
             // Run transformation command
             ProcessBuilder transformation = new ProcessBuilder(command);
@@ -125,6 +124,7 @@ public class TransformerServiceImpl implements ITransformerService {
             // Interprete exit status of the process and return it
             ExitStatus exitStatus = null;
             if (transformationProcess.exitValue() == 0) {
+                logger.info("Successfully completed transformation for study: " + untransformedFilesPath.getFilename());
                 exitStatus = ExitStatus.SUCCESS;
             } else if (transformationProcess.exitValue() == 3) {
                 exitStatus = ExitStatus.WARNING;

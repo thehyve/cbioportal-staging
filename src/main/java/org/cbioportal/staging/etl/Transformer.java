@@ -100,9 +100,8 @@ public class Transformer {
                     throw new ReporterException(e);
                 }
 
-                Resource[] resources;
-                    resources = fileSystemResourceProvider.list(transformedFilesPath);
-                    Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
+                Resource[] resources = fileSystemResourceProvider.list(transformedFilesPath);
+                Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
 
                 //Add status of the validation for the study
                 statusStudies.put(study, transformationStatus);
