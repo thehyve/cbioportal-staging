@@ -257,7 +257,7 @@ files are not removed from the `scan.location`.
 
 ### Transformer settings
 
-- `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+- `transformation.command.script`: full transformation command, except input and output (-i and -o parameters). First element must be the absolute path to the transformation script; the path must contain a resource type prefix (e.g. `file:`).
 - `transformation.command.script.docker.image`: if the transformation command runs in Docker, add here the Docker image name. The app will call the script in the path provided in `transformtion.command.script`. If your command is executed at the entrypoint, you can comment `transformation.command.script` out.
 - `transformation.skip`: set this parameter to `true` if you want to skip the transformation step.
 - `transformation.directory`: resource path to directory where transformed study files are placed after transformation. When not set, transformed files are placed in the 'staging' subdirectory of study folders in the `etl.working.dir`.
