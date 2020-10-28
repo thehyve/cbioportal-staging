@@ -40,20 +40,21 @@ import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = App.class)
-@TestPropertySource(
-    locations = "classpath:e2e_studies/e2e_integration_test.properties",
-    properties = {
-        "scan.location=ftp:/localhost/studies/es_0",
-        "central.share.location=ftp:/localhost/share",
-        "scan.location.type=sftp",
-        "ftp.host=localhost",
-        "ftp.port=9922",
-        "ftp.user=testuser",
-        "ftp.password=testuser",
-        "sftp.privateKey=classpath:ftp_server/key",
-        "sftp.privateKeyPassphrase=P@ssword1",
-    }
+@TestPropertySource(locations = "classpath:e2e_studies/e2e_integration_test.properties")
+@SpringBootTest(classes = App.class,
+        properties = {
+                "scan.location=ftp:/localhost/studies/es_0_tar",
+                "transformation.skip=false",
+                "transformation.command.script=classpath:e2e_studies/es_0_tar/unzip.py",
+                "central.share.location=ftp:/localhost/share",
+                "scan.location.type=sftp",
+                "ftp.host=localhost",
+                "ftp.port=9922",
+                "ftp.user=testuser",
+                "ftp.password=testuser",
+                "sftp.privateKey=classpath:ftp_server/key",
+                "sftp.privateKeyPassphrase=P@ssword1"
+        }
 )
 public class IntegrationTestSFTP {
 
@@ -112,11 +113,11 @@ public class IntegrationTestSFTP {
 
         assertTrue(exitValue);
 
-        verify(transformationService, never()).transform(any(), any(), any());
+        verify(transformationService, times(1)).transform(any(), any(), any());
         verify(validatorService, times(1)).validate(any(), any(), any());
         verify(loaderService, times(1)).load(any(), any());
         verify(restarterService, times(1)).restart();
-        verify(publisherService, times(3)).publishFiles(any(Map.class)); // transformation step skipped, not called
+        verify(publisherService, times(4)).publishFiles(any(Map.class)); // transformation step skipped, not called
         verify(ignoreSet, times(1)).appendResources(any(Resource[].class));
         verify(authorizerService, times(1)).authorizeStudies(anySet());
 
@@ -126,13 +127,13 @@ public class IntegrationTestSFTP {
 
         // check files have been published
         Resource[] remoteFiles = ftpProvider.list(ftpProvider.getResource("ftp:///localhost/share"), true);
-        assertTrue(has(remoteFiles, "test_study_es_0_yaml_loading_log.txt"));
-        assertTrue(has(remoteFiles, "test_study_es_0_yaml_validation_log.txt"));
-        assertTrue(has(remoteFiles, "test_study_es_0_yaml_validation_report.html"));
+        assertTrue(has(remoteFiles, "test_study_tar_loading_log.txt"));
+        assertTrue(has(remoteFiles, "test_study_tar_validation_log.txt"));
+        assertTrue(has(remoteFiles, "test_study_tar_validation_report.html"));
     }
 
     private boolean has(Resource[] resources, String fileName) {
-        return Stream.of(resources).anyMatch(s -> s.getFilename().equals(fileName));
+        return Stream.of(resources).anyMatch(s -> s.getFilename().contains(fileName));
     }
 
 }
