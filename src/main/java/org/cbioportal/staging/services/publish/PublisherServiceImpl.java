@@ -81,14 +81,7 @@ public class PublisherServiceImpl implements IPublisherService {
 
     private Resource publishOneFile(Study study, Resource logFile) throws PublisherException {
         try {
-            //Resource localRootDir = transformationDirectory != null? transformationDirectory : etlWorkingDir;
             String intermediatePath = directoryCreator.getIntermediatePath(study);
-            // logFile.getURL().toString().replaceFirst(localRootDir.getURL().toString(), "");
-            // if (filePathRelative.lastIndexOf("/") > -1) {
-            //     filePathRelative = filePathRelative.substring(0, filePathRelative.lastIndexOf("/") + 1);
-            // } else {
-            //     filePathRelative = "";
-            // }
             Resource remoteDestinationDir = resourceProvider.getResource(utils.trimPathRight(centralShareLocation.getURL().toString()) + "/" + intermediatePath);
             return resourceProvider.copyToRemote(remoteDestinationDir, logFile);
         } catch (Exception e) {
