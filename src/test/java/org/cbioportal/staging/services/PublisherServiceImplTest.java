@@ -18,6 +18,7 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.publish.PublisherServiceImpl;
+import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
 import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
@@ -37,7 +38,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { PublisherServiceImpl.class, FileSystemResourceProvider.class,
+@SpringBootTest(classes = { PublisherServiceImpl.class,
         ResourceUtils.class, DirectoryCreator.class }, properties = { "central.share.location=file:/fake-share/",
                 "transformation.directory=file:/transf-dir/", "etl.dir.format:timestamp/study_id" })
 public class PublisherServiceImplTest {

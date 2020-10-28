@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -27,6 +28,9 @@ public class ResourceUtilsTest {
 
     @Autowired
     private ResourceUtils utils;
+
+    @MockBean
+    private IResourceProvider resourceProvider;
 
     @Test
     public void trimDir_success() {
