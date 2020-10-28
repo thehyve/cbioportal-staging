@@ -23,10 +23,12 @@ import com.pivovarit.function.ThrowingPredicate;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ftp.FtpResource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
@@ -40,6 +42,12 @@ public class ResourceUtils {
 
     @Autowired
     private ResourcePatternResolver resourceResolver;
+
+    @Autowired
+    private IResourceProvider resourceProvider;
+
+    @Value("${java.io.tmpdir}")
+    private FileSystemResource tempDir;
 
     /**
      * Remove trailing slashes and asterixes from the right end of a path.
@@ -159,7 +167,12 @@ public class ResourceUtils {
         BufferedReader bufferedReader = null;
         Map<String, String> entries = new HashMap<>();
         try {
-            bufferedReader = new BufferedReader(new FileReader(studyMetaFile.getFile()));
+            // The meta file may be located on a remote location.
+            // Copy meta file to the /tmp dir and read contents.
+            String uniqueKey = RandomStringUtils.randomAlphabetic(20);
+            Resource tmpLocation = resourceResolver.getResource(tempDir.getURL().toString() + uniqueKey);
+            Resource localStudyMetaFile = resourceProvider.copyFromRemote(tmpLocation, studyMetaFile);
+            bufferedReader = new BufferedReader(new FileReader(localStudyMetaFile.getFile()));
             String line = bufferedReader.readLine();
             while (line != null) {
                 String[] elements = line.split("\\s*:\\s*");
@@ -259,7 +272,7 @@ public class ResourceUtils {
             String fullDestinationPath = trimPathRight(getFile(destinationDir).getAbsolutePath()) + "/" + trimPathLeft(fileName);
             ensureDirs(fullDestinationPath.substring(0, fullDestinationPath.lastIndexOf("/")));
 
-            WritableResource localFile = getWritableResource(fullDestinationPath);
+            FileSystemResource localFile = getWritableResource(fullDestinationPath);
             IOUtils.copy(inputResource.getInputStream(), localFile.getOutputStream());
 
             return localFile;
@@ -330,7 +343,7 @@ public class ResourceUtils {
      */
     // XXX writable resources are hard coded to be on the local system
     // if needed (writable remote files) update implementation.
-    public WritableResource getWritableResource(String path) {
+    public FileSystemResource getWritableResource(String path) {
         return new FileSystemResource(path);
 	}
 
@@ -460,7 +473,7 @@ public class ResourceUtils {
      */
     public File getFile(Resource resource) throws ResourceUtilsException {
         try {
-            return resource.getFile();
+                return resource.getFile();
         } catch (IOException e) {
             throw new ResourceUtilsException("Cannot read File from Resource: " + resource.getDescription());
         }
