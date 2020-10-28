@@ -40,7 +40,7 @@ public class PublisherServiceImpl implements IPublisherService {
 
     private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
 
-    @Value("${central.share.location:}")
+    @Value("${central.share.location:@null}")
     private Resource centralShareLocation;
 
     @Value("${transformation.directory:}")
