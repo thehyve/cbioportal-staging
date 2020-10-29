@@ -26,6 +26,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Primary
 @Component
@@ -37,6 +39,9 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
 	@Value("${cbioportal.compose.service}")
 	private String cbioportalDockerService;
+
+    @Value("${transformation.directory}:")
+    private String transformationDirectory;
 
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
@@ -52,17 +57,20 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             utils.getFile(reportFile).getParentFile().mkdirs();
             utils.getFile(reportFile).createNewFile();
 
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
 
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
+            Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
-                "-v", "/tmp/staging-app/transformed/" + studyPath.getFilename() + ":/study:ro",
                 "-v", reportFilePath + ":/outreport.html",
                 cbioportalDockerService,
-                "validateData.py", "-u", "http://"+cbioportalDockerService+":8080", "-s", "/study", "--html=/outreport.html");
+                "validateData.py",
+                "-u", "http://"+cbioportalDockerService+":8080",
+                "-s", internalPath.toString(),
+                "--html=/outreport.html");
 
             return validationCmd;
         } catch (IOException e) {
@@ -75,7 +83,6 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         return new ProcessBuilder ("docker-compose", "run", "--rm",
-            "-v", "/tmp/staging-app/transformed/" + studyPath.getFilename() + ":/study:ro",
             cbioportalDockerService,
             "cbioportalImporter.py", "-s", "/study");
     }
