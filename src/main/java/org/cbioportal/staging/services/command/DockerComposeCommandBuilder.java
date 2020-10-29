@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -98,7 +99,9 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                             "--html=/outreport.html"
                     })
             );
-            return new ProcessBuilder(commands);
+            ProcessBuilder processBuilder = new ProcessBuilder(commands);
+            processBuilder.directory(new File("/cbioportal-staging/"));
+            return processBuilder;
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
