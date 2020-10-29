@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Primary
 @Component
@@ -68,9 +69,11 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //docker command:
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
-            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose");
-            Arrays.stream(composeExtensions).forEach(e -> validationCmd.command("-f", e));
-            validationCmd.command(
+            String composeExtension = Arrays.stream(composeExtensions)
+                    .map(e -> "-f " + e)
+                    .collect( Collectors.joining( " " ) );
+            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose",
+                composeExtension,
                 "run", "--rm",
                 "-v", reportFilePath + ":/outreport.html",
                 cbioportalDockerService,
@@ -90,13 +93,22 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
-        ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose");
-        Arrays.stream(composeExtensions).forEach(e -> validationCmd.command("-f", e));
-        validationCmd.command(
-            "run", "--rm",
-            cbioportalDockerService,
-            "cbioportalImporter.py", "-s", "/study"
-        );
-        return validationCmd;
+        try {
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
+            Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
+            String composeExtension = Arrays.stream(composeExtensions)
+                    .map(e -> "-f " + e)
+                    .collect( Collectors.joining( " " ) );
+            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose",
+                composeExtension,
+                "run", "--rm",
+                cbioportalDockerService,
+                "cbioportalImporter.py",
+                "-s", internalPath.toString()
+            );
+            return validationCmd;
+        } catch (ResourceUtilsException e) {
+            throw new CommandBuilderException("File IO problem during the build of the loader command", e);
+        }
     }
 }
