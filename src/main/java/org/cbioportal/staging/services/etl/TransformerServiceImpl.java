@@ -116,9 +116,7 @@ public class TransformerServiceImpl implements ITransformerService {
             ProcessBuilder transformation = new ProcessBuilder(command);
             logger.info("Executing command: " + String.join(" ", transformation.command()));
             transformation.redirectErrorStream(true);
-            logger.info("Step 1");
             transformation.redirectOutput(Redirect.appendTo(utils.getFile(logFile)));
-            logger.info("Step 2");
             Process transformationProcess = transformation.start();
 
             transformationProcess.waitFor();
