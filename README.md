@@ -274,6 +274,11 @@ files are not removed from the `scan.location`.
 - `cbioportal.docker.network`: docker network where cBioPortal is placed.
 - `cbioportal.docker.properties`: path to the `portal.properties` of the cBioPortal container.
 
+### Properties for 'compose' application profile
+
+- `cbioportal.compose.service`: name for cbioportal service in compose file
+- `cbioportal.compose.cbioportal.extensions`: list of docker compose extension files for the cbioportal container (command-separated list).
+
 ### Properties for 'local' application profile
 
 - `portal.source`: path to portal source

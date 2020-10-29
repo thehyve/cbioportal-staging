@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 @Primary
 @Component
@@ -42,6 +43,9 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Value("${transformation.directory}:")
     private String transformationDirectory;
+
+    @Value("${cbioportal.compose.cbioportal.extensions:}")
+    private String[] composeExtensions;
 
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
@@ -64,13 +68,17 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //docker command:
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
-            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
+            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose");
+            Arrays.stream(composeExtensions).forEach(e -> validationCmd.command("-f", e));
+            validationCmd.command(
+                "run", "--rm",
                 "-v", reportFilePath + ":/outreport.html",
                 cbioportalDockerService,
                 "validateData.py",
                 "-u", "http://"+cbioportalDockerService+":8080",
                 "-s", internalPath.toString(),
-                "--html=/outreport.html");
+                "--html=/outreport.html"
+            );
 
             return validationCmd;
         } catch (IOException e) {
@@ -82,8 +90,13 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
-        return new ProcessBuilder ("docker-compose", "run", "--rm",
+        ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose");
+        Arrays.stream(composeExtensions).forEach(e -> validationCmd.command("-f", e));
+        validationCmd.command(
+            "run", "--rm",
             cbioportalDockerService,
-            "cbioportalImporter.py", "-s", "/study");
+            "cbioportalImporter.py", "-s", "/study"
+        );
+        return validationCmd;
     }
 }
