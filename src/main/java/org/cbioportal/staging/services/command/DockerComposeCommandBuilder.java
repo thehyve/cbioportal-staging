@@ -73,8 +73,11 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
+            String transformationDir = transformationDirectory.getFile().getAbsolutePath();
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
                     .replace(transformationDirectory.getFile().getAbsolutePath(), "");
+            logger.info("studyPath: ", studyPath.toString());
+            logger.info("transformationDir: ", transformationDir);
             logger.info("studyDirPath: ", studyDirPath);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             List<String> commands = new ArrayList<>();
@@ -95,9 +98,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                             "--html=/outreport.html"
                     })
             );
-            ProcessBuilder validationCmd = new ProcessBuilder(commands);
-
-            return validationCmd;
+            return new ProcessBuilder(commands);
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
@@ -127,8 +128,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                             "-s", internalPath.toString()
                     })
             );
-            ProcessBuilder validationCmd = new ProcessBuilder(commands);
-            return validationCmd;
+            return new ProcessBuilder(commands);
         } catch (ResourceUtilsException | IOException e) {
             throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
