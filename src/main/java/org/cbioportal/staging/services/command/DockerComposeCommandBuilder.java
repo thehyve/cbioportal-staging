@@ -49,7 +49,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 	@Value("${cbioportal.compose.service}")
 	private String cbioportalDockerService;
 
-    @Value("${transformation.directory}:")
+    @Value("${transformation.directory:}")
     private Resource transformationDirectory;
 
     @Value("${cbioportal.compose.cbioportal.extensions:}")
@@ -79,7 +79,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             studyDir = studyDir.replace(transformationDir, "");
             logger.info("studyPath: " + studyPath.toString());
             logger.info("transformationDir: " + transformationDir);
-            logger.info("studyDirPath: " + studyDir);
+            logger.info("studyPath: " + studyDir);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDir);
             List<String> commands = new ArrayList<>();
             Arrays.stream(composeExtensions)
@@ -139,7 +139,8 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
         List<String> commands = new ArrayList<>();
         commands.add("docker-compose");
-        ProcessBuilder processBuilder = new ProcessBuilder(arguments);
+        commands.addAll(arguments);
+        ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.directory(new File("/cbioportal-staging/"));
         return processBuilder;
     }
