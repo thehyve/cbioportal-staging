@@ -15,8 +15,6 @@
 */
 package org.cbioportal.staging.services.command;
 
-import java.io.IOException;
-
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -26,6 +24,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 @Primary
 @Component
@@ -59,10 +59,10 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
             //docker command:
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
-            "-v", studyDirPath + ":/study:ro",
-            "-v", reportFilePath + ":/outreport.html",
-            cbioportalDockerService,
-            "validateData.py", "-u", "http://"+cbioportalDockerService+":8080", "-s", "/study", "--html=/outreport.html");
+                "-v", "/tmp/staging-app/transformed/" + studyPath.getFilename() + ":/study:ro",
+                "-v", reportFilePath + ":/outreport.html",
+                cbioportalDockerService,
+                "validateData.py", "-u", "http://"+cbioportalDockerService+":8080", "-s", "/study", "--html=/outreport.html");
 
             return validationCmd;
         } catch (IOException e) {
@@ -74,14 +74,9 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
-        try {
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
-            return new ProcessBuilder ("docker-compose", "run", "--rm",
-                "-v", studyDirPath + ":/study:ro",
-                cbioportalDockerService,
-                "cbioportalImporter.py", "-s", "/study");
-        } catch (ResourceUtilsException e) {
-            throw new CommandBuilderException("CommandBuilder experiences File IO problems.", e);
-        }
+        return new ProcessBuilder ("docker-compose", "run", "--rm",
+            "-v", "/tmp/staging-app/transformed/" + studyPath.getFilename() + ":/study:ro",
+            cbioportalDockerService,
+            "cbioportalImporter.py", "-s", "/study");
     }
 }
