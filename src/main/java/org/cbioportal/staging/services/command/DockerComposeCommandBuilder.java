@@ -75,12 +75,12 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
             //docker command:
             String transformationDir = transformationDirectory.getFile().getAbsolutePath();
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
-                    .replace(transformationDirectory.getFile().getAbsolutePath(), "");
+            String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
+            studyDir = studyDir.replace(transformationDir, "");
             logger.info("studyPath: " + studyPath.toString());
             logger.info("transformationDir: " + transformationDir);
-            logger.info("studyDirPath: " + studyDirPath);
-            Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
+            logger.info("studyDirPath: " + studyDir);
+            Path internalPath = Paths.get("/staging-app/transformed/", studyDir);
             List<String> commands = new ArrayList<>();
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
@@ -109,10 +109,13 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
-                    .replace(transformationDirectory.getFile().getAbsolutePath(), "");
-            logger.info("studyDirPath: ", studyDirPath);
-            Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
+            String transformationDir = transformationDirectory.getFile().getAbsolutePath();
+            String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
+            studyDir = studyDir.replace(transformationDir, "");
+            logger.info("studyPath: " + studyPath.toString());
+            logger.info("transformationDir: " + transformationDir);
+            logger.info("studyDirPath: " + studyDir);
+            Path internalPath = Paths.get("/staging-app/transformed/", studyDir);
             List<String> commands = new ArrayList<>();
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
