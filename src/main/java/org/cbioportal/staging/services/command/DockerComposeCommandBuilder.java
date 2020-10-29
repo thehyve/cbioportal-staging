@@ -40,10 +40,9 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
-
-        return new ProcessBuilder("docker-compose", "run", "--rm",
-        "-w", "/cbioportal/core/src/main/scripts",
-        cbioportalDockerService, "./dumpPortalInfo.pl", "/portalinfo");
+        // With compose we use the API of a live portal for validation.
+        // No dump command is needed; we return 'null'.
+        return null;
     }
 
     @Override
@@ -55,7 +54,6 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
-            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
 
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
@@ -63,9 +61,8 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
             "-v", studyDirPath + ":/study:ro",
             "-v", reportFilePath + ":/outreport.html",
-            "-v", portalInfoPath + ":/portalinfo:ro",
             cbioportalDockerService,
-            "validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
+            "validateData.py", "-u", "http://"+cbioportalDockerService+":8080", "-s", "/study", "--html=/outreport.html");
 
             return validationCmd;
         } catch (IOException e) {
