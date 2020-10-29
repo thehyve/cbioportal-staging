@@ -77,12 +77,11 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             String transformationDir = transformationDirectory.getFile().getAbsolutePath();
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
                     .replace(transformationDirectory.getFile().getAbsolutePath(), "");
-            logger.info("studyPath: ", studyPath.toString());
-            logger.info("transformationDir: ", transformationDir);
-            logger.info("studyDirPath: ", studyDirPath);
+            logger.info("studyPath: " + studyPath.toString());
+            logger.info("transformationDir: " + transformationDir);
+            logger.info("studyDirPath: " + studyDirPath);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             List<String> commands = new ArrayList<>();
-            commands.add("docker-compose");
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
                         commands.add("-f");
@@ -99,9 +98,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                             "--html=/outreport.html"
                     })
             );
-            ProcessBuilder processBuilder = new ProcessBuilder(commands);
-            processBuilder.directory(new File("/cbioportal-staging/"));
-            return processBuilder;
+            return dockerComposeProcessBuilder(commands);
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
@@ -117,7 +114,6 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             logger.info("studyDirPath: ", studyDirPath);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             List<String> commands = new ArrayList<>();
-            commands.add("docker-compose");
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
                         commands.add("-f");
@@ -131,9 +127,17 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                             "-s", internalPath.toString()
                     })
             );
-            return new ProcessBuilder(commands);
+            return dockerComposeProcessBuilder(commands);
         } catch (ResourceUtilsException | IOException e) {
             throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
+    }
+
+    private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
+        List<String> commands = new ArrayList<>();
+        commands.add("docker-compose");
+        ProcessBuilder processBuilder = new ProcessBuilder(arguments);
+        processBuilder.directory(new File("/cbioportal-staging/"));
+        return processBuilder;
     }
 }
