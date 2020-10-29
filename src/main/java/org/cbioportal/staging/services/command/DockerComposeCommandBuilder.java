@@ -43,7 +43,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 	private String cbioportalDockerService;
 
     @Value("${transformation.directory}:")
-    private String transformationDirectory;
+    private Resource transformationDirectory;
 
     @Value("${cbioportal.compose.cbioportal.extensions:}")
     private String[] composeExtensions;
@@ -67,11 +67,12 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
+                    .replace(transformationDirectory.getFile().getAbsolutePath(), "");
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             String composeExtension = Arrays.stream(composeExtensions)
                     .map(e -> "-f " + e)
-                    .collect( Collectors.joining( " " ) );
+                    .collect( Collectors.joining(" ") );
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose",
                 composeExtension,
                 "run", "--rm",
@@ -94,11 +95,12 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath().replace(transformationDirectory, "");
+            String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
+                    .replace(transformationDirectory.getFile().getAbsolutePath(), "");
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             String composeExtension = Arrays.stream(composeExtensions)
                     .map(e -> "-f " + e)
-                    .collect( Collectors.joining( " " ) );
+                    .collect( Collectors.joining(" ") );
             ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose",
                 composeExtension,
                 "run", "--rm",
@@ -107,7 +109,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                 "-s", internalPath.toString()
             );
             return validationCmd;
-        } catch (ResourceUtilsException e) {
+        } catch (ResourceUtilsException | IOException e) {
             throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
     }
