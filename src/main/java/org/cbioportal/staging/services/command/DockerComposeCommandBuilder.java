@@ -15,9 +15,12 @@
 */
 package org.cbioportal.staging.services.command;
 
+import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 @Component
 @ConditionalOnProperty(value="cbioportal.mode", havingValue = "compose")
 public class DockerComposeCommandBuilder implements ICommandBuilder {
+    private static final Logger logger = LoggerFactory.getLogger(DockerComposeCommandBuilder.class);
 
     @Autowired
 	private ResourceUtils utils;
@@ -69,6 +73,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //docker command:
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
                     .replace(transformationDirectory.getFile().getAbsolutePath(), "");
+            logger.info("studyDirPath: ", studyDirPath);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             String composeExtension = Arrays.stream(composeExtensions)
                     .map(e -> "-f " + e)
@@ -97,6 +102,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
         try {
             String studyDirPath = utils.getFile(studyPath).getAbsolutePath()
                     .replace(transformationDirectory.getFile().getAbsolutePath(), "");
+            logger.info("studyDirPath: ", studyDirPath);
             Path internalPath = Paths.get("/staging-app/transformed/", studyDirPath);
             String composeExtension = Arrays.stream(composeExtensions)
                     .map(e -> "-f " + e)
