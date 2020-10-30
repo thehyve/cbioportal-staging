@@ -83,18 +83,15 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             Path internalPath = getCbioportalContainerPath(studyPath);
             // at the moment this all only works when the reportFile specified as an argument is located in the transformed directory
             Path internalReportFilePath = getCbioportalContainerPath(reportFile);
-            List<String> commands = new ArrayList<>();
-            commands.addAll(
-                    Arrays.asList(new String[]{
-                            "exec", "-T",
-                            cbioportalDockerService,
-                            "validateData.py",
-                            "-u", "http://" + cbioportalDockerService + ":8080",
-                            "-s", internalPath.toString(),
-                            "--html=" + internalReportFilePath.toString()
-                    })
+            List<String> commands = Arrays.asList(
+                "exec", "-T",
+                cbioportalDockerService,
+                "validateData.py",
+                "-u", "http://" + cbioportalDockerService + ":8080",
+                "-s", internalPath.toString(),
+                "--html=" + internalReportFilePath.toString()
             );
-            return dockerComposeProcessBuilder(commands);
+            return dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
@@ -106,16 +103,13 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
             Path internalPath = getCbioportalContainerPath(studyPath);
-            List<String> commands = new ArrayList<>();
-            commands.addAll(
-                    Arrays.asList(new String[]{
-                            "exec", "-T",
-                            cbioportalDockerService,
-                            "cbioportalImporter.py",
-                            "-s", internalPath.toString()
-                    })
+            List<String> commands = Arrays.asList(
+                "exec", "-T",
+                cbioportalDockerService,
+                "cbioportalImporter.py",
+                "-s", internalPath.toString()
             );
-            return dockerComposeProcessBuilder(commands);
+            return dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (ResourceUtilsException | IOException e) {
             throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
@@ -128,7 +122,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
         return Paths.get(cbioportalContainerStudiesDir, target);
     }
 
-    private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
+    public static ProcessBuilder dockerComposeProcessBuilder(String composeContext, String[] composeExtensions, List<String> arguments) {
         List<String> commands = new ArrayList<>();
         commands.add("docker-compose");
         List<String> extensions = new ArrayList<>();
