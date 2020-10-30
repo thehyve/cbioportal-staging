@@ -16,8 +16,12 @@
 package org.cbioportal.staging.services.command;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.slf4j.Logger;
@@ -37,10 +41,23 @@ public class DockerComposeRestarter implements IRestarter {
 	@Value("${cbioportal.compose.service}")
 	private String cbioService;
 
+    @Value("${cbioportal.compose.cbioportal.extensions:}")
+    private String[] composeExtensions;
+
+    // path inside staging app container where compose files are located
+    @Value("${cbioportal.compose.context}")
+    private String composeContext;
+
 	public void restart() throws RestarterException {
         try {
             logger.info("Restarting cBioPortal...");
-            ProcessBuilder restarterCmd = new ProcessBuilder ("docker-compose", cbioService, "restart");
+            List<String> commands = new ArrayList<>();
+            commands.addAll(
+                    Arrays.asList(new String[]{
+                            cbioService, "restart"
+                    })
+            );
+            ProcessBuilder restarterCmd = dockerComposeProcessBuilder(commands);
             logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
             Process restartProcess = restarterCmd.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
@@ -58,4 +75,21 @@ public class DockerComposeRestarter implements IRestarter {
             throw new RestarterException("The loading process has been interrupted by another process.", e);
         }
 	}
+
+    private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
+        List<String> commands = new ArrayList<>();
+        commands.add("docker-compose");
+        List<String> extensions = new ArrayList<>();
+        Arrays.stream(composeExtensions)
+                .forEach(e -> {
+                    commands.add("-f");
+                    commands.add(e);
+                });
+        commands.addAll(extensions);
+        commands.addAll(arguments);
+        ProcessBuilder processBuilder = new ProcessBuilder(commands);
+        processBuilder.directory(new File(composeContext));
+        return processBuilder;
+    }
+
 }

@@ -15,7 +15,6 @@
 */
 package org.cbioportal.staging.services.command;
 
-import org.cbioportal.staging.etl.Transformer;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -35,7 +34,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Primary
 @Component
@@ -82,22 +80,18 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
-            Path internalPath = getCbioportalContainerStudyPath(studyPath);
+            Path internalPath = getCbioportalContainerPath(studyPath);
+            // at the moment this all only works when the reportFile specified as an argument is located in the transformed directory
+            Path internalReportFilePath = getCbioportalContainerPath(reportFile);
             List<String> commands = new ArrayList<>();
-            Arrays.stream(composeExtensions)
-                    .forEach(e -> {
-                        commands.add("-f");
-                        commands.add(e);
-                    });
             commands.addAll(
                     Arrays.asList(new String[]{
-                            "run", "--rm",
-                            "-v", reportFilePath + ":/outreport.html",
+                            "exec", "-T",
                             cbioportalDockerService,
                             "validateData.py",
                             "-u", "http://" + cbioportalDockerService + ":8080",
                             "-s", internalPath.toString(),
-                            "--html=/outreport.html"
+                            "--html=" + internalReportFilePath.toString()
                     })
             );
             return dockerComposeProcessBuilder(commands);
@@ -111,16 +105,11 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
-            Path internalPath = getCbioportalContainerStudyPath(studyPath);
+            Path internalPath = getCbioportalContainerPath(studyPath);
             List<String> commands = new ArrayList<>();
-            Arrays.stream(composeExtensions)
-                    .forEach(e -> {
-                        commands.add("-f");
-                        commands.add(e);
-                    });
             commands.addAll(
                     Arrays.asList(new String[]{
-                            "run", "--rm",
+                            "exec", "-T",
                             cbioportalDockerService,
                             "cbioportalImporter.py",
                             "-s", internalPath.toString()
@@ -132,16 +121,23 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
         }
     }
 
-    private Path getCbioportalContainerStudyPath(Resource studyPath) throws IOException, ResourceUtilsException {
+    private Path getCbioportalContainerPath(Resource resource) throws IOException, ResourceUtilsException {
         String transformationDir = transformationDirectory.getFile().getAbsolutePath();
-        String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
-        studyDir = studyDir.replace(transformationDir, "");
-        return Paths.get(cbioportalContainerStudiesDir, studyDir);
+        String target = utils.stripResourceTypePrefix(utils.getFile(resource).getAbsolutePath());
+        target = target.replace(transformationDir, "");
+        return Paths.get(cbioportalContainerStudiesDir, target);
     }
 
     private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
         List<String> commands = new ArrayList<>();
         commands.add("docker-compose");
+        List<String> extensions = new ArrayList<>();
+        Arrays.stream(composeExtensions)
+                .forEach(e -> {
+                    commands.add("-f");
+                    commands.add(e);
+                });
+        commands.addAll(extensions);
         commands.addAll(arguments);
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
         processBuilder.directory(new File(composeContext));

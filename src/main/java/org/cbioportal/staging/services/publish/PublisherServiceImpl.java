@@ -15,14 +15,7 @@
 */
 package org.cbioportal.staging.services.publish;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
 import com.pivovarit.function.ThrowingFunction;
-
 import org.cbioportal.staging.exceptions.PublisherException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.IResourceProvider;
@@ -35,19 +28,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
 @Component
 public class PublisherServiceImpl implements IPublisherService {
 
     private static final Logger logger = LoggerFactory.getLogger(PublisherServiceImpl.class);
 
-    @Value("${central.share.location:@null}")
+    @Value("${central.share.disable:false}")
+    private boolean disableShareFiles;
+
+    @Value("${central.share.location:null}")
     private Resource centralShareLocation;
-
-    @Value("${transformation.directory:}")
-    private Resource transformationDirectory;
-
-    @Value("${etl.working.dir:}")
-    private Resource etlWorkingDir;
 
     @Autowired
     IResourceProvider resourceProvider;
@@ -61,6 +57,11 @@ public class PublisherServiceImpl implements IPublisherService {
     private List<Resource> publishedFiles = new ArrayList<>();
 
     public Map<Study, Resource> publishFiles(Map<Study, Resource> logFiles) throws PublisherException {
+
+        if (disableShareFiles) {
+            logger.info("Sharing of log files is disabled. Skipping publishing of log files.");
+            return null;
+        }
 
         if (centralShareLocation == null) {
             logger.info("No central.share.location defined. Skipping publishing of log files.");
