@@ -53,7 +53,7 @@ public class DockerComposeRestarter implements IRestarter {
         try {
             logger.info("Restarting cBioPortal...");
             List<String> commands = Arrays.asList(
-                cbioService, "restart"
+               "restart",  cbioService
             );
             ProcessBuilder restarterCmd = dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
             logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
