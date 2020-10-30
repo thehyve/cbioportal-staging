@@ -55,10 +55,18 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Value("${cbioportal.compose.cbioportal.extensions:}")
     private String[] composeExtensions;
 
+    // path inside staging app container where compose files are located
+    @Value("${cbioportal.compose.context}")
+    private String composeContext;
+
+    // path inside cbioportal container where transformed studies are located
+    @Value("${cbioportal.compose.cbioportal.studies_path}")
+    private String cbioportalContainerStudiesDir;
+
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
         // With compose we use the API of a live portal for validation.
-        // No dump command is needed; we return 'null'.
+        // No dump command is needed, so we return 'null'.
         return null;
     }
 
@@ -74,13 +82,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
-            String transformationDir = transformationDirectory.getFile().getAbsolutePath();
-            String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
-            studyDir = studyDir.replace(transformationDir, "");
-            logger.info("studyPath: " + studyPath.toString());
-            logger.info("transformationDir: " + transformationDir);
-            logger.info("studyPath: " + studyDir);
-            Path internalPath = Paths.get("/staging-app/transformed/", studyDir);
+            Path internalPath = getCbioportalContainerStudyPath(studyPath);
             List<String> commands = new ArrayList<>();
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
@@ -109,13 +111,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
-            String transformationDir = transformationDirectory.getFile().getAbsolutePath();
-            String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
-            studyDir = studyDir.replace(transformationDir, "");
-            logger.info("studyPath: " + studyPath.toString());
-            logger.info("transformationDir: " + transformationDir);
-            logger.info("studyDirPath: " + studyDir);
-            Path internalPath = Paths.get("/staging-app/transformed/", studyDir);
+            Path internalPath = getCbioportalContainerStudyPath(studyPath);
             List<String> commands = new ArrayList<>();
             Arrays.stream(composeExtensions)
                     .forEach(e -> {
@@ -136,12 +132,20 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
         }
     }
 
+    private Path getCbioportalContainerStudyPath(Resource studyPath) throws IOException, ResourceUtilsException {
+        String transformationDir = transformationDirectory.getFile().getAbsolutePath();
+        String studyDir = utils.stripResourceTypePrefix(utils.getFile(studyPath).getAbsolutePath());
+        studyDir = studyDir.replace(transformationDir, "");
+        return Paths.get(cbioportalContainerStudiesDir, studyDir);
+    }
+
     private ProcessBuilder dockerComposeProcessBuilder(List<String> arguments) {
         List<String> commands = new ArrayList<>();
         commands.add("docker-compose");
         commands.addAll(arguments);
         ProcessBuilder processBuilder = new ProcessBuilder(commands);
-        processBuilder.directory(new File("/cbioportal-staging/"));
+        processBuilder.directory(new File(composeContext));
         return processBuilder;
     }
+
 }

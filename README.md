@@ -277,7 +277,9 @@ files are not removed from the `scan.location`.
 ### Properties for 'compose' application profile
 
 - `cbioportal.compose.service`: name for cbioportal service in compose file
-- `cbioportal.compose.cbioportal.extensions`: list of docker compose extension files for the cbioportal container (command-separated list).
+- `cbioportal.compose.cbioportal.extensions`: list of docker compose extension files that should be used for the cbioportal container (command-separated list). Default is only _docker-compose.yml_.
+- `cbioportal.compose.context`: path inside staging app container where compose files (_docker-compose.yml_ and extension files) are located
+- `cbioportal.compose.cbioportal.studies_path`: path inside cbioportal container where transformed studies are located
 
 ### Properties for 'local' application profile
 
@@ -285,6 +287,7 @@ files are not removed from the `scan.location`.
 
 ### Reporting location settings
 
+- `central.share.disable`: disable sharing files to the central share location.
 - `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
 - `central.share.location.web.address`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.
