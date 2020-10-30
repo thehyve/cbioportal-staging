@@ -61,7 +61,7 @@ public class DirectoryCreatorTest {
 
 	@Before
 	public void init() {
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "job");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "timestamp/study_id");
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
@@ -105,7 +105,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void etlWorkingDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(false);
@@ -123,7 +123,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void etlWorkingDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "id");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/timestamp");
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(false);
@@ -182,7 +182,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void transformationDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
@@ -199,7 +199,7 @@ public class DirectoryCreatorTest {
     @Test
 	public void transformationDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
 
-		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "id");
+		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/timestamp");
 
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);

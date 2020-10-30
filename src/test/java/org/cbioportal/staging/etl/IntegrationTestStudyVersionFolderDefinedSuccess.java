@@ -56,7 +56,7 @@ import freemarker.template.TemplateNotFoundException;
     properties = {
         "scan.location=classpath:e2e_studies/es_0_version/test_study_es_0/version2",
         "scan.studyfiles.strategy=versiondefined",
-        "etl.dir.format=id"
+        "etl.dir.format=study_id/timestamp"
     }
 )
 public class IntegrationTestStudyVersionFolderDefinedSuccess {
