@@ -49,9 +49,9 @@ public class ValidatorServiceImpl implements IValidatorService {
 
 			Resource portalInfoFolder = utils.createDirResource(studyPath, "portalInfo");
 
-			logger.info("Dumping portalInfo...");
 			ProcessBuilder portalInfoCmd = commandBuilder.buildPortalInfoCommand(portalInfoFolder);
 			if (portalInfoCmd != null) {
+			    logger.info("Dumping portalInfo...");
                 logger.info("Executing command: " + String.join(" ", portalInfoCmd.command()));
                 Process pInfo = portalInfoCmd.start();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
