@@ -26,11 +26,10 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.cbioportal.staging.services.command.DockerComposeCommandBuilder.dockerComposeProcessBuilder;
+import static org.cbioportal.staging.services.command.DockerUtils.dockerComposeProcessBuilder;
 
 @Primary
 @Component

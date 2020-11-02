@@ -27,11 +27,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -91,7 +89,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                 "-s", internalPath.toString(),
                 "--html=" + internalReportFilePath.toString()
             );
-            return dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
+            return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
@@ -109,7 +107,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                 "cbioportalImporter.py",
                 "-s", internalPath.toString()
             );
-            return dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
+            return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (ResourceUtilsException | IOException e) {
             throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
@@ -120,22 +118,6 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
         String target = utils.stripResourceTypePrefix(utils.getFile(resource).getAbsolutePath());
         target = target.replace(transformationDir, "");
         return Paths.get(cbioportalContainerStudiesDir, target);
-    }
-
-    public static ProcessBuilder dockerComposeProcessBuilder(String composeContext, String[] composeExtensions, List<String> arguments) {
-        List<String> commands = new ArrayList<>();
-        commands.add("docker-compose");
-        List<String> extensions = new ArrayList<>();
-        Arrays.stream(composeExtensions)
-                .forEach(e -> {
-                    commands.add("-f");
-                    commands.add(e);
-                });
-        commands.addAll(extensions);
-        commands.addAll(arguments);
-        ProcessBuilder processBuilder = new ProcessBuilder(commands);
-        processBuilder.directory(new File(composeContext));
-        return processBuilder;
     }
 
 }
