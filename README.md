@@ -247,6 +247,7 @@ We can configure the app to run as a cron job by using these parameters:
 - `scan.retry.time`: minutes before trying to find a file specified by the yaml file that has not been found. This will be tried 5 times.
 - `scan.extract.folders`: if used, it will only run the staging app for the specific folders (studies) placed inside the `scan.location` place. For example, to only load `study2` and `study3`, contained in `study2_dir` and `study3_dir` folders, set the property like this: `scan.extract.folders=study2_dir,study3_dir`. If the property is commented out, the app will load all folders contained in `scan.location`.
 - `etl.working.dir`: location of the working directory, that is the place where the app will save the study files retrieved from `scan.location` and also the generated staging files based on the study files.
+- `etl.dir.format`: format of the path within the working directory for the extracted files. There are three options, each value defining the path where the study will be saved: `timestamp/study_id`; `study_id/timestamp`; and `study_id/version`, where `version` is the value saved in the "version" property of the study object. 
 - `scan.ignore.file`: when specified, all files listed in this file will be excluded
 from the scan. Each file should be represented on a single line. Only exact matched will
 be excluded. Wildcards are not supported.

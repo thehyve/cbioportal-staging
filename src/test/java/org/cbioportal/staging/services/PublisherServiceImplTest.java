@@ -39,7 +39,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { PublisherServiceImpl.class, FileSystemResourceProvider.class,
         ResourceUtils.class, DirectoryCreator.class }, properties = { "central.share.location=file:/fake-share/",
-                "transformation.directory=file:/transf-dir/", "etl.dir.format:job" })
+                "transformation.directory=file:/transf-dir/", "etl.dir.format:timestamp/study_id" })
 public class PublisherServiceImplTest {
 
     @Value("${central.share.location:}")
@@ -65,7 +65,7 @@ public class PublisherServiceImplTest {
     @Before
     public void init() throws ResourceCollectionException {
         doReturn(fakePublishedLogFile).when(resourceProvider).copyToRemote(isA(Resource.class), isA(Resource.class));
-        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "job");
+        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "timestamp/study_id");
     }
 
     @Test
@@ -91,7 +91,7 @@ public class PublisherServiceImplTest {
     public void testPublish_success_with_version()
             throws ResourceCollectionException, PublisherException, ResourceUtilsException, IOException {
         
-        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "version");
+        ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
         Map<Study,Resource> logFiles = new HashMap<>();
         Resource fakeLogFile = TestUtils.createMockResource("file:/transf-dir/dummy-study/log1.txt", 0);
