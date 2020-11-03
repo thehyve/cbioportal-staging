@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class LocalFileSystemService {
 
     @ServiceActivator(inputChannel = "local.resource.ls")
-    public List<File> ftpGatewayLs(String directory) {
+    public List<File> gatewayLs(String directory) {
         try {
             return Files.list(Paths.get(directory)).filter(Files::isRegularFile).map(Path::toFile)
                     .collect(Collectors.toList());
@@ -31,7 +31,7 @@ public class LocalFileSystemService {
     }
 
     @ServiceActivator(inputChannel = "local.resource.ls.dir")
-    public List<File> ftpGatewayLsDir(String directory) {
+    public List<File> gatewayLsDir(String directory) {
         try {
             return Files.list(Paths.get(directory)).map(Path::toFile).collect(Collectors.toList());
         } catch (IOException e) {
@@ -40,7 +40,7 @@ public class LocalFileSystemService {
     }
 
     @ServiceActivator(inputChannel = "local.resource.ls.dir.recur")
-    public List<File> ftpGatewayLsDirRecur(String directory) {
+    public List<File> gatewayLsDirRecur(String directory) {
         try {
             return Files.walk(Paths.get(directory)).map(Path::toFile).collect(Collectors.toList());
         } catch (IOException e) {
@@ -50,7 +50,7 @@ public class LocalFileSystemService {
     }
 
     @ServiceActivator(inputChannel = "local.resource.get.stream")
-    public InputStream ftpGatewayGetStream(String file) {
+    public InputStream gatewayGetStream(String file) {
         try {
             return new FileInputStream(file);
         } catch (FileNotFoundException e) {
@@ -59,7 +59,7 @@ public class LocalFileSystemService {
     }
 
     @ServiceActivator(inputChannel = "local.resource.put")
-    public String ftpGatewayPut(Message<byte[]> message) {
+    public String gatewayPut(Message<byte[]> message) {
         byte[] contents = message.getPayload();
         String destinationDir = (String) message.getHeaders().get("dest.dir");
         String fileName = (String) message.getHeaders().get("filename");
@@ -73,7 +73,7 @@ public class LocalFileSystemService {
     }
 
     @ServiceActivator(inputChannel = "local.resource.rm")
-    public Boolean ftpGatewayRm(String file) {
+    public Boolean gatewayRm(String file) {
         Path filePath = Paths.get(file);
         try {
             return Files.deleteIfExists(filePath);
