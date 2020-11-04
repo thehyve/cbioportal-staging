@@ -61,9 +61,12 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
-        // With compose we use the API of a live portal for validation.
-        // No dump command is needed, so we return 'null'.
-        return null;
+        List<String> commands = Arrays.asList(
+                "exec", "-T",
+                "-w", "/cbioportal/core/src/main/scripts",
+                cbioportalDockerService, "./dumpPortalInfo.pl", "/portalinfo"
+        );
+        return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
     }
 
     @Override
@@ -85,7 +88,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                 "exec", "-T",
                 cbioportalDockerService,
                 "validateData.py",
-                "-u", "http://" + cbioportalDockerService + ":8080",
+                "-p", "/portalinfo",
                 "-s", internalPath.toString(),
                 "--html=" + internalReportFilePath.toString()
             );
