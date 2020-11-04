@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +47,7 @@ public class AuthorizerServiceImpl implements IAuthorizerService {
 	@Value("${study.curator.emails:}")
 	private String studyCuratorEmails;
 
-	// base dir of stagin app inside docker container
+	// base dir of staging app inside docker container
     @Value("${cbioportal.compose.context}")
     private String composeContext;
 
@@ -61,7 +62,8 @@ public class AuthorizerServiceImpl implements IAuthorizerService {
 			for (String studyId : studyIds) {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
 
-                    List<String> commands = Arrays.asList(studyAuthorizeCommandPrefix.split("\\S+"));
+                    List<String> commands = new ArrayList<>();
+                    commands.addAll(Arrays.asList(studyAuthorizeCommandPrefix.split("\\S+")));
                     commands.add(studyId);
                     commands.add(studyCuratorEmail);
                     ProcessBuilder authCmd = new ProcessBuilder(commands);
