@@ -63,7 +63,7 @@ public class AuthorizerServiceImpl implements IAuthorizerService {
                 for (String studyCuratorEmail : studyCuratorEmails.split(",")) {
 
                     List<String> commands = new ArrayList<>();
-                    commands.addAll(Arrays.asList(studyAuthorizeCommandPrefix.split("\\S+")));
+                    commands.addAll(Arrays.asList(studyAuthorizeCommandPrefix.split("\\s+")));
                     commands.add(studyId);
                     commands.add(studyCuratorEmail);
                     ProcessBuilder authCmd = new ProcessBuilder(commands);
