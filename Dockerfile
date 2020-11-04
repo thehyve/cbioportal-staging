@@ -13,6 +13,7 @@ LABEL maintainers=" \
 # install build and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		maven \
+		jq \
 		python3 \
 		python3-pip && \
 		pip3 install setuptools && \
