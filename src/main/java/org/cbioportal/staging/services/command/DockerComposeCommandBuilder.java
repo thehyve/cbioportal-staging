@@ -52,7 +52,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     private String[] composeExtensions;
 
     // path inside staging app container where compose files are located
-    @Value("${cbioportal.compose.context}")
+    @Value("${cbioportal.compose.context:/cbioportal-staging/}")
     private String composeContext;
 
     // path inside cbioportal container where transformed studies are located

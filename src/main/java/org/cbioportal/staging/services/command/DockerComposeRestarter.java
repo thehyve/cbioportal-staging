@@ -45,7 +45,7 @@ public class DockerComposeRestarter implements IRestarter {
     private String[] composeExtensions;
 
     // path inside staging app container where compose files are located
-    @Value("${cbioportal.compose.context}")
+    @Value("${cbioportal.compose.context:/cbioportal-staging/}")
     private String composeContext;
 
 	public void restart() throws RestarterException {

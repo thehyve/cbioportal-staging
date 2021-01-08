@@ -48,7 +48,7 @@ public class AuthorizerServiceImpl implements IAuthorizerService {
 	private String studyCuratorEmails;
 
 	// base dir of staging app inside docker container
-    @Value("${cbioportal.compose.context}")
+    @Value("${cbioportal.compose.context:/cbioportal-staging/}")
     private String composeContext;
 
 	public void authorizeStudies(Set<String> studyIds) throws InterruptedException, IOException, ConfigurationException {
