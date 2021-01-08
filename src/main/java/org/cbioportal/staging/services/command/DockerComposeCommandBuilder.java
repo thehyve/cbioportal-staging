@@ -15,11 +15,11 @@
 */
 package org.cbioportal.staging.services.command;
 
-import java.io.IOException;
-
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,10 +27,17 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+
 @Primary
 @Component
 @ConditionalOnProperty(value="cbioportal.mode", havingValue = "compose")
 public class DockerComposeCommandBuilder implements ICommandBuilder {
+    private static final Logger logger = LoggerFactory.getLogger(DockerComposeCommandBuilder.class);
 
     @Autowired
 	private ResourceUtils utils;
@@ -38,12 +45,28 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 	@Value("${cbioportal.compose.service}")
 	private String cbioportalDockerService;
 
+    @Value("${transformation.directory:}")
+    private Resource transformationDirectory;
+
+    @Value("${cbioportal.compose.cbioportal.extensions:}")
+    private String[] composeExtensions;
+
+    // path inside staging app container where compose files are located
+    @Value("${cbioportal.compose.context:/cbioportal-staging/}")
+    private String composeContext;
+
+    // path inside cbioportal container where transformed studies are located
+    @Value("${cbioportal.compose.cbioportal.studies_path}")
+    private String cbioportalContainerStudiesDir;
+
     @Override
     public ProcessBuilder buildPortalInfoCommand(Resource portalInfoFolder) throws CommandBuilderException {
-
-        return new ProcessBuilder("docker-compose", "run", "--rm",
-        "-w", "/cbioportal/core/src/main/scripts",
-        cbioportalDockerService, "./dumpPortalInfo.pl", "/portalinfo");
+        List<String> commands = Arrays.asList(
+                "exec", "-T",
+                "-w", "/cbioportal/core/src/main/scripts",
+                cbioportalDockerService, "./dumpPortalInfo.pl", "/portalinfo"
+        );
+        return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
     }
 
     @Override
@@ -53,21 +76,23 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
             utils.getFile(reportFile).getParentFile().mkdirs();
             utils.getFile(reportFile).createNewFile();
 
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
-            String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
 
             //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
 
             //docker command:
-            ProcessBuilder validationCmd = new ProcessBuilder ("docker-compose", "run", "--rm",
-            "-v", studyDirPath + ":/study:ro",
-            "-v", reportFilePath + ":/outreport.html",
-            "-v", portalInfoPath + ":/portalinfo:ro",
-            cbioportalDockerService,
-            "validateData.py", "-p", "/portalinfo", "-s", "/study", "--html=/outreport.html");
-
-            return validationCmd;
+            Path internalPath = getCbioportalContainerPath(studyPath);
+            // at the moment this all only works when the reportFile specified as an argument is located in the transformed directory
+            Path internalReportFilePath = getCbioportalContainerPath(reportFile);
+            List<String> commands = Arrays.asList(
+                "exec", "-T",
+                cbioportalDockerService,
+                "validateData.py",
+                "-p", "/portalinfo",
+                "-s", internalPath.toString(),
+                "--html=" + internalReportFilePath.toString()
+            );
+            return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (IOException e) {
             throw new CommandBuilderException("The report file could not be created.", e);
         } catch (ResourceUtilsException e) {
@@ -78,13 +103,24 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
     @Override
     public ProcessBuilder buildLoaderCommand(Resource studyPath) throws CommandBuilderException {
         try {
-            String studyDirPath = utils.getFile(studyPath).getAbsolutePath();
-            return new ProcessBuilder ("docker-compose", "run", "--rm",
-                "-v", studyDirPath + ":/study:ro",
+            Path internalPath = getCbioportalContainerPath(studyPath);
+            List<String> commands = Arrays.asList(
+                "exec", "-T",
                 cbioportalDockerService,
-                "cbioportalImporter.py", "-s", "/study");
-        } catch (ResourceUtilsException e) {
-            throw new CommandBuilderException("CommandBuilder experiences File IO problems.", e);
+                "cbioportalImporter.py",
+                "-s", internalPath.toString()
+            );
+            return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
+        } catch (ResourceUtilsException | IOException e) {
+            throw new CommandBuilderException("File IO problem during the build of the loader command", e);
         }
     }
+
+    private Path getCbioportalContainerPath(Resource resource) throws IOException, ResourceUtilsException {
+        String transformationDir = transformationDirectory.getFile().getAbsolutePath();
+        String target = utils.stripResourceTypePrefix(utils.getFile(resource).getAbsolutePath());
+        target = target.replace(transformationDir, "");
+        return Paths.get(cbioportalContainerStudiesDir, target);
+    }
+
 }

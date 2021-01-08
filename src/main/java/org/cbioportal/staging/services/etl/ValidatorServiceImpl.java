@@ -17,9 +17,9 @@ package org.cbioportal.staging.services.etl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
-
 import org.cbioportal.staging.etl.Validator;
 import org.cbioportal.staging.exceptions.CommandBuilderException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
@@ -49,21 +49,24 @@ public class ValidatorServiceImpl implements IValidatorService {
 
 			Resource portalInfoFolder = utils.createDirResource(studyPath, "portalInfo");
 
-			logger.info("Dumping portalInfo...");
 			ProcessBuilder portalInfoCmd = commandBuilder.buildPortalInfoCommand(portalInfoFolder);
-			logger.info("Executing command: " + String.join(" ", portalInfoCmd.command()));
-			Process pInfo = portalInfoCmd.start();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
-			String line = null;
-			while ((line = reader.readLine()) != null) {
-				logger.warn(line);// TODO warn, since this is error stream output ^ ?
-			}
-			pInfo.waitFor();
-			if (pInfo.exitValue() != 0) {
-				throw new ValidatorException("Dump portalInfo step failed");
-			}
-
-			logger.info("Dump portalInfo finished. Continuing validation...");
+			if (portalInfoCmd != null) {
+			    logger.info("Dumping portalInfo...");
+                logger.info("Executing command: " + String.join(" ", portalInfoCmd.command()));
+                Process pInfo = portalInfoCmd.start();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(pInfo.getErrorStream()));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    logger.warn(line);// TODO warn, since this is error stream output ^ ?
+                }
+                pInfo.waitFor();
+                if (pInfo.exitValue() != 0) {
+                    throw new ValidatorException("Dump portalInfo step failed");
+                }
+			    logger.info("Dump portalInfo finished. Continuing validation...");
+            } else {
+                logger.info("Dump portalInfo is not needed. Accessing live portal. Continuing validation...");
+            }
 
 			// Apply validation command
 			ProcessBuilder validationCmd = commandBuilder.buildValidatorCommand(studyPath, portalInfoFolder, reportFile);

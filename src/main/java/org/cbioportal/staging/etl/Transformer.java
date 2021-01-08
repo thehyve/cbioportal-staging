@@ -26,14 +26,17 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.etl.ITransformerService;
-import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
+import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -50,7 +53,7 @@ public class Transformer {
     private ResourceUtils utils;
 
     @Autowired
-    private IResourceProvider provider;
+    private FileSystemResourceProvider fileSystemResourceProvider;
 
     @Autowired
 	private IDirectoryCreator directoryCreator;
@@ -89,9 +92,8 @@ public class Transformer {
                     throw new ReporterException(e);
                 }
 
-                Resource[] resources;
-                    resources = provider.list(transformedFilesPath);
-                    Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
+                Resource[] resources = fileSystemResourceProvider.list(transformedFilesPath);
+                Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
 
                 //Add status of the validation for the study
                 statusStudies.put(study, transformationStatus);
@@ -118,7 +120,7 @@ public class Transformer {
     }
 
     public boolean metaFileExists(Resource originPath) throws ResourceCollectionException {
-        Resource[] studyFiles = provider.list(originPath);
+        Resource[] studyFiles = fileSystemResourceProvider.list(originPath);
         return Stream.of(studyFiles).anyMatch(f -> f.getFilename().contains("meta_study.txt"));
     }
 

@@ -15,33 +15,15 @@
 */
 package org.cbioportal.staging.etl;
 
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.util.Map;
-
 import org.cbioportal.staging.TestUtils;
-import org.cbioportal.staging.exceptions.ConfigurationException;
-import org.cbioportal.staging.exceptions.DirectoryCreatorException;
-import org.cbioportal.staging.exceptions.ReporterException;
-import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
-import org.cbioportal.staging.exceptions.TransformerException;
+import org.cbioportal.staging.exceptions.*;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.etl.TransformerServiceImpl;
-import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
+import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,9 +34,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { Transformer.class, TransformerServiceImpl.class, ResourceUtils.class,
-        IResourceProvider.class, DirectoryCreator.class })
+@SpringBootTest(classes = { Transformer.class, TransformerServiceImpl.class,
+        ResourceUtils.class, DirectoryCreator.class })
 public class TransformerTest {
 
     @Autowired
@@ -67,7 +56,7 @@ public class TransformerTest {
     private ResourceUtils utils;
 
     @MockBean
-    private IResourceProvider provider;
+    private FileSystemResourceProvider resourceProvider;
 
     @MockBean
     private IDirectoryCreator directoryCreator;
@@ -104,7 +93,7 @@ public class TransformerTest {
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         // when(directoryCreator.createTransformedStudyDir(isA(Study.class),isA(Resource.class))).thenReturn(studyFiles[0]);
-        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        when(resourceProvider.list(isA(Resource.class))).thenReturn(studyFiles);
         // when(transformer.metaFileExists(null)).thenReturn(false);
 
 		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
@@ -126,7 +115,7 @@ public class TransformerTest {
         // mock provider.list() -> return resource list that contains a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/meta_study.txt", 0)};
         // when(directoryCreator.createTransformedStudyDir(isA(Study.class),isA(Resource.class))).thenReturn(studyFiles[0]);
-        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        when(resourceProvider.list(isA(Resource.class))).thenReturn(studyFiles);
         // when(transformer.metaFileExists(null)).thenReturn(false);
 
 		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
@@ -146,7 +135,7 @@ public class TransformerTest {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
-        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        when(resourceProvider.list(isA(Resource.class))).thenReturn(studyFiles);
 
         Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
 
@@ -165,7 +154,7 @@ public class TransformerTest {
 
         // mock provider.list() -> return resource list that does not contain a meta_study file
         Resource[] studyFiles = new Resource[] {TestUtils.createMockResource("file:/dummy_study_folder/file_that_needs_transformation.txt", 0)};
-        when(provider.list(isA(Resource.class))).thenReturn(studyFiles);
+        when(resourceProvider.list(isA(Resource.class))).thenReturn(studyFiles);
 
         Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", studyFiles[0], studyFiles);
 

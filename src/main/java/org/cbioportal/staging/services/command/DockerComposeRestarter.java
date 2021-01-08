@@ -15,10 +15,6 @@
 */
 package org.cbioportal.staging.services.command;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import org.cbioportal.staging.exceptions.RestarterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +22,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.cbioportal.staging.services.command.DockerUtils.dockerComposeProcessBuilder;
 
 @Primary
 @Component
@@ -37,10 +41,20 @@ public class DockerComposeRestarter implements IRestarter {
 	@Value("${cbioportal.compose.service}")
 	private String cbioService;
 
+    @Value("${cbioportal.compose.cbioportal.extensions:}")
+    private String[] composeExtensions;
+
+    // path inside staging app container where compose files are located
+    @Value("${cbioportal.compose.context:/cbioportal-staging/}")
+    private String composeContext;
+
 	public void restart() throws RestarterException {
         try {
             logger.info("Restarting cBioPortal...");
-            ProcessBuilder restarterCmd = new ProcessBuilder ("docker-compose", cbioService, "restart");
+            List<String> commands = Arrays.asList(
+               "restart",  cbioService
+            );
+            ProcessBuilder restarterCmd = dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
             logger.info("Executing command: "+String.join(" ", restarterCmd.command()));
             Process restartProcess = restarterCmd.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(restartProcess.getErrorStream()));
@@ -58,4 +72,5 @@ public class DockerComposeRestarter implements IRestarter {
             throw new RestarterException("The loading process has been interrupted by another process.", e);
         }
 	}
+
 }

@@ -257,7 +257,7 @@ files are not removed from the `scan.location`.
 
 ### Transformer settings
 
-- `transformation.command.script`: full transformation command, except input and output (-i and -o parameters).
+- `transformation.command.script`: full transformation command, except input and output (-i and -o parameters). First element must be the absolute path to the transformation script; the path must contain a resource type prefix (e.g. `file:`).
 - `transformation.command.script.docker.image`: if the transformation command runs in Docker, add here the Docker image name. The app will call the script in the path provided in `transformtion.command.script`. If your command is executed at the entrypoint, you can comment `transformation.command.script` out.
 - `transformation.skip`: set this parameter to `true` if you want to skip the transformation step.
 - `transformation.directory`: resource path to directory where transformed study files are placed after transformation. When not set, transformed files are placed in the 'staging' subdirectory of study folders in the `etl.working.dir`.
@@ -274,12 +274,20 @@ files are not removed from the `scan.location`.
 - `cbioportal.docker.network`: docker network where cBioPortal is placed.
 - `cbioportal.docker.properties`: path to the `portal.properties` of the cBioPortal container.
 
+### Properties for 'compose' application profile
+
+- `cbioportal.compose.service`: name for cbioportal service in compose file
+- `cbioportal.compose.cbioportal.extensions`: list of docker compose extension files that should be used for the cbioportal container (command-separated list). Default is only _docker-compose.yml_.
+- `cbioportal.compose.context`: path inside staging app container where compose files (_docker-compose.yml_ and extension files) are located
+- `cbioportal.compose.cbioportal.studies_path`: path inside cbioportal container where transformed studies are located
+
 ### Properties for 'local' application profile
 
 - `portal.source`: path to portal source
 
 ### Reporting location settings
 
+- `central.share.disable`: disable sharing files to the central share location.
 - `central.share.location`: location where the app will save the different files that generates, such as validation reports or logs. This property can point to a local file system location or to a S3 bucket.
 - `central.share.location.web.address`: optional URL, in case the reports can also be found on a web portal. This will URL will be added to
 email notifications. For example: `https://s3.console.aws.amazon.com/s3/buckets/my_bucket/myreports_folder`.

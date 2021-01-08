@@ -11,22 +11,22 @@ import org.springframework.messaging.handler.annotation.Header;
 @MessagingGateway
 public interface IFileSystemGateway {
 
-    @Gateway(requestChannel = "resource.ls")
+    @Gateway(requestChannel = "local.resource.ls")
     public List<File> ls(String dir);
 
-    @Gateway(requestChannel = "resource.ls.dir")
+    @Gateway(requestChannel = "local.resource.ls.dir")
     public List<File> lsDir(String dir);
 
-    @Gateway(requestChannel = "resource.ls.dir.recur")
+    @Gateway(requestChannel = "local.resource.ls.dir.recur")
     public List<File> lsDirRecur(String dir);
 
-    @Gateway(requestChannel = "resource.get.stream")
+    @Gateway(requestChannel = "local.resource.get.stream")
     public InputStream getStream(String file);
 
-    @Gateway(requestChannel = "resource.put")
+    @Gateway(requestChannel = "local.resource.put")
     public String put(byte[] bytes, @Header("dest.dir") String destinationDir, @Header("filename") String fileName);
 
-    @Gateway(requestChannel = "resource.rm")
+    @Gateway(requestChannel = "local.resource.rm")
     public String rm(String file);
 
 }

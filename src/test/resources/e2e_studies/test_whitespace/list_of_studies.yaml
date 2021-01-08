@@ -1,0 +1,4 @@
+test_study_es_0_yaml:
+  - dir with spaces/data_clinical_samples.txt
+  - dir with spaces/meta_clinical_samples.txt
+  - dir with spaces/meta_study.txt

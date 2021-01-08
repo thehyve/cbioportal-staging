@@ -56,7 +56,7 @@ public class TransformerServiceImpl implements ITransformerService {
             List<String> command = Stream.of(transformationCommandScript.trim().split("\\s+")).collect(Collectors.toList());
             Resource script = resourceResolver.getResource(command.get(0));
             script.getFile().setExecutable(true); // required for tests: x-permissions are stripped in maven target resource
-                                                // dir
+                                                  // dir
 
             if (!script.exists()) {
                 throw new TransformerException(
@@ -109,8 +109,8 @@ public class TransformerServiceImpl implements ITransformerService {
             utils.ensureDirs(transformedFilesPath);
 
             // Build transformation command
-            Stream.of("-i", utils.getFile(untransformedFilesPath).getAbsolutePath(), "-o",
-                    utils.getFile(transformedFilesPath).getAbsolutePath()).forEach(e -> command.add(e));
+            Stream.of("-i", utils.getFile(untransformedFilesPath).getAbsolutePath(),
+                    "-o", utils.getFile(transformedFilesPath).getAbsolutePath()).forEach(e -> command.add(e));
 
             // Run transformation command
             ProcessBuilder transformation = new ProcessBuilder(command);
@@ -124,6 +124,7 @@ public class TransformerServiceImpl implements ITransformerService {
             // Interprete exit status of the process and return it
             ExitStatus exitStatus = null;
             if (transformationProcess.exitValue() == 0) {
+                logger.info("Successfully completed transformation for study: " + untransformedFilesPath.getFilename());
                 exitStatus = ExitStatus.SUCCESS;
             } else if (transformationProcess.exitValue() == 3) {
                 exitStatus = ExitStatus.WARNING;
