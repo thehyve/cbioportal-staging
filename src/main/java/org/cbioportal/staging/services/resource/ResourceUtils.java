@@ -221,7 +221,8 @@ public class ResourceUtils {
         int shortest = Integer.MAX_VALUE;
         String shortestPath = "";
         for (String filePath : pathsNoNull) {
-            if (StringUtils.countMatches(filePath, "/") < shortest) {
+            int currentCount = StringUtils.countMatches(filePath, "/");
+            if (currentCount < shortest) {
                 shortest = StringUtils.countMatches(filePath, "/");
                 shortestPath = filePath;
             }
