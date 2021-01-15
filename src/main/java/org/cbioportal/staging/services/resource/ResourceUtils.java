@@ -24,6 +24,7 @@ import com.pivovarit.function.ThrowingPredicate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ftp.FtpResource;
@@ -220,8 +221,8 @@ public class ResourceUtils {
         int shortest = Integer.MAX_VALUE;
         String shortestPath = "";
         for (String filePath : pathsNoNull) {
-            if (filePath.length() < shortest) {
-                shortest = filePath.length();
+            if (StringUtils.countMatches(filePath, "/") < shortest) {
+                shortest = StringUtils.countMatches(filePath, "/");
                 shortestPath = filePath;
             }
         }

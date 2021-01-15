@@ -119,6 +119,15 @@ public class ResourceUtilsTest {
     }
 
     @Test
+    public void getBasePath_resolveNestedDirsWithLongFileName() throws ConfigurationException {
+        List<String> paths = new ArrayList<>();
+        paths.add("file:/def/xz/file.txt");
+        paths.add("file:/def/filenamelongerthanthepreviouspath.txt");
+        String common = utils.getBasePath(paths);
+        assertEquals("file:/def", common);
+    }
+
+    @Test
     public void getBasePath_includesNullArgument() throws ConfigurationException {
         List<String> paths = new ArrayList<>();
         paths.add(null);
