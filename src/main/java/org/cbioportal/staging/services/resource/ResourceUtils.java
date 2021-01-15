@@ -24,6 +24,7 @@ import com.pivovarit.function.ThrowingPredicate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ftp.FtpResource;
@@ -220,9 +221,11 @@ public class ResourceUtils {
         int shortest = Integer.MAX_VALUE;
         String shortestPath = "";
         for (String filePath : pathsNoNull) {
-            if (filePath.length() < shortest) {
-                shortest = filePath.length();
-                shortestPath = filePath;
+            String parsedFilePath = filePath.replaceAll("/+", "/");
+            int currentCount = StringUtils.countMatches(parsedFilePath, "/");
+            if (currentCount < shortest) {
+                shortest = StringUtils.countMatches(parsedFilePath, "/");
+                shortestPath = parsedFilePath;
             }
         }
         String result = "";
@@ -232,9 +235,10 @@ public class ResourceUtils {
         // validate if main assumption is correct (i.e. all paths contain the shortest
         // path):
         for (String filePath : pathsNoNull) {
-            if (!filePath.contains(result)) {
+            String parsedFilePath = filePath.replaceAll("/+", "/");
+            if (!parsedFilePath.contains(result)) {
                 throw new ConfigurationException("Study configuration contains mixed locations. Not allowed. E.g. "
-                        + "locations: " + filePath + " and " + result + "/...");
+                        + "locations: " + parsedFilePath + " and " + result + "/...");
             }
         }
         return result;
