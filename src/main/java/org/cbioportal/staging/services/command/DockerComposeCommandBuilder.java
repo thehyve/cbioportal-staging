@@ -78,8 +78,6 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
 
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
 
-            //TODO: we need to pass portal.properties to parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
-
             //docker command:
             Path internalPath = getCbioportalContainerPath(studyPath);
             // at the moment this all only works when the reportFile specified as an argument is located in the transformed directory
@@ -90,7 +88,7 @@ public class DockerComposeCommandBuilder implements ICommandBuilder {
                 "validateData.py",
                 "-p", "/portalinfo",
                 "-s", internalPath.toString(),
-                "--html=" + internalReportFilePath.toString()
+                "-html", internalReportFilePath.toString()
             );
             return DockerUtils.dockerComposeProcessBuilder(composeContext, composeExtensions, commands);
         } catch (IOException e) {

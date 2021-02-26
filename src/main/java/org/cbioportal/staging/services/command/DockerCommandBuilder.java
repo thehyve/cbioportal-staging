@@ -78,18 +78,13 @@ public class DockerCommandBuilder implements ICommandBuilder {
             String reportFilePath = utils.getFile(reportFile).getAbsolutePath();
             String portalInfoPath = utils.getFile(portalInfoFolder).getAbsolutePath();
             
-            //parse cBioPortal portal properties to extract ncbi and ucsc builds, and species
-            Properties cbioProperties = utils.parsePropertiesFile(propertiesFilePath);
-
             //docker command:
             ProcessBuilder validationCmd = new ProcessBuilder ("docker", "run", "-i", "--rm",
             "-v", studyDirPath + ":/study:ro",
             "-v", reportFilePath + ":/outreport.html",
             "-v", portalInfoPath + ":/portalinfo:ro",
             "-v", propertiesFilePath + ":/cbioportal/portal.properties:ro", cbioportalDockerImage,
-            "validateData.py", "-p", "/portalinfo", "-s", "/study", "-ncbi", cbioProperties.getProperty("ncbi.build"), 
-                "-species", cbioProperties.getProperty("species"), "-ucsc", cbioProperties.getProperty("ucsc.build"), 
-                "--html=/outreport.html");
+            "validateData.py", "-p", "/portalinfo", "-s", "/study", "-html", "outreport.html");
 
             return validationCmd;
         } catch (IOException e) {
