@@ -17,7 +17,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-//@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
+@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
 public class LocalFileSystemService {
 
     @ServiceActivator(inputChannel = "local.resource.ls")

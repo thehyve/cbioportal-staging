@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
+import com.amazonaws.services.s3.AmazonS3;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,9 +14,11 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,12 +33,14 @@ import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ftp.FtpResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.aws.core.io.s3.SimpleStorageResource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.integration.sftp.session.SftpFileInfo;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +56,9 @@ public class ResourceUtils {
 
     @Value("${java.io.tmpdir}")
     private FileSystemResource tempDir;
+
+    @Value("${scan.location.type}")
+    private String scanLocationType;
 
     /**
      * Remove trailing slashes and asterixes from the right end of a path.
@@ -147,6 +155,25 @@ public class ResourceUtils {
      * @return Resource[]  List of directory Resources
      */
     public Resource[] extractDirs(Resource[] resources) {
+        if (scanLocationType.equals("aws")) {
+            Set<SimpleStorageResource> dirs = new HashSet<>();
+            AmazonS3 amazonS3 = ((SimpleStorageResource) resources[0]).getAmazonS3();
+            String uri = stripResourceTypePrefix(((SimpleStorageResource) resources[0]).getS3Uri().toString());
+            String bucket = uri.split("/")[1];
+            Stream.of(resources)
+                .map(SimpleStorageResource.class::cast)
+                .map(r -> r.getS3Uri().toString())
+                .map(u -> stripResourceTypePrefix(u))
+                .forEach(u -> {
+                    String[] parts = u.split("/");
+                    if (parts.length > 3) {
+                        dirs.add(new SimpleStorageResource(
+                            amazonS3, bucket, parts[2], null
+                        ));
+                    }
+                });
+            return dirs.stream().toArray(Resource[]::new);
+        }
         return Stream.of(resources)
             .filter(ThrowingPredicate.unchecked(
                     n -> {

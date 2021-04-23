@@ -1,9 +1,11 @@
 package org.cbioportal.staging.services.resource.aws;
 
+import com.amazonaws.services.s3.AmazonS3;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -15,6 +17,9 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cloud.aws.core.io.s3.PathMatchingSimpleStorageResourcePatternResolver;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -29,36 +34,37 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(value = "scan.location.type" , havingValue = "aws")
 public class AwsSystemService {
 
-    @Autowired
     private ResourcePatternResolver resourceResolver;
+
+    @Autowired
+    public void setupResolver(ApplicationContext applicationContext, AmazonS3 amazonS3){
+        this.resourceResolver = new PathMatchingSimpleStorageResourcePatternResolver(amazonS3, applicationContext);
+    }
 
     @Autowired
     private ResourceUtils utils;
 
     @ServiceActivator(inputChannel = "resource.ls")
-    public List<File> ftpGatewayLs(String directory) throws ResourceCollectionException {
+    public List<Resource> ftpGatewayLs(String directory) throws ResourceCollectionException {
         return lsHelper(directory, "*", true);
     }
 
     @ServiceActivator(inputChannel = "resource.ls.dir")
-    public List<File> ftpGatewayLsDir(String directory) throws ResourceCollectionException {
+    public List<Resource> ftpGatewayLsDir(String directory) throws ResourceCollectionException {
         return lsHelper(directory, "*", false);
     }
 
     @ServiceActivator(inputChannel = "resource.ls.dir.recur")
-    public List<File> ftpGatewayLsDirRecur(String directory) throws ResourceCollectionException {
-        return lsHelper(directory, "**", false);
+    public List<Resource> ftpGatewayLsDirRecur(String directory) throws ResourceCollectionException {
+        return lsHelper(directory, "**/*", false);
     }
 
-    private List<File> lsHelper(String dir, String wildcard, boolean exludeDirs) throws ResourceCollectionException {
+    private List<Resource> lsHelper(String dir, String wildcard, boolean excludeDirs) throws ResourceCollectionException {
         try {
             String path = utils.trimPathRight(dir);
             String wildCardPath = path + "/" + wildcard;
             Resource[] res = resourceResolver.getResources(wildCardPath);
-            return Stream.of(res)
-                .filter(ThrowingPredicate.sneaky(e -> ! exludeDirs || e.getFile().isFile()))
-                .map(ThrowingFunction.sneaky(r -> r.getFile()))
-                .collect(Collectors.toList());
+            return Arrays.asList(res);
         } catch (Exception e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir, e);
         }

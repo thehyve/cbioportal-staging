@@ -1,23 +1,29 @@
-package org.cbioportal.staging.services.resource.filesystem;
+package org.cbioportal.staging.services.resource.aws;
 
 import com.pivovarit.function.ThrowingPredicate;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
+import org.cbioportal.staging.services.resource.filesystem.IFileSystemGateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cloud.aws.core.io.s3.SimpleStorageResource;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
+@Primary
 @Component
-//@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
-public class FileSystemResourceProvider implements IResourceProvider {
+@ConditionalOnProperty(value = "scan.location.type" , havingValue = "aws")
+public class AwsResourceProvider implements IResourceProvider {
 
     @Autowired
     protected ResourceUtils utils;
@@ -26,7 +32,10 @@ public class FileSystemResourceProvider implements IResourceProvider {
     private ResourcePatternResolver resourceResolver;
 
     @Autowired
-    private IFileSystemGateway gateway;
+    private ResourceLoader resourceLoader;
+
+    @Autowired
+    private IAwsGateway gateway;
 
     @Override
     public Resource getResource(String url) throws ResourceCollectionException {
@@ -35,7 +44,7 @@ public class FileSystemResourceProvider implements IResourceProvider {
 
     @Override
     public Resource[] list(Resource dir) throws ResourceCollectionException {
-        return list(dir, false);
+        return list(dir, true);
     }
 
     @Override
@@ -47,29 +56,10 @@ public class FileSystemResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive, boolean filterDirs) throws ResourceCollectionException {
 
         try {
-            // Check whether the scan.location is s3 bucket
-            // If so, do not modify the scan directory.
-            boolean isS3ScanLocation = !dir.isFile() && ((ClassPathResource) dir).getPath().startsWith("s3");
-            String scanLocation = isS3ScanLocation ? ((ClassPathResource) dir).getPath() : utils.getURL(dir).toString();
-            String remoteDir = scanLocation;
-            if (!isS3ScanLocation) {
-                String path = utils.trimPathRight(utils.getURL(dir).toString());
-                if (utils.getFile(dir).isFile()) {
-                    throw new ResourceCollectionException(
-                        "Scan location points to a file (should be a directory): " + path);
-                }
-                remoteDir = utils.remotePath(null, utils.getURL(dir));
-            }
-
-            List<File> files = recursive ? gateway.lsDirRecur(remoteDir) : gateway.lsDir(remoteDir);
-
-            if (filterDirs)
-                files = files.stream().filter(ThrowingPredicate.sneaky(e -> e.isFile()))
-                        .collect(Collectors.toList());
-
-            return files.stream()
-                .map(FileSystemResource::new)
-                .toArray(Resource[]::new);
+            String scanLocation = ((SimpleStorageResource) dir).getS3Uri().toString();
+            List<Resource> resources = recursive ? gateway.lsDirRecur(scanLocation) : gateway.lsDir(scanLocation);
+            return resources.stream().toArray(Resource[]::new);
+//            return (SimpleStorageResource[]) resources.toArray();
         } catch (Exception e) {
             throw new ResourceCollectionException("Could not read from remote directory: " + dir.getFilename(), e);
         }
