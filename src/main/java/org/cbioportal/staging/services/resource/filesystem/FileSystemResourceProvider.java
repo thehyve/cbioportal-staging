@@ -1,22 +1,17 @@
 package org.cbioportal.staging.services.resource.filesystem;
 
+import com.pivovarit.function.ThrowingPredicate;
 import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.pivovarit.function.ThrowingPredicate;
-
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -50,13 +45,19 @@ public class FileSystemResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive, boolean filterDirs) throws ResourceCollectionException {
 
         try {
-            String path = utils.trimPathRight(utils.getURL(dir).toString());
-            if (utils.getFile(dir).isFile()) {
-                throw new ResourceCollectionException(
+            // Check whether the scan.location is s3 bucket
+            // If so, do not modify the scan directory.
+            boolean isS3ScanLocation = !dir.isFile() && ((ClassPathResource) dir).getPath().startsWith("s3");
+            String scanLocation = isS3ScanLocation ? ((ClassPathResource) dir).getPath() : utils.getURL(dir).toString();
+            String remoteDir = scanLocation;
+            if (!isS3ScanLocation) {
+                String path = utils.trimPathRight(utils.getURL(dir).toString());
+                if (utils.getFile(dir).isFile()) {
+                    throw new ResourceCollectionException(
                         "Scan location points to a file (should be a directory): " + path);
+                }
+                remoteDir = utils.remotePath(null, utils.getURL(dir));
             }
-
-            String remoteDir = utils.remotePath(null, dir.getURL());
 
             List<File> files = recursive ? gateway.lsDirRecur(remoteDir) : gateway.lsDir(remoteDir);
 
