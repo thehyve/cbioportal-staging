@@ -41,7 +41,7 @@ public class ResourceCollectorService implements IResourceCollector {
 
         try {
 
-            logger.info("Scanning for files at: " + scanLocation.getURL().toString());
+            //logger.info("Scanning for files at: " + scanLocation.getURL().toString());
             Resource[] scannedResources = resourceProvider.list(scanLocation);
             logger.info("Found " + scannedResources.length + " files");
 
@@ -53,7 +53,7 @@ public class ResourceCollectorService implements IResourceCollector {
         } catch (ResourceCollectionException e) {
             throw e;
         } catch (Exception e) {
-            throw new ResourceCollectionException("Error while retrieving resources from scan.location: " + scanLocation.getFilename());
+            throw new ResourceCollectionException("Error while retrieving resources from scan.location: " + scanLocation.getFilename(), e);
         }
 
         return resources;
