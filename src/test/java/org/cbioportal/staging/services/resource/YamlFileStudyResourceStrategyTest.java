@@ -75,7 +75,7 @@ public class YamlFileStudyResourceStrategyTest {
         assertTrue(study1.isPresent());
         assertEquals(2, study1.get().getResources().length);
         List<String> filesStudy1 = Stream.of(study1.get().getResources())
-            .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
+            .map(ThrowingFunction.unchecked(e -> e.getURI().toString()))
             .collect(Collectors.toList());
         assertTrue(filesStudy1.contains("file:/tmp/files/dummy1.txt"));
         assertTrue(filesStudy1.contains("file:/tmp/files/dummy2.txt"));
@@ -83,7 +83,7 @@ public class YamlFileStudyResourceStrategyTest {
         assertTrue(study2.isPresent());
         assertEquals(2, study2.get().getResources().length);
         List<String> filesStudy2 = Stream.of(study2.get().getResources())
-            .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
+            .map(ThrowingFunction.unchecked(e -> e.getURI().toString()))
             .collect(Collectors.toList());
         assertTrue(filesStudy2.contains("file:/tmp/files/dummy3.txt"));
         assertTrue(filesStudy2.contains("file:/tmp/files/dummy4.txt"));

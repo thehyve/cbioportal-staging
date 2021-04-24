@@ -217,23 +217,45 @@ In the example above the study identifiers will be _study1_ and _study2_.
 
 ### Running with AWS remote file system
 
-To start the staging application with the `aws` maven profile:
+#### Setting up AWS credentials for scanning S3 bucket
+
+1. Create file `~/.aws/credentials` with contents (add correct keys):
+
+```
+[my-profile-name]
+aws_access_key_id=<KEY>
+aws_secret_access_key=<SECRET>
+```
+
+2. Update property `cloud.aws.credentials.profile-name` with profile name from `~/.aws/credentials`:
+
+```
+cloud.aws.credentials.profile-name=my-profile-name
+```
+
+3. (Optional) When running in a Docker container mount the my-profile-name `~/.aws/credentials` in user home:
 
 <pre>
-mvn spring-boot:run <b>-P aws</b>
-</pre>
-
-or, when running in docker:
-
-<pre>
-docker run -d --restart=always \
-    --name=cbio-staging-container \
+services:
+  cbio-staging:
+    container_name: cbio-staging
     ...
-    cbio-staging <b>-P aws</b>
+    volumes:
+    - ??????
 </pre>
 
-Make sure to add the AWS credentials to the custom properties file (see
-[S3 file system settings](#s3-file-system-settings)).
+
+#### Running _cbioportal-staging_ on an EC2 instance
+
+Comment out the following application properties like so:
+
+```
+# disable these when running on AWS EC2 instance
+    #cloud.aws.region.use-default-aws-region-chain=true
+    #cloud.aws.region.static=us-east-1
+    #cloud.aws.region.auto=false
+    #cloud.aws.instance.data.enabled=false
+```
 
 ## Application properties
 
@@ -299,7 +321,8 @@ the app with the maven `aws` active profile).
 You will must configure the following:
 
 - `cloud.aws.region.static`: environment settings needed by S3 library. This is needed when `scan.location` points to S3 and running the tool outside EC2 environment.
-- `cloud.aws.credentials.accessKey` and `cloud.aws.credentials.secretKey`: optional aws credentials for access to S3 bucket. Set these when aws credentials have not been configured on machine or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
+- `cloud.aws.credentials.profile-name`: profile-name that references aws credentials (for access to S3 bucket) in `~/.aws/credentials` file. Set these when aws credentials have not been configured on machine with IAM role or if default aws credentials are different. Setting it here also improves performance of the S3 operations (probably because if these are not set, a slower trial and error route is chosen).
+- `cloud.aws.stack.auto`: set to _true_ when running as part of a CloudFormation stack.
 
 ### SFTP file system settings
 

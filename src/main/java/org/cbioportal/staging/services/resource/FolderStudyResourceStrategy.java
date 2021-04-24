@@ -54,7 +54,7 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
         String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
             List<String> paths = Stream.of(resources)
-                    .map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
+                    .map(ThrowingFunction.unchecked(e -> utils.getURI(e).toString()))
                     .collect(Collectors.toList());
 
             Resource[] studyDirs = utils.extractDirs(resources);
@@ -71,7 +71,7 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
             }
 
         } catch (ResourceUtilsException e) {
-            throw new ResourceCollectionException("Cannot read from study directory:" + studyPath);
+            throw new ResourceCollectionException("Cannot read from study directory:" + studyPath, e);
         }
 
         return out.toArray(new Study[0]);

@@ -10,14 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-//@ConditionalOnProperty(value = "scan.location.type" , havingValue = "filesystem")
 public class LocalFileSystemService {
 
     @ServiceActivator(inputChannel = "local.resource.ls")

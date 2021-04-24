@@ -134,6 +134,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-aws</artifactId>
+			<version>2.2.6.RELEASE</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -173,28 +179,6 @@
 	</build>
 
 	<profiles>
-
-		<profile>
-			<id>aws</id>
-				<dependencyManagement>
-					<dependencies>
-						<dependency>
-							<groupId>org.springframework.cloud</groupId>
-							<artifactId>spring-cloud-aws</artifactId>
-							<version>2.2.1.RELEASE</version>
-							<type>pom</type>
-							<scope>import</scope>
-						</dependency>
-					</dependencies>
-				</dependencyManagement>
-				<dependencies>
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-aws</artifactId>
-					</dependency>
-				</dependencies>
-		</profile>
-
 		<profile>
 			<id>integration-test</id>
 			<build>

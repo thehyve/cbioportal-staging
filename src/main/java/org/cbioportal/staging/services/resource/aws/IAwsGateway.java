@@ -1,24 +1,23 @@
 package org.cbioportal.staging.services.resource.aws;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
-
+import org.springframework.core.io.Resource;
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.messaging.handler.annotation.Header;
 
 @MessagingGateway
-public interface IAWsGateway {
+public interface IAwsGateway {
 
     @Gateway(requestChannel = "resource.ls")
-    public List<File> ls(String dir);
+    public List<Resource> ls(String dir);
 
     @Gateway(requestChannel = "resource.ls.dir")
-    public List<File> lsDir(String dir);
+    public List<Resource> lsDir(String dir);
 
     @Gateway(requestChannel = "resource.ls.dir.recur")
-    public List<File> lsDirRecur(String dir);
+    public List<Resource> lsDirRecur(String dir);
 
     @Gateway(requestChannel = "resource.get.stream")
     public InputStream getStream(String file);

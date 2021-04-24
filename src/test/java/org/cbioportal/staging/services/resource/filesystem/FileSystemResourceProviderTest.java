@@ -65,8 +65,8 @@ public class FileSystemResourceProviderTest {
     public void testList_success() throws ResourceCollectionException, FtpUtilsException, IOException {
         Resource[] res = provider.list(scanDir, false, false);
         assertTrue(res.length == 2);
-        assertEquals("file:/scandir/file1.txt", res[0].getURL().toString());
-        assertEquals("file:/scandir/dir", res[1].getURL().toString());
+        assertEquals("file:/scandir/file1.txt", res[0].getURI().toString());
+        assertEquals("file:/scandir/dir", res[1].getURI().toString());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class FileSystemResourceProviderTest {
         when(files.get(1).isFile()).thenReturn(false);
         Resource[] res = provider.list(scanDir, false, true);
         assertTrue(res.length == 1);
-        assertEquals("file:/scandir/file1.txt", res[0].getURL().toString());
+        assertEquals("file:/scandir/file1.txt", res[0].getURI().toString());
     }
 
 }

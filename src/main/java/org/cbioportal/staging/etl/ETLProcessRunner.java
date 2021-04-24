@@ -27,6 +27,7 @@ import java.util.Set;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.LoaderException;
 import org.cbioportal.staging.exceptions.ReporterException;
+import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.exceptions.ValidatorException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.authorize.IAuthorizerService;
@@ -158,7 +159,7 @@ public class ETLProcessRunner {
             }
             reportSummary(localResources, transformer.getLogFiles(), validator.getLogFiles(), validator.getReportFiles(), loader.getLogFiles(),
                 transformerExitStatus, validatorExitStatus, loaderExitStatus);
-		} catch (ReporterException e) {
+		} catch (TransformerException e) {
 			try {
 				logger.error("An error occurred during the transformation step. Error found: "+ e);
 				reportingService.reportGenericError("An error occurred during the transformation step. Error found: ", e);

@@ -15,10 +15,13 @@
 */
 package org.cbioportal.staging.services.directory;
 
+import java.io.IOException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ResourceUtils;
 import org.cbioportal.staging.services.resource.Study;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -27,6 +30,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DirectoryCreator implements IDirectoryCreator {
+
+    private static final Logger logger = LoggerFactory.getLogger(IDirectoryCreator.class);
 
     @Autowired
     private ResourceUtils utils;
@@ -60,7 +65,7 @@ public class DirectoryCreator implements IDirectoryCreator {
 
             return utils.createDirResource(etlWorkingDir, getIntermediatePath(study));
 
-        } catch (ResourceUtilsException e) {
+        } catch (ResourceUtilsException | IOException e) {
 			throw new DirectoryCreatorException("Cannot create Resource.", e);
 		}
     }
@@ -74,13 +79,13 @@ public class DirectoryCreator implements IDirectoryCreator {
                             "transformation.directory points to a file on the local file system, but should point to a directory.: "
                                     + transformationDir);
                 }
-
+                logger.info("Create transformation directory: transformationDir= " + transformationDir.getFilename() + "intermediatePath=" + getIntermediatePath(study));
                 return utils.createDirResource(transformationDir, getIntermediatePath(study));
 
             } else {
                 return utils.createDirResource(untransformedStudyDir, "staging");
             }
-        } catch (ResourceUtilsException e) {
+        } catch (ResourceUtilsException | IOException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
     }

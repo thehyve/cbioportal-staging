@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,20 +50,20 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
 
             out.add(new Study(studyId, studyVersion, timestamp, scanLocation, studyResources));
 
-        } catch (ResourceUtilsException e) {
+        } catch (IOException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + scanLocation, e);
         }
 
         return out.toArray(new Study[0]);
     }
 
-    private String getStudyVersion(Resource dir) throws ResourceUtilsException {
-        String url = utils.trimPathRight(utils.getURL(dir).toString());
-        return url.substring(url.lastIndexOf("/") + 1);
+    private String getStudyVersion(Resource dir) throws IOException {
+        String uri = utils.trimPathRight(utils.getURI(dir).toString());
+        return uri.substring(uri.lastIndexOf("/") + 1);
     }
 
-    private String getStudyId(Resource dir) throws ResourceUtilsException {
-        String url = utils.trimPathRight(utils.getURL(dir).toString());
+    private String getStudyId(Resource dir) throws IOException {
+        String url = utils.trimPathRight(utils.getURI(dir).toString());
         String[] parts = url.split("/");
         return parts[parts.length -2];
     }

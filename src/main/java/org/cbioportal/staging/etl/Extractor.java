@@ -15,6 +15,7 @@
  */
 package org.cbioportal.staging.etl;
 
+import com.pivovarit.function.ThrowingFunction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,13 +24,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.pivovarit.function.ThrowingFunction;
-
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -77,18 +76,22 @@ class Extractor {
 				String studyId = study.getStudyId();
 				Resource studyDir = directoryCreator.createStudyExtractDir(study);
 
-				String remoteBasePath = getBasePathResources(study.getResources());
+				String remoteBasePath = getBasePathResources(study.getResources()).replaceAll("/+", "/");
 
 				List<String> errorFiles = new ArrayList<>();
 				List<Resource> files = new ArrayList<>();
 				for (Resource remoteResource : study.getResources()) {
 
-					String fullOriginalFilePath = remoteResource.getURL().toString();
+					logger.debug("Resource info: " + remoteResource.getFilename() + " " + utils.getURI(remoteResource) + " " + remoteResource.getDescription());
+					String fullOriginalFilePath = utils.getURI(remoteResource).toString();
+					fullOriginalFilePath = fullOriginalFilePath.replaceAll("/+", "/");
 
-					String path = fullOriginalFilePath.replaceFirst(remoteBasePath, "");
-					path = path.substring(0, path.lastIndexOf("/"));
+					String path = utils.trimPathLeft(fullOriginalFilePath.replaceFirst(remoteBasePath, ""));
+					path = path.contains("/") ? path.substring(0, path.lastIndexOf("/")) : "";
+					logger.debug("Building local resource path: remoteBasePath=" + remoteBasePath + " fullOriginalPath=" + fullOriginalFilePath + " path=" + path);
 
-					Resource targetDir = resourceProvider.getResource(studyDir.getURL() + path);
+					String studyDirStr = utils.trimPathRight(utils.getURI(studyDir).toString());
+					Resource targetDir = resourceProvider.getResource(studyDirStr + "/" +  path);
 					Resource localResource = attemptCopyResource(targetDir, remoteResource);
 					if (localResource == null) {
 						errorFiles.add(fullOriginalFilePath);
@@ -102,12 +105,12 @@ class Extractor {
 					out.add(new Study(study.getStudyId(), study.getVersion(), study.getTimestamp(), studyDir,
 							files.toArray(new Resource[0])));
 				} else {
+					logger.error("Extractor finished with error files: " + errorFiles.stream().collect(
+							Collectors.joining(", ")));
 					filesNotFound.put(studyId, errorFiles);
 				}
 			}
 
-		} catch (IOException e) {
-			throw new ExtractionException("Cannot access working ELT directory.", e);
 		} catch (ConfigurationException e) {
 			throw new ExtractionException(e.getMessage(), e);
 		} catch (InterruptedException e) {
@@ -116,6 +119,8 @@ class Extractor {
 			throw new ExtractionException("Cannot copy Resource.", e);
 		} catch (DirectoryCreatorException e) {
 			throw new ExtractionException("Cannot create directory.", e);
+		} catch (IOException e) {
+			throw new ExtractionException("Cannot read URI from resource.", e);
 		}
 
 		logger.info("Extractor step finished");
@@ -129,7 +134,7 @@ class Extractor {
 		Resource r = null;
 		while (i++ <= times) {
 			try {
-				logger.info("Copying resource " + remoteResource.getURL() + " to "+ destination);
+				logger.info("Copying resource " + utils.getURI(remoteResource) + " to "+ destination);
 				r = resourceProvider.copyFromRemote(destination, remoteResource);
 				logger.info("File has been copied successfully to "+ destination);
 				break;
@@ -144,8 +149,8 @@ class Extractor {
 
 	private String getBasePathResources(Resource[] resources) throws ConfigurationException {
 		List<String> paths = Stream.of(resources)
-			.map(ThrowingFunction.unchecked(e -> e.getURL().toString()))
-			.collect(Collectors.toList());
+					.map(ThrowingFunction.unchecked(e -> utils.getURI(e).toString()))
+					.collect(Collectors.toList());
 		return utils.getBasePath(paths);
 	}
 

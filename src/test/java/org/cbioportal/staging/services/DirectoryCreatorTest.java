@@ -20,6 +20,8 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+
+import java.io.IOException;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
@@ -87,7 +89,8 @@ public class DirectoryCreatorTest {
     }
 
     @Test
-	public void etlWorkingDir_isCorrect() throws DirectoryCreatorException, ResourceUtilsException {
+	public void etlWorkingDir_isCorrect()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(false);
@@ -103,7 +106,8 @@ public class DirectoryCreatorTest {
 	}
 
     @Test
-	public void etlWorkingDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
+	public void etlWorkingDir_calledWithStudyIdAndVersion()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
@@ -121,7 +125,8 @@ public class DirectoryCreatorTest {
     }
 
     @Test
-	public void etlWorkingDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
+	public void etlWorkingDir_calledWithStudyIdAndTimeStamp()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/timestamp");
 
@@ -138,7 +143,9 @@ public class DirectoryCreatorTest {
         assertEquals(expectedStudyDir, generatedStudyDir);
     }
     @Test
-	public void transformationDir_transformationDirNull() throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
+	public void transformationDir_transformationDirNull()
+			throws DirectoryCreatorException, ResourceUtilsException,
+			IOException {
 
         when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
@@ -153,7 +160,7 @@ public class DirectoryCreatorTest {
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
-	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
+	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
 		when(utils.isFile(isA(Resource.class))).thenReturn(true);
@@ -164,7 +171,8 @@ public class DirectoryCreatorTest {
     }
 
 	@Test
-	public void transformationDir_isCorrect() throws DirectoryCreatorException, ResourceUtilsException {
+	public void transformationDir_isCorrect()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 
 		when(etlDir.exists()).thenReturn(false);
@@ -180,7 +188,8 @@ public class DirectoryCreatorTest {
 	}
 
     @Test
-	public void transformationDir_calledWithStudyIdAndVersion() throws DirectoryCreatorException, ResourceUtilsException {
+	public void transformationDir_calledWithStudyIdAndVersion()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
@@ -197,7 +206,8 @@ public class DirectoryCreatorTest {
     }
 
     @Test
-	public void transformationDir_calledWithStudyIdAndTimeStamp() throws DirectoryCreatorException, ResourceUtilsException {
+	public void transformationDir_calledWithStudyIdAndTimeStamp()
+			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/timestamp");
 

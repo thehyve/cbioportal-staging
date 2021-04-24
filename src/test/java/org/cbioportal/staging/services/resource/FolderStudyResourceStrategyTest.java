@@ -40,7 +40,9 @@ public class FolderStudyResourceStrategyTest {
     private ResourceUtils utils;
 
     @Test
-    public void testDetectStudyIdFromPath() throws ResourceCollectionException, FileNotFoundException, IOException {
+    public void testDetectStudyIdFromPath()
+        throws ResourceCollectionException,
+        ResourceUtilsException {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/not_a_study_meta_file.txt", 0));
