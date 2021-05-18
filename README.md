@@ -276,6 +276,9 @@ be excluded. Wildcards are not supported.
 - `scan.ignore.appendonsuccess`: when set to true, all study files of succesfully loaded
 studies are appended to the `scan.ignore.file`. This prevents ETL to be triggered when
 files are not removed from the `scan.location`.
+- `scan.ignore.appendonfailure`: when set to true, all study files of studies that failed to load
+  appended to the `scan.ignore.file`. This prevents ETL to be triggered when
+  files are not removed from the `scan.location`.
 
 ### Transformer settings
 
