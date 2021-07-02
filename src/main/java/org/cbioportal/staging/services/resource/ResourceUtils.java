@@ -1,5 +1,7 @@
 package org.cbioportal.staging.services.resource;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.pivovarit.function.ThrowingPredicate;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,20 +9,26 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.pivovarit.function.ThrowingPredicate;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -28,8 +36,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.resource.ftp.FtpResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.aws.core.io.s3.SimpleStorageResource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
@@ -42,6 +53,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResourceUtils {
 
+    private static final Logger logger = LoggerFactory.getLogger(ResourceUtils.class);
+
     @Autowired
     private ResourcePatternResolver resourceResolver;
 
@@ -51,6 +64,12 @@ public class ResourceUtils {
 
     @Value("${java.io.tmpdir}")
     private FileSystemResource tempDir;
+
+    @Value("${scan.location.type}")
+    private String scanLocationType;
+
+    @Value("${scan.location}")
+    private String scanLocation;
 
     /**
      * Remove trailing slashes and asterixes from the right end of a path.
@@ -146,7 +165,28 @@ public class ResourceUtils {
      * @param resources  Resources be filtered
      * @return Resource[]  List of directory Resources
      */
-    public Resource[] extractDirs(Resource[] resources) {
+    public Resource[] extractDirs(Resource[] resources) throws ResourceUtilsException {
+        // TODO: The below is a HACK for AWS S3. S3 does not return directories as
+        // separate entries. Here we create dummy directories for each resource passed as argument.
+        // This hack may cause problems when using certain setup of scan.location.
+        if (scanLocationType.equals("aws")) {
+            Set<SimpleStorageResource> dirs = new HashSet<>();
+            AmazonS3 amazonS3 = ((SimpleStorageResource) resources[0]).getAmazonS3();
+            String bucket = evalUrlDomain(((SimpleStorageResource) resources[0]).getS3Uri().toString());
+            String scanLocationCleaned = trimPathLeft(trimPathRight(stripResourceTypePrefix(scanLocation)));
+            String dirPrefix = scanLocationCleaned.substring(scanLocationCleaned.indexOf("/")+1);
+            Stream.of(resources)
+                .map(SimpleStorageResource.class::cast)
+                .map(r -> correctS3ResourcePathForScanLocation(r))
+                .filter(l -> l.split("/").length > 1)
+                .map(l -> l.split("/")[0])
+                .forEach(dir -> {
+                    dirs.add(new SimpleStorageResource(
+                        amazonS3, bucket, dirPrefix + "/" + dir, null
+                    ));
+                });
+            return dirs.stream().toArray(Resource[]::new);
+        }
         return Stream.of(resources)
             .filter(ThrowingPredicate.unchecked(
                     n -> {
@@ -173,7 +213,7 @@ public class ResourceUtils {
             // The meta file may be located on a remote location.
             // Copy meta file to the /tmp dir and read contents.
             String uniqueKey = RandomStringUtils.randomAlphabetic(20);
-            Resource tmpLocation = resourceResolver.getResource(tempDir.getURL().toString() + uniqueKey);
+            Resource tmpLocation = resourceResolver.getResource(getURI(tempDir).toString() + uniqueKey);
             Resource localStudyMetaFile = resourceProvider.copyFromRemote(tmpLocation, studyMetaFile);
             bufferedReader = new BufferedReader(new FileReader(localStudyMetaFile.getFile()));
             String line = bufferedReader.readLine();
@@ -218,10 +258,17 @@ public class ResourceUtils {
 
         List<String> pathsNoNull = paths.stream().filter(s -> s != null).collect(Collectors.toList());
 
+        String resourceTypePrefix = "";
+        Pattern pattern = Pattern.compile("(^.*:/+).*");
+        Matcher matcher = pattern.matcher(pathsNoNull.get(0));
+        if (matcher.matches()) {
+            resourceTypePrefix = matcher.group(1);
+        }
+
         int shortest = Integer.MAX_VALUE;
         String shortestPath = "";
         for (String filePath : pathsNoNull) {
-            String parsedFilePath = filePath.replaceAll("/+", "/");
+            String parsedFilePath = stripResourceTypePrefix(filePath).replaceAll("/+", "/");
             int currentCount = StringUtils.countMatches(parsedFilePath, "/");
             if (currentCount < shortest) {
                 shortest = StringUtils.countMatches(parsedFilePath, "/");
@@ -241,7 +288,7 @@ public class ResourceUtils {
                         + "locations: " + parsedFilePath + " and " + result + "/...");
             }
         }
-        return result;
+        return resourceTypePrefix + trimPathLeft(result);
     }
 
     /**
@@ -377,7 +424,7 @@ public class ResourceUtils {
     public Resource createFileResource(Resource basePath, String ... fileElements)
             throws ResourceUtilsException {
         try {
-            String base = trimPathRight(basePath.getURL().toString());
+            String base = trimPathRight(getURI(basePath).toString());
             Resource res = resourceResolver.getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")));
             File file = res.getFile();
             if (file.exists()) {
@@ -403,15 +450,13 @@ public class ResourceUtils {
      * @throws ResourceUtilsException
      */
     public Resource createDirResource(Resource basePath, String ... fileElements)
-            throws ResourceUtilsException {
-        try {
-            String base = trimPathRight(basePath.getURL().toString());
-            Resource res = resourceResolver.getResource(base + "/" + Stream.of(fileElements).collect(Collectors.joining("/")) + "/");
-            ensureDirs(res);
-            return res;
-        } catch (IOException e) {
-            throw new ResourceUtilsException("Cannot create new directory Resource: " + basePath.getDescription());
-        }
+        throws ResourceUtilsException, IOException {
+        String base = trimPathRight(getURI(basePath).toString());
+        String file = Stream.of(fileElements).collect(Collectors.joining("/"));
+        logger.debug("Create dir for: basePath=" + basePath.getFilename() + " file=" + file);
+        Resource res = resourceResolver.getResource(base + "/" + file + "/");
+        ensureDirs(res);
+        return res;
     }
 
     /**
@@ -421,7 +466,7 @@ public class ResourceUtils {
      * @return Resource
      * @throws ResourceUtilsException
      */
-    public Resource createDirResource(Resource dir) throws ResourceUtilsException {
+    public Resource createDirResource(Resource dir) throws ResourceUtilsException, IOException {
         return createDirResource(dir, "");
     }
 
@@ -463,12 +508,10 @@ public class ResourceUtils {
      * @return URL
      * @throws ResourceUtilsException
      */
-    public URL getURL(Resource resource) throws ResourceUtilsException {
-        try {
-            return resource.getURL();
-        } catch (IOException e) {
-            throw new ResourceUtilsException("Cannot read URL from Resource: " + resource.getDescription());
-        }
+    public URI getURI(Resource resource) throws IOException {
+        if (resource instanceof SimpleStorageResource)
+            return ((SimpleStorageResource) resource).getS3Uri();
+        return resource.getURI();
     }
 
     /**
@@ -572,14 +615,16 @@ public class ResourceUtils {
      * @return String  path to item from perspective of server
      * @throws ResourceUtilsException
      */
-    public String remotePath(String host, URL path) throws ResourceUtilsException {
+    public String remotePath(String host, URI path) throws ResourceUtilsException {
         if (host == null)
             host = "";
-        String pathStr = path.toString();
-
-        pathStr = trimPathLeft(stripResourceTypePrefix(pathStr)).replaceFirst(host, "");
-
-        return "/" + trimPathLeft(pathStr);
+        try {
+            String pathStr = URLDecoder.decode(path.toString(), StandardCharsets.UTF_8.name());
+            pathStr = trimPathLeft(stripResourceTypePrefix(pathStr)).replaceFirst(host, "");
+            return "/" + trimPathLeft(pathStr);
+        } catch (UnsupportedEncodingException e) {
+            throw new ResourceUtilsException("Could not parse URI: path=" + path.toString());
+        }
     }
 
     public Properties parsePropertiesFile(String propertiesPath) throws ResourceUtilsException {
@@ -596,6 +641,56 @@ public class ResourceUtils {
         } catch (IOException ex) {
             throw new ResourceUtilsException("Properties file could not be parsed.", ex);
         }
+    }
+
+    /**
+     * Get the domain of a url
+     *
+     * Examples:
+     * s3://domain/dir/file --> 'domain'
+     * https://domain/path/html --> 'domain'
+     * file://domain/path/html --> 'domain'
+     * /domain/path/html --> 'domain'
+     *
+     * @param  url String
+     * @return String  Value of domain
+     */
+    public String evalUrlDomain(String url) throws ResourceUtilsException {
+        if (url == null)
+            throw new ResourceUtilsException("Could not resolve domain from URL: url=null");
+        String host = null;
+        try {
+            host = new URL("http:/" + stripResourceTypePrefix(url)).getHost();
+        } catch (MalformedURLException e) {
+            throw new ResourceUtilsException("Could not resolve domain from URL: url=" + url, e);
+        }
+        if (host == null || host.isEmpty())
+            throw new ResourceUtilsException("Could not resolve domain from URL: url=null");
+        return host;
+    }
+
+    /**
+     * Strip the scan.location from a S3 resource URI
+     *
+     * Examples:
+     * Scan.location: s3:///bucket/
+     * Resource: s3://bucket/dir/file.txt
+     * Result: dir/file.txt
+     *
+     * Scan.location: s3:///bucket/dir
+     * Resource: s3://bucket/dir/file.txt
+     * Result: file.txt
+     *
+     * @param  resource SimpleStorageResource
+     * @return String  Path corrected for scan.location path
+     */
+    public String correctS3ResourcePathForScanLocation(SimpleStorageResource resource) {
+        if (resource == null)
+            return null;
+        String cleanedScanLocation = scanLocation.replaceAll("/+", "/");
+        cleanedScanLocation = trimPathRight(cleanedScanLocation) + "/";
+        String resourcePathClean = ((SimpleStorageResource) resource).getS3Uri().toString().replaceAll("/+", "/");
+        return resourcePathClean.replaceFirst(cleanedScanLocation, "");
     }
 
 }

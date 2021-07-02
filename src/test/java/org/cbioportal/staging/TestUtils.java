@@ -6,6 +6,8 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.stream.Stream;
 
@@ -23,15 +25,15 @@ public class TestUtils {
         when(f.isFile()).thenReturn(true);
         try {
             long modifiedDate = (long) number;
-            URL url = new URL(fileName);
+            URI uri = new URI(fileName);
             when(r.getFilename()).thenReturn(fileName.substring(fileName.lastIndexOf("/")+1));
-            when(r.getURL()).thenReturn(url);
+            when(r.getURI()).thenReturn(uri);
             when(r.lastModified()).thenReturn(modifiedDate);
             when(r.exists()).thenReturn(true);
             when(r.getInputStream()).thenReturn(i);
             when(r.isFile()).thenReturn(true);
             when(r.getFile()).thenReturn(f);
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
         return r;

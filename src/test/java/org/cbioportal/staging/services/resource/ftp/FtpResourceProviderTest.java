@@ -74,15 +74,15 @@ public class FtpResourceProviderTest {
     public void testList_success() throws ResourceCollectionException, FtpUtilsException, IOException {
         Resource[] res = provider.list(scanDir, false, false);
         assertTrue(res.length == 2);
-        assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURL().toString());
-        assertEquals("ftp:/host/root_dir/dir", res[1].getURL().toString());
+        assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURI().toString());
+        assertEquals("ftp:/host/root_dir/dir", res[1].getURI().toString());
     }
 
     @Test
     public void testList_exludeDirs() throws ResourceCollectionException, FtpUtilsException, IOException {
         Resource[] res = provider.list(scanDir, false, true);
         assertTrue(res.length == 1);
-        assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURL().toString());
+        assertEquals("ftp:/host/root_dir/file1.txt", res[0].getURI().toString());
     }
 
 }

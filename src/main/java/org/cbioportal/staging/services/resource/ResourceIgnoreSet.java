@@ -75,7 +75,7 @@ public class ResourceIgnoreSet extends HashSet<String> {
             try {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    this.add(resourcePatternResolver.getResource(line).getURL().toString());
+                    this.add(utils.getURI(resourcePatternResolver.getResource(line)).toString());
                     line = bufferedReader.readLine();
                 }
             } catch (IOException e) {
@@ -94,17 +94,17 @@ public class ResourceIgnoreSet extends HashSet<String> {
 
     public void appendResources(Resource[] resources) throws ResourceCollectionException {
         try {
-            List<String> urls = Stream.of(resources).map(ThrowingFunction.sneaky(r -> r.getURL().toString()))
+            List<String> uris = Stream.of(resources).map(ThrowingFunction.sneaky(r -> utils.getURI(r).toString()))
             .collect(Collectors.toList());
 
-            urls.stream().forEach(url -> add(url));
+            uris.stream().forEach(uri -> add(uri));
 
             if (ignoreFile != null && !ignoreFile.exists()) {
                 ignoreFile = utils.createFileResource(ignoreFile, "");
             }
 
             if (ignoreFile != null && ignoreFile.exists()) {
-                utils.writeToFile(utils.getWritableResource(ignoreFile), urls, true);
+                utils.writeToFile(utils.getWritableResource(ignoreFile), uris, true);
             }
         } catch (ResourceUtilsException e) {
             throw new ResourceCollectionException("Error adding resources to ignore file.", e);

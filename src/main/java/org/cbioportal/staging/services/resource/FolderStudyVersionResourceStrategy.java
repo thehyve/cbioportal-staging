@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -83,7 +84,7 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
 
             }
 
-        } catch (ResourceUtilsException e) {
+        } catch (ResourceUtilsException | IOException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + studyVersionPath, e);
         }
 
@@ -102,16 +103,21 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
     }
 
     private Resource getMostRecentStudyVersion(Resource studyDir) throws ResourceCollectionException {
-        Resource[] studyResources = resourceProvider.list(studyDir);
-        Resource[] versions = utils.extractDirs(studyResources);
-        if (versions.length == 0) {
-            return null;
+        try {
+            Resource[] studyResources = resourceProvider.list(studyDir);
+            Resource[] versions = new Resource[0];
+            versions = utils.extractDirs(studyResources);
+            if (versions.length == 0) {
+                return null;
+            }
+            return utils.getMostRecent(versions);
+        } catch (ResourceUtilsException e) {
+            throw new ResourceCollectionException("Could not process resources.", e);
         }
-        return utils.getMostRecent(versions);
     }
 
-    private String getStudyVersion(Resource dir) throws ResourceUtilsException {
-        String url = utils.trimPathRight(utils.getURL(dir).toString());
+    private String getStudyVersion(Resource dir) throws IOException {
+        String url = utils.trimPathRight(utils.getURI(dir).toString());
         return url.substring(url.lastIndexOf("/") + 1);
     }
 

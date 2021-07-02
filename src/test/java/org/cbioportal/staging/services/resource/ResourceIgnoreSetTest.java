@@ -5,8 +5,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,6 +23,7 @@ import java.util.Collection;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -27,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
@@ -54,7 +59,7 @@ public class ResourceIgnoreSetTest {
 
     }
 
-    @MockBean
+    @SpyBean
     private ResourceUtils utils;
 
     @Autowired
@@ -86,7 +91,8 @@ public class ResourceIgnoreSetTest {
 
         WritableResource ignoreFile = TestUtils.createMockResource("file:/mock_ignore_file.txt", 0);
         ReflectionTestUtils.setField(resourceIgnoreSet, "ignoreFile", ignoreFile);
-        when(utils.getWritableResource(isA(Resource.class))).thenReturn(ignoreFile);
+        doReturn(ignoreFile).when(utils).getWritableResource(isA(Resource.class));
+        doNothing().when(utils).writeToFile(isA(WritableResource.class), anyString(), anyBoolean());
 
         String fileUrl = "file:/resource_to_be_ignored.txt";
         resourceIgnoreSet.appendResources(new Resource[] {TestUtils.createMockResource(fileUrl, 0)});

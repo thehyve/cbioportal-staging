@@ -1,5 +1,6 @@
 package org.cbioportal.staging.services.resource;
 
+import java.io.IOException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,8 +68,8 @@ public class DefaultResourceFilter implements IResourceFilter {
             resource -> {
                 try {
 
-                    String scanLocationPath = utils.stripResourceTypePrefix(utils.getURL(scanLocation).toString());
-                    String path = utils.getURL(resource).toString();
+                    String scanLocationPath = utils.stripResourceTypePrefix(utils.getURI(scanLocation).toString());
+                    String path = utils.getURI(resource).toString();
                     String pathMinusType = utils.stripResourceTypePrefix(path);
                     String pathMinusScanLocation = utils.trimPathLeft(pathMinusType.replace(scanLocationPath, ""));
 
@@ -78,7 +79,7 @@ public class DefaultResourceFilter implements IResourceFilter {
                     boolean inIncludeDir = includedDirs.stream().anyMatch(dir -> path.startsWith(dir) || pathMinusScanLocation.startsWith(dir) );
 
                     return inIncludeDir && ! inIgnoreFile;
-                } catch (ResourceUtilsException e) {
+                } catch (IOException e) {
                     throw new RuntimeException("Cannot get URL from resource.", e);
                 }
 

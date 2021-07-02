@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.cbioportal.staging.etl.ETLProcessRunner;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
@@ -59,7 +58,10 @@ public class ScheduledScanner {
 	private int nrIterations = 0;
 
 	@Value("${scan.ignore.appendonsuccess:false}")
-	private boolean ignoreAppend;
+	private boolean ignoreAppendSuccess;
+
+	@Value("${scan.ignore.appendonfailure:false}")
+	private boolean ignoreAppendFailure;
 
 	@Autowired
 	private IResourceCollector resourceCollector;
@@ -99,7 +101,7 @@ public class ScheduledScanner {
 
 			etlProcessRunner.run(resourcesPerStudy);
 
-			if (ignoreAppend)
+			if (ignoreAppendSuccess || ignoreAppendFailure)
 				addToIgnoreFile(etlProcessRunner.getLoaderExitStatus(), resourcesPerStudy);
 
 		} catch (Exception e) {
@@ -129,13 +131,27 @@ public class ScheduledScanner {
 			.filter(s -> successStudyIds.contains(s.getStudyId()))
 			.collect(Collectors.toList());
 
-		successStudies.stream().forEach(s -> {
-			try {
-				resourceIgnoreSet.appendResources(s.getResources());
-			} catch (ResourceCollectionException ex) {
-				throw new RuntimeException(ex);
-			}
-		});
+		List<Study> failureStudies = Stream.of(resourcesPerStudy)
+				.filter(s -> ! successStudyIds.contains(s.getStudyId()))
+				.collect(Collectors.toList());
+
+		if (ignoreAppendSuccess)
+			successStudies.stream().forEach(s -> {
+				try {
+					resourceIgnoreSet.appendResources(s.getResources());
+				} catch (ResourceCollectionException ex) {
+					throw new RuntimeException(ex);
+				}
+			});
+
+		if (ignoreAppendFailure)
+			failureStudies.stream().forEach(s -> {
+				try {
+					resourceIgnoreSet.appendResources(s.getResources());
+				} catch (ResourceCollectionException ex) {
+					throw new RuntimeException(ex);
+				}
+			});
 	}
 
 	private boolean shouldStopApp() {

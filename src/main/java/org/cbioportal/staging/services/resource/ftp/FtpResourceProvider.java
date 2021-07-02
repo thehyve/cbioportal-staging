@@ -1,12 +1,10 @@
 package org.cbioportal.staging.services.resource.ftp;
 
+import com.pivovarit.function.ThrowingFunction;
+import com.pivovarit.function.ThrowingPredicate;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Stream;
-
-import com.pivovarit.function.ThrowingFunction;
-import com.pivovarit.function.ThrowingPredicate;
-
 import org.apache.commons.io.IOUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.resource.IResourceProvider;
@@ -56,7 +54,7 @@ public class FtpResourceProvider implements IResourceProvider {
     public Resource[] list(Resource dir, boolean recursive, boolean excludeDirs) throws ResourceCollectionException {
 
         try {
-            String remoteDir = utils.remotePath(ftpHost, dir.getURL());
+            String remoteDir = utils.remotePath(ftpHost, utils.getURI(dir));
 
             List<SftpFileInfo> remoteFiles;
             if (recursive) {
@@ -83,7 +81,7 @@ public class FtpResourceProvider implements IResourceProvider {
     public Resource copyFromRemote(Resource destinationDir, Resource remoteResource) throws ResourceCollectionException {
         try {
             if (remoteResource.getInputStream() == null) {
-                remoteResource = getResource(remoteResource.getURL().toString());
+                remoteResource = getResource(utils.getURI(remoteResource).toString());
             }
             return utils.copyResource(destinationDir, remoteResource, remoteResource.getFilename());
         } catch (Exception e) {
@@ -97,7 +95,7 @@ public class FtpResourceProvider implements IResourceProvider {
         try {
             String remoteFilePath = ftpGateway.put(
                 IOUtils.toByteArray(localResource.getInputStream()),
-                utils.remotePath(ftpHost, destinationDir.getURL()),
+                utils.remotePath(ftpHost, utils.getURI(destinationDir)),
                 localResource.getFilename()
             );
 

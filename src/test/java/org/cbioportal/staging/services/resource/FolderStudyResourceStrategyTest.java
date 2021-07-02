@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
@@ -22,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -36,11 +38,13 @@ public class FolderStudyResourceStrategyTest {
     @MockBean
     private IResourceProvider resourceProvider;
 
-    @MockBean
+    @SpyBean
     private ResourceUtils utils;
 
     @Test
-    public void testDetectStudyIdFromPath() throws ResourceCollectionException, FileNotFoundException, IOException {
+    public void testDetectStudyIdFromPath()
+        throws ResourceCollectionException,
+        ResourceUtilsException {
 
         List<Resource> providedResources = new ArrayList<>();
         providedResources.add(TestUtils.createMockResource("file:/study_folder/not_a_study_meta_file.txt", 0));
@@ -49,8 +53,8 @@ public class FolderStudyResourceStrategyTest {
         Resource[] studyDirs = new Resource[] { TestUtils.createMockResource("file:/study_folder/", 1) };
         Map<String, String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
-        when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
+        doReturn(studyDirs).when(utils).extractDirs(any());
+        doReturn("file:/study_folder").when(utils).trimPathRight(anyString());
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 
@@ -69,9 +73,9 @@ public class FolderStudyResourceStrategyTest {
         Resource[] studyDirs = new Resource[] {TestUtils.createMockResource("file:/study_folder/", 1)};
         Map<String,String> metaFileContents = new HashMap<>();
         metaFileContents.put("cancer_study_identifier", "dummy_study_id_1");
-        when(utils.readMetaFile(any())).thenReturn(metaFileContents);
-        when(utils.extractDirs(any())).thenReturn(studyDirs);
-        when(utils.trimPathRight(anyString())).thenReturn("file:/study_folder");
+        doReturn(metaFileContents).when(utils).readMetaFile(any());
+        doReturn(studyDirs).when(utils).extractDirs(any());
+        doReturn("file:/study_folder").when(utils).trimPathRight(anyString());
 
         Study[] resources = folderStudyResourceStrategy.resolveResources(studyDirs);
 

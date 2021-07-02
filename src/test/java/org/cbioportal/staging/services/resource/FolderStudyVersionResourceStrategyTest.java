@@ -43,7 +43,8 @@ public class FolderStudyVersionResourceStrategyTest {
     private ResourceUtils utils;
 
     @Test
-    public void mapOneStudyWithoutMetaFile() throws ResourceCollectionException {
+    public void mapOneStudyWithoutMetaFile()
+        throws ResourceCollectionException, ResourceUtilsException {
 
         Resource r = TestUtils.createMockResource("file:/study_folder/study1", 0);
         Resource[] providedResources = new Resource[] {r};
@@ -105,7 +106,7 @@ public class FolderStudyVersionResourceStrategyTest {
     }
 
     @Test
-    public void studyWithNoVersions() throws ResourceCollectionException {
+    public void studyWithNoVersions() throws ResourceCollectionException, ResourceUtilsException {
 
         Resource r = TestUtils.createMockResource("file:/study_folder/study1", 0);
         Resource[] providedResources = new Resource[] {r};
@@ -126,7 +127,7 @@ public class FolderStudyVersionResourceStrategyTest {
     }
 
     @Test
-    public void noResources() throws ResourceCollectionException {
+    public void noResources() throws ResourceCollectionException, ResourceUtilsException {
 
         Resource[] providedResources = new Resource[] {};
         doReturn(providedResources).when(utils).extractDirs(eq(providedResources));

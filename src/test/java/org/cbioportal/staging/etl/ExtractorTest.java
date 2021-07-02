@@ -94,15 +94,14 @@ public class ExtractorTest {
 		assertTrue(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
 
 		Study extractedStudy = extractedResources[0];
-		assertTrue(extractedStudy.getStudyDir().getURL().toString().equals("file:/extract-dir/dummy-study"));
+		assertTrue(extractedStudy.getStudyDir().getURI().toString().equals("file:/extract-dir/dummy-study"));
 		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
 
 	@Test
 	public void testRun_fileFail()
-			throws DirectoryCreatorException, ResourceCollectionException, IOException, ExtractionException,
-			ResourceUtilsException {
+			throws DirectoryCreatorException, ResourceCollectionException, ExtractionException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
 		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);

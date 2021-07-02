@@ -15,7 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		maven \
 		jq \
 		python3 \
-		python3-pip && \
+		python3-pip \
+		python3-venv \
+		python3-wheel \
+		&& \
 		pip3 install setuptools && \
 		pip3 install awscli --upgrade --user
 

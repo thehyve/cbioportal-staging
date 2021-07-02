@@ -20,9 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import org.cbioportal.staging.exceptions.ReporterException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.exceptions.TransformerException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.etl.ITransformerService;
@@ -33,10 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
-import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -61,7 +57,8 @@ public class Transformer {
     final private Map<Study, Resource> logFiles = new HashMap<>();
     final private List<Study> validStudies = new ArrayList<>();
 
-    public Map<Study, ExitStatus> transform(Study[] studies) throws ReporterException {
+    public Map<Study, ExitStatus> transform(Study[] studies)
+        throws TransformerException {
 
         logFiles.clear();
         validStudies.clear();
@@ -76,8 +73,11 @@ public class Transformer {
                 Resource transformedFilesPath;
                 try {
                     Resource untransformedFilesPath = study.getStudyDir();
+                    logger.debug("Creating transformed data study directory: untransformedFilesPath=" + untransformedFilesPath);
                     transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
 
+                    logger.info("Created transformed data study directory: transformedFilesPath=" + transformedFilesPath.getFilename());
+                    logger.debug("Creating log file.");
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
                     logFiles.put(study, logFile);
 
@@ -89,9 +89,10 @@ public class Transformer {
                     }
 
                 } catch (Exception e) {
-                    throw new ReporterException(e);
+                    throw new TransformerException(e);
                 }
 
+                logger.debug("Collecting transformed resources.");
                 Resource[] resources = fileSystemResourceProvider.list(transformedFilesPath);
                 Study transformedStudy = new Study(studyId, study.getVersion(), study.getTimestamp(), transformedFilesPath, resources);
 
@@ -102,7 +103,7 @@ public class Transformer {
                     logger.info("Transformation of study "+studyId+" finished successfully.");
                 } else if (transformationStatus == ExitStatus.WARNING) {
                     validStudies.add(transformedStudy);
-                    logger.info("Transformation of study "+studyId+" finished successfully with warnings.");
+                    logger.warn("Transformation of study "+studyId+" finished successfully with warnings.");
                 } else if (transformationStatus == ExitStatus.SKIPPED) {
                     validStudies.add(transformedStudy);
                     logger.info("Study "+studyId+" does contain a meta file, so the transformation step is skipped.");
@@ -112,7 +113,7 @@ public class Transformer {
             }
 
         } catch (ResourceCollectionException e) {
-            throw new ReporterException(e);
+            throw new TransformerException(e);
         }
 
         logger.info("Transformation step finished.");

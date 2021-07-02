@@ -82,7 +82,7 @@ public class PublisherServiceImplTest {
 
         // verify the correct path of the destination dir used for copying
         verify(resourceProvider).copyToRemote(remoteDestinationDir.capture(), eq(fakeLogFile));
-        assertEquals("file:/fake-share/dummy-time/dummy-study", remoteDestinationDir.getValue().getURL().toString());
+        assertEquals("file:/fake-share/dummy-time/dummy-study", remoteDestinationDir.getValue().getURI().toString());
 
         assertTrue(publishedLogFiles.containsKey(dummyStudy));
         assertEquals(fakePublishedLogFile, publishedLogFiles.get(dummyStudy));
@@ -100,7 +100,7 @@ public class PublisherServiceImplTest {
 
         // verify the correct path of the destination dir used for copying
         verify(resourceProvider).copyToRemote(remoteDestinationDir.capture(), eq(fakeLogFile));
-        assertEquals("file:/fake-share/dummy-study/dummy-version", remoteDestinationDir.getValue().getURL().toString());
+        assertEquals("file:/fake-share/dummy-study/dummy-version", remoteDestinationDir.getValue().getURI().toString());
 
         assertTrue(publishedLogFiles.containsKey(dummyStudy));
         assertEquals(fakePublishedLogFile, publishedLogFiles.get(dummyStudy));

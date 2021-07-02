@@ -67,7 +67,7 @@ public class TransformerServiceImpl implements ITransformerService {
                 throw new TransformerException(
                         "Transformation command script specified in the application.properties points to directory.");
             }
-            String scriptPath = utils.stripResourceTypePrefix(script.getURL().toString());
+            String scriptPath = utils.stripResourceTypePrefix(utils.getURI(script).toString());
             command.set(0, scriptPath);
             return command;
         } catch (IOException e) {
@@ -81,8 +81,8 @@ public class TransformerServiceImpl implements ITransformerService {
             return parseCommandScript();
         } else {
             try {
-                String untransformedPath = utils.stripResourceTypePrefix(untransformedFilesPath.getURL().toString());
-                String transformedPath = utils.stripResourceTypePrefix(transformedFilesPath.getURL().toString());
+                String untransformedPath = utils.stripResourceTypePrefix(utils.getURI(untransformedFilesPath).toString());
+                String transformedPath = utils.stripResourceTypePrefix(utils.getURI(transformedFilesPath).toString());
                 String dockerPrefix = "docker run --rm -v "+untransformedPath+":"+untransformedPath+
                     " -v "+transformedPath+":"+transformedPath+" "+transformationCommandScriptDockerImage;
                 List<String> command = Stream.of(dockerPrefix.trim().split("\\s+")).collect(Collectors.toList());
