@@ -117,7 +117,7 @@ public class ScheduledScanner {
 			}
 		}
 
-		return shouldStopApp();
+		return shouldStopApp(etlProcessRunner.getLoaderExitStatus());
 	}
 
 	private void addToIgnoreFile(Map<Study,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
@@ -160,6 +160,29 @@ public class ScheduledScanner {
 		if (scanCron.equals("* * * * * *")) {
 			logger.info("Closing the app after running one time. When scheduled scanning " +
 			"is needed set the scan.cron property to a value different from '* * * * * *'");
+			scheduledScannerService.stopAppWithSuccess();
+		}
+		if (scanIterations != -1 && nrIterations >= scanIterations) {
+			logger.info("==>>>>> Reached configured number of iterations (" + scanIterations + "). Exiting... <<<<<==");
+			scheduledScannerService.stopAppWithSuccess();
+		}
+		return true;
+	}
+
+	private boolean shouldStopApp(Map<Study, ExitStatus> LoaderExitStatus) {
+		// When scanning every second, we assume that the scanner should run
+		// only once. The appl is closed when the patter is '* * * * * *'.
+		if (scanCron.equals("* * * * * *")) {
+			logger.info("Closing the app after running one time. When scheduled scanning " +
+			"is needed set the scan.cron property to a value different from '* * * * * *'");
+			if (LoaderExitStatus.size() == 1) { //When only one study, return errror if the study fails to load
+				if (LoaderExitStatus.values().toArray()[0] == ExitStatus.ERROR) {
+					scheduledScannerService.stopApp();
+				} else {
+					scheduledScannerService.stopAppWithSuccess();
+				}
+
+			}
 			scheduledScannerService.stopAppWithSuccess();
 		}
 		if (scanIterations != -1 && nrIterations >= scanIterations) {
