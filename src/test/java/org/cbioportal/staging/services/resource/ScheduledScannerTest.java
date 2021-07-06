@@ -114,7 +114,7 @@ public class ScheduledScannerTest {
         scheduledScanner.scan();
 
         verify(reportingService, times(1)).reportGenericError(anyString(), any());
-        verify(scheduledScannerService, times(1)).stopApp();
+        verify(scheduledScannerService, times(2)).stopApp();
     }
 
     @Test

@@ -86,12 +86,14 @@ public class ScheduledScanner {
 			scheduledScannerService.stopApp();
 		}
 
+		Study[] resourcesPerStudy = {};
+
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()));
 			nrIterations++;
 
 			logger.info("Started fetching of resources.");
-			Study[] resourcesPerStudy = resourceCollector.getResources(scanLocation);
+			resourcesPerStudy = resourceCollector.getResources(scanLocation);
 
 			if (resourcesPerStudy.length == 0) {
 				return shouldStopApp();
@@ -117,7 +119,7 @@ public class ScheduledScanner {
 			}
 		}
 
-		return shouldStopApp(etlProcessRunner.getLoaderExitStatus());
+		return shouldStopApp(resourcesPerStudy, etlProcessRunner.getLoaderExitStatus());
 	}
 
 	private void addToIgnoreFile(Map<Study,ExitStatus> loaderStatus, Study[] resourcesPerStudy) {
@@ -169,19 +171,15 @@ public class ScheduledScanner {
 		return true;
 	}
 
-	private boolean shouldStopApp(Map<Study, ExitStatus> LoaderExitStatus) {
+	private boolean shouldStopApp(Study[] resourcesPerStudy, Map<Study, ExitStatus> LoaderExitStatus) {
 		// When scanning every second, we assume that the scanner should run
 		// only once. The appl is closed when the patter is '* * * * * *'.
 		if (scanCron.equals("* * * * * *")) {
 			logger.info("Closing the app after running one time. When scheduled scanning " +
 			"is needed set the scan.cron property to a value different from '* * * * * *'");
-			if (LoaderExitStatus.size() == 1) { //When only one study, return errror if the study fails to load
-				if (LoaderExitStatus.values().toArray()[0] == ExitStatus.ERROR) {
-					scheduledScannerService.stopApp();
-				} else {
-					scheduledScannerService.stopAppWithSuccess();
-				}
-
+			//Return error if the study doesn't reach the loader step (size = 0) or if the Loader Exit status is not SUCCESS
+			if (resourcesPerStudy.length == 1 && (LoaderExitStatus.size() == 0 || LoaderExitStatus.values().toArray()[0] != ExitStatus.SUCCESS)) {
+				scheduledScannerService.stopApp(); 
 			}
 			scheduledScannerService.stopAppWithSuccess();
 		}
