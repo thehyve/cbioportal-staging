@@ -26,6 +26,7 @@ import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.ExitStatus;
 import org.cbioportal.staging.services.report.IReportingService;
 import org.cbioportal.staging.services.resource.IResourceCollector;
+import org.cbioportal.staging.services.resource.IResourceFinder;
 import org.cbioportal.staging.services.resource.ResourceIgnoreSet;
 import org.cbioportal.staging.services.resource.Study;
 import org.cbioportal.staging.services.scanner.IScheduledScannerService;
@@ -70,6 +71,9 @@ public class ScheduledScanner {
 	private IScheduledScannerService scheduledScannerService;
 
 	@Autowired
+	private IResourceFinder resourceFinder;
+
+	@Autowired
 	private IReportingService reporingService;
 
 	@Autowired
@@ -93,7 +97,8 @@ public class ScheduledScanner {
 			nrIterations++;
 
 			logger.info("Started fetching of resources.");
-			resourcesPerStudy = resourceCollector.getResources(scanLocation);
+			Resource inputDir = resourceFinder.getInputDirectory();
+			resourcesPerStudy = resourceCollector.getResources(inputDir);
 
 			if (resourcesPerStudy.length == 0) {
 				return shouldStopApp();

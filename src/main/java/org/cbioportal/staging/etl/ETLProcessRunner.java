@@ -53,6 +53,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class ETLProcessRunner {
 
+	public enum Stage {
+		ALL,
+		EXTRACT,
+		TRANSFORM,
+		VALIDATE,
+		LOAD
+	}
+
 	private static final Logger logger = LoggerFactory.getLogger(ETLProcessRunner.class);
 
 	@Autowired
@@ -94,71 +102,88 @@ public class ETLProcessRunner {
     @Value("${validation.level:ERROR}")
 	private String validationLevel;
 
+    @Value("${execution.stage:ALL}")
+	private Stage executeStage;
+
 	Map<Study, ExitStatus> transformerExitStatus;
 	Map<Study, ExitStatus> validatorExitStatus;
 	Map<Study, ExitStatus> loaderExitStatus;
 
-	public void run(Study[] remoteResources) throws Exception {
+	public void run(Study[] initialStudies) throws Exception {
 		try  {
 			startProcess();
 
-			if (etlWorkingDir  == null) {
-                throw new ConfigurationException("etl.working.dir not defined. Please check the application properties.");
-			} else {
-				utils.ensureDirs(etlWorkingDir);
+			Study[] studies = initialStudies;
+
+			if (executeStage == Stage.ALL || executeStage == Stage.EXTRACT) {
+
+				if (etlWorkingDir == null) {
+					throw new ConfigurationException("etl.working.dir not defined. Please check the application properties.");
+				} else {
+					utils.ensureDirs(etlWorkingDir);
+				}
+
+				//E (Extract) step:
+				Study[] extractedStudies = extractor.run(studies);
+
+				studies = extractedStudies;
+
+				if (!extractor.errorFiles().isEmpty()) {
+					reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
+				}
+
 			}
 
-            //E (Extract) step:
-			Study[] localResources = extractor.run(remoteResources);
+			if (executeStage == Stage.ALL || executeStage == Stage.TRANSFORM) {
 
-			if (! extractor.errorFiles().isEmpty()) {
-				reportingService.reportStudyFileNotFound(extractor.errorFiles(), extractor.getTimeRetry());
+				transformerExitStatus = new HashMap<>();
+				validatorExitStatus = new HashMap<>();
+				loaderExitStatus = new HashMap<>();
+
+				//T (TRANSFORM) STEP:
+
+				transformerExitStatus = transformer.transform(studies);
+				publisher.publishFiles(transformer.getLogFiles());
+				Study [] transformedStudies = transformer.getValidStudies();
+				studies = transformedStudies;
 			}
 
-			transformerExitStatus = new HashMap<>();
-			validatorExitStatus = new HashMap<>();
-			loaderExitStatus = new HashMap<>();
+			if (executeStage == Stage.ALL || executeStage == Stage.VALIDATE) {
 
-			//T (TRANSFORM) STEP:
-			Study[] transformedStudies;
-			if (etlUtils.doTransformation()) {
-				transformerExitStatus = transformer.transform(localResources);
-                publisher.publishFiles(transformer.getLogFiles());
-                transformedStudies = transformer.getValidStudies();
-			} else {
-                for (Study study : localResources) {
-                    transformerExitStatus.put(study, ExitStatus.SKIPPED);
-                }
-				transformedStudies = localResources;
+				//V (VALIDATE) STEP:
+				if (studies.length > 0) {
+					validatorExitStatus = validator.validate(studies);
+					studies = validator.getValidStudies();
+				}
+
+				publisher.publishFiles(validator.getLogFiles());
+				publisher.publishFiles(validator.getReportFiles());
+
 			}
 
-			//V (VALIDATE) STEP:
-			if (transformedStudies.length > 0) {
-                validatorExitStatus = validator.validate(transformedStudies);
-                publisher.publishFiles(validator.getLogFiles());
-                publisher.publishFiles(validator.getReportFiles());
-
-				Study[] studiesThatPassedValidation = validator.getValidStudies();
+			if (executeStage == Stage.ALL || executeStage == Stage.LOAD) {
 
 				//L (LOAD) STEP:
-				if (studiesThatPassedValidation.length > 0) {
-                    loaderExitStatus = loader.load(studiesThatPassedValidation);
-                    publisher.publishFiles(loader.getLogFiles());
+				if (studies.length > 0) {
+					loaderExitStatus = loader.load(studies);
+					publisher.publishFiles(loader.getLogFiles());
 
 					if (loader.areStudiesLoaded()) {
-                        restarterService.restart();
-						if (studyAuthorizeCommandPrefix != null && ! studyAuthorizeCommandPrefix.equals("")) {
-                            Set<String> studyIds = new HashSet<String>();
-                            for (Study study : validatorExitStatus.keySet()) {
-                                studyIds.add(study.getStudyId());
-                            }
+						restarterService.restart();
+						if (studyAuthorizeCommandPrefix != null && !studyAuthorizeCommandPrefix.equals("")) {
+							Set<String> studyIds = new HashSet<String>();
+							for (Study study : validatorExitStatus.keySet()) {
+								studyIds.add(study.getStudyId());
+							}
 							authorizer.authorizeStudies(studyIds);
 						}
 					}
 				}
-            }
-            reportSummary(localResources, transformer.getLogFiles(), validator.getLogFiles(), validator.getReportFiles(), loader.getLogFiles(),
+			}
+
+            reportSummary(initialStudies, transformer.getLogFiles(), validator.getLogFiles(), validator.getReportFiles(), loader.getLogFiles(),
                 transformerExitStatus, validatorExitStatus, loaderExitStatus);
+
 		} catch (TransformerException e) {
 			try {
 				logger.error("An error occurred during the transformation step. Error found: "+ e);
