@@ -1,20 +1,16 @@
 package org.cbioportal.staging.services.resource;
 
-import static org.cbioportal.staging.etl.ETLProcessRunner.Stage;
-
-
 import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.aws.core.io.s3.SimpleStorageResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 /**
- * DefaultResouceCollector
+ * DefaultResourceCollector
  *
  * Complies a list of resources per study on the file system indicated by
  * 'scan.location' property.
@@ -33,9 +29,6 @@ public class ResourceCollectorService implements IResourceCollector {
 
     @Autowired
     private IResourceFilter resourceFilter;
-
-    @Value("${execution.stage:ALL}")
-    private Stage executionStage;
 
     @Override
     public Study[] getResources(Resource scanLocation)
