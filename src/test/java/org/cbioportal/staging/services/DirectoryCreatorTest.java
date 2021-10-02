@@ -16,8 +16,14 @@
 package org.cbioportal.staging.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -36,6 +42,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -53,14 +61,13 @@ public class DirectoryCreatorTest {
 	@Autowired
 	private IDirectoryCreator directoryCreator;
 
-	@MockBean
+	@SpyBean
 	private ResourceUtils utils;
 
 	private Resource etlDir = mock(Resource.class);
 	private Resource transformDir = mock(Resource.class);
 	private Resource untransformedDir = mock(Resource.class);
 	private Resource studyDir = mock(Resource.class);
-//	private Study studyStub = new Study("studyId", "version", "timestamp", null, null);
 
 	@Before
 	public void init() {
@@ -82,7 +89,7 @@ public class DirectoryCreatorTest {
 			throws DirectoryCreatorException, ResourceCollectionException, ResourceUtilsException {
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(isA(Resource.class))).thenReturn(true);
+		doReturn(true).when(utils).isFile(isA(Resource.class));
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
@@ -94,12 +101,12 @@ public class DirectoryCreatorTest {
 			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(isA(Resource.class))).thenReturn(false);
+		doReturn(false).when(utils).isFile(isA(Resource.class));
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
+		doReturn(expectedStudyDir).when(utils).createDirResource(isA(Resource.class));
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyDir);
 
@@ -113,12 +120,12 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/study_version");
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(isA(Resource.class))).thenReturn(false);
+		doReturn(false).when(utils).isFile(isA(Resource.class));
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
+		doReturn(expectedStudyDir).when(utils).createDirResource(isA(Resource.class));
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyDir);
 
@@ -132,42 +139,45 @@ public class DirectoryCreatorTest {
 		ReflectionTestUtils.setField(directoryCreator, "dirFormat", "study_id/timestamp");
 
 		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(isA(Resource.class))).thenReturn(false);
+		doReturn(false).when(utils).isFile(isA(Resource.class));
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
         Resource expectedStudyDir = TestUtils.createMockResource("file:/studyId", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(expectedStudyDir);
+		doReturn(expectedStudyDir).when(utils).createDirResource(isA(Resource.class));
 
         Resource generatedStudyDir = directoryCreator.createStudyExtractDir(studyDir);
 
         assertEquals(expectedStudyDir, generatedStudyDir);
     }
-    @Test
+
+    @Test(expected = DirectoryCreatorException.class)
 	public void transformationDir_transformationDirNull()
-			throws DirectoryCreatorException, ResourceUtilsException,
-			IOException {
+		throws DirectoryCreatorException, ResourceUtilsException, IOException {
+		doThrow(new IOException()).when(utils).createDirResource(isNull());
+        directoryCreator.createTransformedStudyDir(null);
+	}
 
-        when(etlDir.exists()).thenReturn(false);
-		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
-        ReflectionTestUtils.setField(directoryCreator, "transformationDir", null);
+	@Test
+	public void getStudyTransformDir_Null() throws DirectoryCreatorException, IOException {
+		ReflectionTestUtils.setField(directoryCreator, "transformationDir", null);
+		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", new FileSystemResource("/"), null);
+		Resource studyTransformDir = directoryCreator.getStudyTransformDir(dummyStudy);
+		assertEquals("/staging/dummy-time/dummy-study", studyTransformDir.getFile().getAbsolutePath());
+	}
 
-		Resource transDir = TestUtils.createMockResource("file:/staging/", 0);
-		when(utils.createDirResource(untransformedDir, "staging")).thenReturn(transDir);
-
-        Resource transformedDir = directoryCreator.createTransformedStudyDir(studyDir);
-
-        assertEquals(transDir, transformedDir);
+	@Test
+	public void getStudyTransformDir_Dir() throws DirectoryCreatorException, IOException {
+		ReflectionTestUtils.setField(directoryCreator, "transformationDir", new FileSystemResource("/different-transform-dir/"));
+		Study dummyStudy = new Study("dummy-study", "dummy-time", "dummy-time", new FileSystemResource("/"), null);
+		Resource studyTransformDir = directoryCreator.getStudyTransformDir(dummyStudy);
+		assertEquals("/different-transform-dir/dummy-time/dummy-study", studyTransformDir.getFile().getAbsolutePath());
 	}
 
 	@Test(expected = DirectoryCreatorException.class)
-	public void transformationDir_isFile() throws DirectoryCreatorException, ResourceUtilsException {
-
-		when(etlDir.exists()).thenReturn(true);
-		when(utils.isFile(isA(Resource.class))).thenReturn(true);
-		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
-        ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
-
+	public void transformationDirException()
+		throws DirectoryCreatorException, ResourceUtilsException, IOException {
+		doThrow(new IOException()).when(utils).createDirResource(isA(Resource.class));
 		directoryCreator.createTransformedStudyDir(studyDir);
     }
 
@@ -175,13 +185,12 @@ public class DirectoryCreatorTest {
 	public void transformationDir_isCorrect()
 			throws DirectoryCreatorException, ResourceUtilsException, IOException {
 
-
 		when(etlDir.exists()).thenReturn(false);
 		ReflectionTestUtils.setField(directoryCreator, "etlWorkingDir", etlDir);
 		ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
+		doReturn(transDir).when(utils).createDirResource(isA(Resource.class));
 
 		Resource transformedDir = directoryCreator.createTransformedStudyDir(studyDir);
 
@@ -199,7 +208,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
+		doReturn(transDir).when(utils).createDirResource(isA(Resource.class));
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir(studyDir);
 
@@ -217,7 +226,7 @@ public class DirectoryCreatorTest {
         ReflectionTestUtils.setField(directoryCreator, "transformationDir", transformDir);
 
 		Resource transDir = TestUtils.createMockResource("file:/transf", 0);
-		when(utils.createDirResource(isA(Resource.class), isA(String.class))).thenReturn(transDir);
+		doReturn(transDir).when(utils).createDirResource(isA(Resource.class));
 
         Resource transformedDir = directoryCreator.createTransformedStudyDir(studyDir);
 

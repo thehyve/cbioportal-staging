@@ -2,7 +2,7 @@ package org.cbioportal.staging.services.resource;
 
 import org.springframework.core.io.Resource;
 
-public final class Study {
+public class Study {
 
     private String studyId;
     private String version;

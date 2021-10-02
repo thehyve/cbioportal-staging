@@ -522,7 +522,7 @@ public class ResourceUtils {
      */
     public File getFile(Resource resource) throws ResourceUtilsException {
         try {
-                return resource.getFile();
+            return resource.getFile();
         } catch (IOException e) {
             throw new ResourceUtilsException("Cannot read File from Resource: " + resource.getDescription());
         }

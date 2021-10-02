@@ -74,8 +74,9 @@ public class DirectoryCreator implements IDirectoryCreator {
     @Override
     public Resource createTransformedStudyDir(Resource studyTransformDir) throws DirectoryCreatorException {
         try {
+            Resource resource = utils.createDirResource(studyTransformDir);
             logger.info("Create transformation directory: transformationDir= " + studyTransformDir.getFilename());
-            return utils.createDirResource(studyTransformDir);
+            return resource;
         } catch (ResourceUtilsException | IOException e) {
             throw new DirectoryCreatorException("Cannot create Resource.", e);
         }
@@ -94,18 +95,12 @@ public class DirectoryCreator implements IDirectoryCreator {
 
     @Override
     public Resource getStudyTransformDir(Study study) throws DirectoryCreatorException {
-        String studyDir = getIntermediatePath(study);
-        String base = "staging";
+        String base = study.getStudyDir().getFilename() + "/staging";
         try {
             if (transformationDir != null) {
-                if (utils.isFile(transformationDir)) {
-                    throw new DirectoryCreatorException(
-                        "transformation.directory points to a file on the local file system, but should point to a directory.: "
-                            + transformationDir);
-                }
                 base = utils.getFile(transformationDir).getAbsolutePath();
             }
-            return new FileSystemResource(base + "/" + studyDir);
+            return new FileSystemResource(base + "/" + getIntermediatePath(study));
         } catch (ResourceUtilsException e) {
             throw new DirectoryCreatorException("Cannot resolve transformation directory.", e);
         }

@@ -15,21 +15,20 @@
 */
 package org.cbioportal.staging.services.directory;
 
-import java.io.IOException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.services.resource.Study;
 import org.springframework.core.io.Resource;
 
 public interface IDirectoryCreator {
 
-    public Resource createStudyExtractDir(Resource studyExtractDir) throws DirectoryCreatorException;
+    Resource createStudyExtractDir(Resource studyExtractDir) throws DirectoryCreatorException;
 
-    public Resource createTransformedStudyDir(Resource studyTransformDir) throws DirectoryCreatorException;
+    Resource createTransformedStudyDir(Resource studyTransformDir) throws DirectoryCreatorException;
 
     Resource getStudyExtractDir(Study study) throws DirectoryCreatorException;
 
     Resource getStudyTransformDir(Study study) throws DirectoryCreatorException;
 
-    public String getIntermediatePath(Study study) throws DirectoryCreatorException;
+    String getIntermediatePath(Study study) throws DirectoryCreatorException;
 
 }

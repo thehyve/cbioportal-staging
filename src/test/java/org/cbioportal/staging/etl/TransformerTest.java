@@ -80,6 +80,7 @@ public class TransformerTest {
         Resource mockResource = mock(Resource.class);
         when(mockResource.getFilename()).thenReturn("mock-resource");
         when(directoryCreator.createTransformedStudyDir(isA(Resource.class))).thenReturn(mockResource);
+        when(directoryCreator.getStudyTransformDir(isA(Study.class))).thenReturn(mockResource);
 
         // mock utils.createLogFiles -> return Resource mock that has getFile()
         Resource logFile = TestUtils.createMockResource("file:/dummy_study_folder/log_file.txt", 0);
