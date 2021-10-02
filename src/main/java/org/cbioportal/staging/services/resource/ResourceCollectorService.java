@@ -45,7 +45,7 @@ public class ResourceCollectorService implements IResourceCollector {
             throw new ConfigurationException("scan location is null.");
         }
 
-        Study[] studies = null;
+        Study[] studies = new Study[0];
 
         try {
             String scanLocationString = scanLocation.getFilename();
@@ -53,9 +53,9 @@ public class ResourceCollectorService implements IResourceCollector {
                 scanLocationString = ((SimpleStorageResource) scanLocation).getS3Uri().toString();
             }
 
-            logger.info("Scanning for files at: " + scanLocationString);
+            logger.info("Scanning for files at: {}", scanLocationString);
             Resource[] scannedResources = resourceProvider.list(scanLocation);
-            logger.info("Found " + scannedResources.length + " files");
+            logger.info("Found {} files", scannedResources.length);
 
             if (scannedResources.length > 0) {
                 Study[] resolvedResources = resourceStrategy.resolveResources(scannedResources);
