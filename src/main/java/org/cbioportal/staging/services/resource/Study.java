@@ -38,6 +38,10 @@ public final class Study {
         return this.studyDir;
     }
 
+    public void setStudyDir(Resource dir) {
+        this.studyDir = dir;
+    }
+
     public void setResources(Resource[] resources) {
         this.resources = resources;
     }

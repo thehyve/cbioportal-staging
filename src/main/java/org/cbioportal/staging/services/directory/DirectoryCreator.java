@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -46,10 +47,10 @@ public class DirectoryCreator implements IDirectoryCreator {
     private String dirFormat;
 
     @Override
-    public Resource createStudyExtractDir(Study study) throws DirectoryCreatorException {
+    public Resource createStudyExtractDir(Resource studyExtractDir) throws DirectoryCreatorException {
         try {
 
-            if (etlWorkingDir  == null) {
+            if (etlWorkingDir == null) {
                 throw new DirectoryCreatorException("etl.working.dir not defined. Please check the application properties.");
             }
 
@@ -63,7 +64,7 @@ public class DirectoryCreator implements IDirectoryCreator {
 								+ etlWorkingDir);
             }
 
-            return utils.createDirResource(etlWorkingDir, getIntermediatePath(study));
+            return utils.createDirResource(studyExtractDir);
 
         } catch (ResourceUtilsException | IOException e) {
 			throw new DirectoryCreatorException("Cannot create Resource.", e);
@@ -71,22 +72,42 @@ public class DirectoryCreator implements IDirectoryCreator {
     }
 
     @Override
-    public Resource createTransformedStudyDir(Study study, Resource untransformedStudyDir) throws DirectoryCreatorException {
+    public Resource createTransformedStudyDir(Resource studyTransformDir) throws DirectoryCreatorException {
+        try {
+            logger.info("Create transformation directory: transformationDir= " + studyTransformDir.getFilename());
+            return utils.createDirResource(studyTransformDir);
+        } catch (ResourceUtilsException | IOException e) {
+            throw new DirectoryCreatorException("Cannot create Resource.", e);
+        }
+    }
+
+    @Override
+    public Resource getStudyExtractDir(Study study) throws DirectoryCreatorException {
+        try {
+            String base = etlWorkingDir.getFile().getAbsolutePath();
+            String studyDir = getIntermediatePath(study);
+            return new FileSystemResource(base + "/" + studyDir);
+        } catch (IOException e) {
+            throw new DirectoryCreatorException("Cannot resolve extract directory.", e);
+        }
+    }
+
+    @Override
+    public Resource getStudyTransformDir(Study study) throws DirectoryCreatorException {
+        String studyDir = getIntermediatePath(study);
+        String base = "staging";
         try {
             if (transformationDir != null) {
                 if (utils.isFile(transformationDir)) {
                     throw new DirectoryCreatorException(
-                            "transformation.directory points to a file on the local file system, but should point to a directory.: "
-                                    + transformationDir);
+                        "transformation.directory points to a file on the local file system, but should point to a directory.: "
+                            + transformationDir);
                 }
-                logger.info("Create transformation directory: transformationDir= " + transformationDir.getFilename() + "intermediatePath=" + getIntermediatePath(study));
-                return utils.createDirResource(transformationDir, getIntermediatePath(study));
-
-            } else {
-                return utils.createDirResource(untransformedStudyDir, "staging");
+                base = utils.getFile(transformationDir).getAbsolutePath();
             }
-        } catch (ResourceUtilsException | IOException e) {
-            throw new DirectoryCreatorException("Cannot create Resource.", e);
+            return new FileSystemResource(base + "/" + studyDir);
+        } catch (ResourceUtilsException e) {
+            throw new DirectoryCreatorException("Cannot resolve transformation directory.", e);
         }
     }
 

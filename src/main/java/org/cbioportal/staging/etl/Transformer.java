@@ -52,7 +52,7 @@ public class Transformer {
     private FileSystemResourceProvider fileSystemResourceProvider;
 
     @Autowired
-	private IDirectoryCreator directoryCreator;
+    private IDirectoryCreator directoryCreator;
 
     final private Map<Study, Resource> logFiles = new HashMap<>();
     final private List<Study> validStudies = new ArrayList<>();
@@ -72,20 +72,20 @@ public class Transformer {
                 ExitStatus transformationStatus = ExitStatus.SUCCESS;
                 Resource transformedFilesPath;
                 try {
-                    Resource untransformedFilesPath = study.getStudyDir();
-                    logger.debug("Creating transformed data study directory: untransformedFilesPath=" + untransformedFilesPath);
-                    transformedFilesPath = directoryCreator.createTransformedStudyDir(study, untransformedFilesPath);
+                    transformedFilesPath = directoryCreator.getStudyTransformDir(study);
+                    logger.debug("Creating transformed data study directory: transformedFilesPath=" + transformedFilesPath);
+                    directoryCreator.createTransformedStudyDir(transformedFilesPath);
 
                     logger.info("Created transformed data study directory: transformedFilesPath=" + transformedFilesPath.getFilename());
                     logger.debug("Creating log file.");
                     Resource logFile = utils.createFileResource(transformedFilesPath, study.getStudyId() + "_transformation_log.txt");
                     logFiles.put(study, logFile);
 
-                    if (transformationMetaFileCheck && metaFileExists(untransformedFilesPath)) {
-                        utils.copyDirectory(untransformedFilesPath, transformedFilesPath);
+                    if (transformationMetaFileCheck && metaFileExists(study.getStudyDir())) {
+                        utils.copyDirectory(study.getStudyDir(), transformedFilesPath);
                         transformationStatus = ExitStatus.SKIPPED;
                     } else {
-                        transformationStatus = transformerService.transform(untransformedFilesPath, transformedFilesPath, logFile);
+                        transformationStatus = transformerService.transform(study.getStudyDir(), transformedFilesPath, logFile);
                     }
 
                 } catch (Exception e) {

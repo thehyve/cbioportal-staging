@@ -28,7 +28,6 @@ import org.cbioportal.staging.exceptions.ConfigurationException;
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ExtractionException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
-import org.cbioportal.staging.exceptions.ResourceUtilsException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.cbioportal.staging.services.resource.IResourceProvider;
 import org.cbioportal.staging.services.resource.ResourceUtils;
@@ -74,7 +73,7 @@ class Extractor {
 			for (Study study : studies) {
 
 				String studyId = study.getStudyId();
-				Resource studyDir = directoryCreator.createStudyExtractDir(study);
+				Resource studyDir = directoryCreator.createStudyExtractDir(study.getStudyDir());
 
 				String remoteBasePath = getBasePathResources(study.getResources()).replaceAll("/+", "/");
 

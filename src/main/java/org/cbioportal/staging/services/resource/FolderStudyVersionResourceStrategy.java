@@ -9,8 +9,10 @@ import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +30,9 @@ import org.springframework.stereotype.Component;
  * of the study folder.
  *
  */
-@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "versiondir")
-@Component
 @Primary
+@Component
+@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "versiondir")
 public class FolderStudyVersionResourceStrategy implements IStudyResourceStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(FolderStudyVersionResourceStrategy.class);
@@ -40,6 +42,9 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
 
     @Autowired
     private ResourceUtils utils;
+
+    @Autowired
+    private IDirectoryCreator directoryCreator;
 
     @PostConstruct
     public void init() {
@@ -79,13 +84,20 @@ public class FolderStudyVersionResourceStrategy implements IStudyResourceStrateg
 
                     String studyId = getStudyId(studyResources, studyPath);
 
-                    out.add(new Study(studyId, studyVersion, timestamp, studyVersionDir, studyResources));
+                    Study study = new Study(studyId, studyVersion, timestamp, studyVersionDir,
+                        studyResources);
+                    study.setStudyDir(directoryCreator.getStudyExtractDir(study));
+                    out.add(study);
                 }
 
             }
 
-        } catch (ResourceUtilsException | IOException e) {
-            throw new ResourceCollectionException("Cannot read from study directory:" + studyVersionPath, e);
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot read from study dir.", e);
+        } catch (DirectoryCreatorException e) {
+            throw new ResourceCollectionException("Cannot evaluate extraction directory.", e);
+        } catch (ResourceUtilsException e) {
+            throw new ResourceCollectionException("Cannot read study version.", e);
         }
 
         return out.toArray(new Study[0]);

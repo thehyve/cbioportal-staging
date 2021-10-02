@@ -68,7 +68,7 @@ public class ExtractorTest {
 			ExtractionException, ResourceUtilsException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
-		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
+		when(directoryCreator.createStudyExtractDir(any(Resource.class))).thenReturn(targetDir);
 
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
@@ -104,7 +104,7 @@ public class ExtractorTest {
 			throws DirectoryCreatorException, ResourceCollectionException, ExtractionException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
-		when(directoryCreator.createStudyExtractDir(any(Study.class))).thenReturn(targetDir);
+		when(directoryCreator.createStudyExtractDir(any(Resource.class))).thenReturn(targetDir);
 
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);

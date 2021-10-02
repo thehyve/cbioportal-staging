@@ -502,10 +502,10 @@ public class ResourceUtils {
     }
 
     /**
-     * Get URL from Resource object.
+     * Get URI from Resource object.
      *
      * @param resource
-     * @return URL
+     * @return URI
      * @throws ResourceUtilsException
      */
     public URI getURI(Resource resource) throws IOException {

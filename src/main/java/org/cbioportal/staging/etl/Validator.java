@@ -102,7 +102,7 @@ public class Validator {
                 }
             }
         } catch (ResourceUtilsException e) {
-            throw new ValidatorException("Error occured while validating studies.", e);
+            throw new ValidatorException("Error occurred while validating studies.", e);
         }
 		return validatedStudies;
     }

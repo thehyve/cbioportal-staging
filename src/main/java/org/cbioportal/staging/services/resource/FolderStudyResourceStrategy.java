@@ -1,8 +1,11 @@
 package org.cbioportal.staging.services.resource;
 
 import com.pivovarit.function.ThrowingFunction;
+import java.io.IOException;
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +22,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- *
  * Recieves a list of directories and recursively extracts a list of
  * resources for each study. The files/resources are returned keyed
  * by study id. When available the study indentifier is extracted from
  * the meta_study.txt file. If not, study identifier is set to the name
  * of the study folder.
- *
  */
 @Primary
 @Component
@@ -39,6 +40,9 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
     @Autowired
     private ResourceUtils utils;
+
+    @Autowired
+    private IDirectoryCreator directoryCreator;
 
     @PostConstruct
     public void init() {
@@ -54,12 +58,13 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
         String timestamp = utils.getTimeStamp("yyyyMMdd-HHmmss");
         try {
             List<String> paths = Stream.of(resources)
-                    .map(ThrowingFunction.unchecked(e -> utils.getURI(e).toString()))
-                    .collect(Collectors.toList());
+                .map(ThrowingFunction.unchecked(e -> utils.getURI(e).toString()))
+                .collect(Collectors.toList());
 
             Resource[] studyDirs = utils.extractDirs(resources);
 
-            logger.info("Found study directories: " + Stream.of(studyDirs).map(e -> e.getFilename()).collect(Collectors.joining(", ")) );
+            logger.info("Found study directories: " +
+                Stream.of(studyDirs).map(e -> e.getFilename()).collect(Collectors.joining(", ")));
 
             for (Resource studyDir : studyDirs) {
 
@@ -67,19 +72,30 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
 
                 String studyId = getStudyId(studyResources, studyDir.getFilename());
 
-                out.add(new Study(studyId, null, timestamp, studyDir, studyResources));
+                Study study = new Study(studyId, null, timestamp, studyDir, studyResources);
+                out.add(study);
+                study.setStudyDir(directoryCreator.getStudyExtractDir(study));
+                out.add(study);
             }
 
         } catch (ResourceUtilsException e) {
-            throw new ResourceCollectionException("Cannot read from study directory:" + studyPath, e);
+            throw new ResourceCollectionException("Cannot read from study dir:" + studyPath,
+                e);
+        } catch (DirectoryCreatorException e) {
+            throw new ResourceCollectionException("Cannot evaluate extraction directory.", e);
+        } catch (IOException e) {
+            throw new ResourceCollectionException("Cannot read from study dir.", e);
         }
 
         return out.toArray(new Study[0]);
     }
 
-    private String getStudyId(Resource[] resources, String studyPath) throws ResourceUtilsException {
+    private String getStudyId(Resource[] resources, String studyPath)
+        throws ResourceUtilsException {
         // find study meta file and if found get the studyId from the meta file
-        Optional<Resource> studyMetaFile = Stream.of(resources).filter(e -> e.getFilename().matches(".*meta_study.txt$")).findAny();
+        Optional<Resource> studyMetaFile =
+            Stream.of(resources).filter(e -> e.getFilename().matches(".*meta_study.txt$"))
+                .findAny();
         if (studyMetaFile.isPresent()) {
             return utils.readMetaFile(studyMetaFile.get()).get("cancer_study_identifier");
         }

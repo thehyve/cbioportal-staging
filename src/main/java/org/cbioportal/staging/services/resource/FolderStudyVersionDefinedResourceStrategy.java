@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.IDirectoryCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,15 +17,15 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * Recieves a directory and recursively extracts a list of
+ * Receives a directory and recursively extracts a list of
  * resources for a single study. The files/resources are returned
  * keyed by the study id. The study identifier is set to the name
  * of the study folder.
  *
  */
-@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "versiondefined")
-@Component
 @Primary
+@Component
+@ConditionalOnProperty(value="scan.studyfiles.strategy", havingValue = "versiondefined")
 public class FolderStudyVersionDefinedResourceStrategy implements IStudyResourceStrategy {
 
     @Autowired
@@ -31,6 +33,9 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
 
     @Autowired
     private IResourceProvider resourceProvider;
+
+    @Autowired
+    private IDirectoryCreator directoryCreator;
 
     @Value("${scan.location}")
     private Resource scanLocation;
@@ -48,10 +53,14 @@ public class FolderStudyVersionDefinedResourceStrategy implements IStudyResource
             String studyVersion = getStudyVersion(scanLocation);
             String studyId = getStudyId(scanLocation);
 
-            out.add(new Study(studyId, studyVersion, timestamp, scanLocation, studyResources));
+            Study study = new Study(studyId, studyVersion, timestamp, scanLocation, studyResources);
+            study.setStudyDir(directoryCreator.getStudyExtractDir(study));
+            out.add(study);
 
         } catch (IOException e) {
             throw new ResourceCollectionException("Cannot read from study directory:" + scanLocation, e);
+        } catch (DirectoryCreatorException e) {
+            throw new ResourceCollectionException("Cannot evaluate extraction directory.", e);
         }
 
         return out.toArray(new Study[0]);

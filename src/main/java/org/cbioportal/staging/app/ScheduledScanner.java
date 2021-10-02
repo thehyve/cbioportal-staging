@@ -17,6 +17,7 @@ package org.cbioportal.staging.app;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,7 +91,7 @@ public class ScheduledScanner {
 			scheduledScannerService.stopApp();
 		}
 
-		Study[] resourcesPerStudy = {};
+		Study[] resourcesPerStudy = null;
 
 		try {
 			logger.info("Fixed Rate Task :: Execution Time - {}", dateTimeFormatter.format(LocalDateTime.now()));
