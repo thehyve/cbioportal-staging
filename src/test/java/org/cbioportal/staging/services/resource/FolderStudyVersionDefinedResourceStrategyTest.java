@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doReturn;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-    classes = { FolderStudyVersionDefinedResourceStrategy.class },
+    classes = { FolderStudyVersionDefinedResourceStrategy.class, DirectoryCreator.class },
     properties = {
         "scan.studyfiles.strategy=versiondefined"
     }

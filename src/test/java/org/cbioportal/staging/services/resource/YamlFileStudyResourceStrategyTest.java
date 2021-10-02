@@ -18,6 +18,7 @@ import com.pivovarit.function.ThrowingFunction;
 
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
+import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.cbioportal.staging.services.resource.filesystem.FileSystemResourceProvider;
 import org.cbioportal.staging.services.resource.filesystem.IFileSystemGateway;
 import org.junit.Before;
@@ -32,7 +33,7 @@ import org.yaml.snakeyaml.Yaml;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(
-    classes = {YamlFileStudyResourceStrategy.class, FileSystemResourceProvider.class, ResourceUtils.class },
+    classes = {YamlFileStudyResourceStrategy.class, FileSystemResourceProvider.class, ResourceUtils.class, DirectoryCreator.class },
     properties = {"scan.studyfiles.strategy=yaml", "scan.location=file:/tmp"}
 )
 public class YamlFileStudyResourceStrategyTest {

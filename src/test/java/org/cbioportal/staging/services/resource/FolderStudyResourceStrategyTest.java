@@ -18,6 +18,7 @@ import java.util.Map;
 import org.cbioportal.staging.TestUtils;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.exceptions.ResourceUtilsException;
+import org.cbioportal.staging.services.directory.DirectoryCreator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { FolderStudyResourceStrategy.class },
+@SpringBootTest(classes = { FolderStudyResourceStrategy.class, DirectoryCreator.class},
     properties = {"scan.studyfiles.strategy=studydir"})
 public class FolderStudyResourceStrategyTest {
 
