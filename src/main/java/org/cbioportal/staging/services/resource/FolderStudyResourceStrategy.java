@@ -73,7 +73,6 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
                 String studyId = getStudyId(studyResources, studyDir.getFilename());
 
                 Study study = new Study(studyId, null, timestamp, studyDir, studyResources);
-                out.add(study);
                 study.setStudyDir(directoryCreator.getStudyExtractDir(study));
                 out.add(study);
             }
@@ -83,8 +82,6 @@ public class FolderStudyResourceStrategy implements IStudyResourceStrategy {
                 e);
         } catch (DirectoryCreatorException e) {
             throw new ResourceCollectionException("Cannot evaluate extraction directory.", e);
-        } catch (IOException e) {
-            throw new ResourceCollectionException("Cannot read from study dir.", e);
         }
 
         return out.toArray(new Study[0]);

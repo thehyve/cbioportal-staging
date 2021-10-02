@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import org.cbioportal.staging.exceptions.DirectoryCreatorException;
 import org.cbioportal.staging.exceptions.ResourceCollectionException;
 import org.cbioportal.staging.services.directory.IDirectoryCreator;
@@ -25,7 +24,7 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * YamlResourceStrategy
- * <p>
+ *
  * Selects the newest Yaml file and extracts a
  * list of resources per study.
  */

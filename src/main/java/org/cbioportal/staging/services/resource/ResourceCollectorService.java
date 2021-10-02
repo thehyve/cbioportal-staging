@@ -29,11 +29,7 @@ public class ResourceCollectorService implements IResourceCollector {
     private IResourceProvider resourceProvider;
 
     @Autowired
-    // This one is determined by the @Primary annotation of the instantiated Strategy beans
-    private IStudyResourceStrategy remoteResourceStrategy;
-
-//    @Autowired
-//    private FolderStudyResourceStrategy localResourceStrategy;
+    private IStudyResourceStrategy resourceStrategy;
 
     @Autowired
     private IResourceFilter resourceFilter;
@@ -62,14 +58,7 @@ public class ResourceCollectorService implements IResourceCollector {
             logger.info("Found " + scannedResources.length + " files");
 
             if (scannedResources.length > 0) {
-                Study[] resolvedResources;
-//                if (executionStage == Stage.ALL || executionStage == Stage.EXTRACT) {
-                    resolvedResources = remoteResourceStrategy.resolveResources(scannedResources);
-//                } else {
-                    // When only running TRANSFORM, VALIDATION, or LOAD step, resolve the resources
-                    // using a simple local file resource strategy (no need to interpret yaml files etc.).
-//                    resolvedResources = localResourceStrategy.resolveResources(scannedResources);
-//                }
+                Study[] resolvedResources = resourceStrategy.resolveResources(scannedResources);
                 studies = resourceFilter.filterResources(resolvedResources);
             }
 
