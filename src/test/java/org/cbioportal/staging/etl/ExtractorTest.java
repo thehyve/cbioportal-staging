@@ -15,10 +15,13 @@
 */
 package org.cbioportal.staging.etl;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,7 +68,7 @@ public class ExtractorTest {
 
 	@Test
 	public void testRun_success() throws DirectoryCreatorException, ResourceCollectionException, IOException,
-			ExtractionException, ResourceUtilsException {
+			ExtractionException {
 
 		Resource targetDir = TestUtils.createMockResource("file:/extract-dir/dummy-study", 0);
 		when(directoryCreator.createStudyExtractDir(any(Resource.class))).thenReturn(targetDir);
@@ -73,7 +76,8 @@ public class ExtractorTest {
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
 
-		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time",
+		 "dummy-time", mock(Resource.class), new Resource[] {remoteFile1, remoteFile2})};
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource localFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
@@ -94,7 +98,7 @@ public class ExtractorTest {
 		assertTrue(Stream.of(extractedResources).filter(s -> s.getStudyId().equals("dummy-study")).findAny().isPresent());
 
 		Study extractedStudy = extractedResources[0];
-		assertTrue(extractedStudy.getStudyDir().getURI().toString().equals("file:/extract-dir/dummy-study"));
+		assertEquals("file:/extract-dir/dummy-study", extractedStudy.getStudyDir().getURI().toString());
 		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
@@ -109,7 +113,8 @@ public class ExtractorTest {
 		Resource remoteFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		Resource remoteFile2 = TestUtils.createMockResource("file:/file2.txt", 0);
 
-		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time", "dummy-time", null, new Resource[] {remoteFile1, remoteFile2})};
+		Study[] dummyStudies = new Study[] {new Study("dummy-study", "dummy-time",
+		 "dummy-time",  mock(Resource.class), new Resource[] {remoteFile1, remoteFile2})};
 
 		Resource localFile1 = TestUtils.createMockResource("file:/file1.txt", 0);
 		doAnswer(invocation -> {
@@ -124,7 +129,7 @@ public class ExtractorTest {
 
 		assertTrue(extractor.errorFiles().containsKey("dummy-study"));
 		assertTrue(extractor.errorFiles().get("dummy-study").contains("file:/file2.txt"));
-		assertTrue(extractedResources.length == 0);
+		assertEquals(0, extractedResources.length);
 		verify(provider, times(2)).copyFromRemote(isA(Resource.class), isA(Resource.class));
 
 	}
